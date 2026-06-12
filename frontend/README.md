@@ -54,6 +54,16 @@ The local `vercel.json` mirrors the install, build, output, and single-page app 
 The rewrite sends unknown paths to `index.html`, so future Angular client routes can be refreshed
 or opened directly.
 
+If Vercel does not offer `frontend` as a selectable root directory, leave Root Directory as `./`.
+The repository-level `vercel.json` delegates the install and build commands into `frontend`:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `./` |
+| Install Command | `npm ci --prefix frontend` |
+| Build Command | `npm run build --prefix frontend` |
+| Output Directory | `frontend/dist/frontend/browser` |
+
 Backend and database deployment are intentionally out of scope for this frontend-only deployment.
 `docker-compose.yml` remains local development infrastructure and is not required by Vercel.
 
