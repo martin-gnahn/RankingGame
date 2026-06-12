@@ -1,0 +1,25 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+:root {
+  color-scheme: light;
+  font-family: Roboto, Arial, sans-serif;
+  background: #f5f7fb;
+  color: #182032;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    linear-gradient(135deg, rgba(28, 92, 174, 0.08), transparent 34%),
+    linear-gradient(315deg, rgba(27, 130, 120, 0.1), transparent 30%),
+    #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}

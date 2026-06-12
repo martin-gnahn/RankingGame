@@ -1,0 +1,99 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.home-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  align-items: center;
+  gap: 32px;
+  width: min(1120px, calc(100% - 40px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.hero {
+  display: grid;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #16756f;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: #17233a;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.intro {
+  max-width: 620px;
+  margin: 0;
+  color: #41506a;
+  font-size: 1.2rem;
+  line-height: 1.65;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.actions button {
+  min-width: 152px;
+}
+
+.status-card {
+  border-radius: 8px;
+}
+
+mat-card-content {
+  padding-top: 16px;
+}
+
+dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+dt {
+  color: #536078;
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+  color: #182032;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .home-shell {
+    grid-template-columns: 1fr;
+    align-content: center;
+    width: min(100% - 28px, 520px);
+    padding: 32px 0;
+  }
+
+  .actions button {
+    flex: 1 1 180px;
+  }
+}
