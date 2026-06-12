@@ -1,16 +1,22 @@
 services:
   postgres:
-    image: quay.io/sclorg/postgresql-16-c9s:latest
+    image: postgres:16-alpine
     container_name: ranking-game-postgres
     restart: unless-stopped
     environment:
-      POSTGRESQL_DATABASE: ranking_game
-      POSTGRESQL_USER: rankinggame
-      POSTGRESQL_PASSWORD: rankinggame
+      POSTGRES_DB: ranking_game
+      POSTGRES_USER: rankinggame
+      POSTGRES_PASSWORD: rankinggame
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/pgsql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rankinggame -d ranking_game"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:
+    name: ranking_game_postgres_data
