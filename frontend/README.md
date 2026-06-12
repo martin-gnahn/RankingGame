@@ -31,10 +31,35 @@ ng generate --help
 To build the project run:
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+This will compile your project and store the production browser artifacts in
+`dist/frontend/browser`. By default, the production build optimizes your application for
+performance and speed.
+
+## Vercel deployment
+
+This frontend can be deployed independently from the Spring Boot backend. In Vercel, create a
+project for this repository with these settings:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `frontend` |
+| Install Command | `npm ci` |
+| Build Command | `npm run build` |
+| Output Directory | `dist/frontend/browser` |
+
+The local `vercel.json` mirrors the install, build, output, and single-page app rewrite settings.
+The rewrite sends unknown paths to `index.html`, so future Angular client routes can be refreshed
+or opened directly.
+
+Backend and database deployment are intentionally out of scope for this frontend-only deployment.
+`docker-compose.yml` remains local development infrastructure and is not required by Vercel.
+
+Backend API URL handling is deferred until the backend deployment ticket. The current frontend does
+not require a backend URL to build or deploy; when API calls are introduced, configure the base URL
+through Angular/Vercel environment handling instead of hard-coding a local Spring Boot address.
 
 ## Running unit tests
 
