@@ -1,0 +1,46 @@
+<mat-card appearance="outlined" class="action-card">
+  <mat-card-header>
+    <mat-card-title>Raum beitreten</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Raumcode</mat-label>
+        <input
+          matInput
+          formControlName="roomCode"
+          autocomplete="off"
+          autocapitalize="characters"
+          inputmode="text"
+          maxlength="8"
+          pattern="[A-Z0-9]{4,8}"
+          (input)="sanitizeJoinCodeInput()"
+        />
+        @if (form.controls.roomCode.hasError('required')) {
+          <mat-error>Raumcode fehlt</mat-error>
+        } @else if (
+          form.controls.roomCode.hasError('pattern') || form.controls.roomCode.hasError('roomCode')
+        ) {
+          <mat-error>4-8 Zeichen, A-Z oder 0-9</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Dein Name</mat-label>
+        <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
+        @if (form.controls.playerName.hasError('required')) {
+          <mat-error>Name fehlt</mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-stroked-button color="primary" type="submit" [disabled]="disabled">
+        @if (loading) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Raum beitreten
+        }
+      </button>
+    </form>
+  </mat-card-content>
+</mat-card>

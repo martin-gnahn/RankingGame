@@ -36,7 +36,7 @@ describe('Home', () => {
   });
 
   it('should create a room and route to the lobby', () => {
-    roomApi.createRoom.and.returnValue(of({ roomCode: 'ABCD', hostPlayerId: 7 }));
+    roomApi.createRoom.and.returnValue(of({ roomCode: 'ABCD', playerId: '7' }));
 
     const compiled = fixture.nativeElement as HTMLElement;
     const nameInput = compiled.querySelector<HTMLInputElement>('input[formControlName="playerName"]');
@@ -47,25 +47,25 @@ describe('Home', () => {
 
     expect(roomApi.createRoom).toHaveBeenCalledWith({ playerName: 'Marta' });
     expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD'], {
-      queryParams: { playerId: 7, role: 'host' },
+      queryParams: { playerId: '7', role: 'host' },
     });
   });
 
-  it('should join a room with an upper-cased code and route to the lobby', () => {
-    roomApi.joinRoom.and.returnValue(of({ playerId: 9 }));
+  it('should join a room and route to the lobby', () => {
+    roomApi.joinRoom.and.returnValue(of({ roomCode: 'ABCD9', playerId: '9' }));
 
     const compiled = fixture.nativeElement as HTMLElement;
     const inputs = compiled.querySelectorAll<HTMLInputElement>('input');
-    inputs[1].value = 'abcd';
+    inputs[1].value = 'ABCD9';
     inputs[1].dispatchEvent(new Event('input'));
     inputs[2].value = 'Alex';
     inputs[2].dispatchEvent(new Event('input'));
 
     fixture.nativeElement.querySelectorAll('form')[1].dispatchEvent(new Event('submit'));
 
-    expect(roomApi.joinRoom).toHaveBeenCalledWith('ABCD', { playerName: 'Alex' });
-    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD'], {
-      queryParams: { playerId: 9, role: 'player' },
+    expect(roomApi.joinRoom).toHaveBeenCalledWith('ABCD9', { playerName: 'Alex' });
+    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD9'], {
+      queryParams: { playerId: '9', role: 'player' },
     });
   });
 

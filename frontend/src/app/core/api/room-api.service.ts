@@ -3,28 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-
-export interface CreateRoomRequest {
-  playerName: string;
-}
-
-export interface JoinRoomRequest {
-  playerName: string;
-}
-
-export interface RoomActionResponse {
-  roomCode?: string;
-  code?: string;
-  playerId?: string | number;
-  hostPlayerId?: string | number;
-  player?: {
-    id?: string | number;
-  };
-  room?: {
-    code?: string;
-    roomCode?: string;
-  };
-}
+import { CreateRoomRequest, JoinRoomRequest, RoomActionResponse, RoomCode } from './room.models';
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +17,7 @@ export class RoomApiService {
     return this.http.post<RoomActionResponse>(this.roomsUrl, request);
   }
 
-  joinRoom(roomCode: string, request: JoinRoomRequest): Observable<RoomActionResponse> {
+  joinRoom(roomCode: RoomCode, request: JoinRoomRequest): Observable<RoomActionResponse> {
     return this.http.post<RoomActionResponse>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/players`,
       request,

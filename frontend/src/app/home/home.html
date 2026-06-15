@@ -8,82 +8,17 @@
   </section>
 
   <section class="room-actions" aria-label="Raumaktionen">
-    <mat-card appearance="outlined" class="action-card">
-      <mat-card-header>
-        <mat-card-title>Raum erstellen</mat-card-title>
-      </mat-card-header>
+    <app-create-room
+      [disabled]="pendingAction !== null"
+      [loading]="pendingAction === 'create'"
+      (createRoomRequested)="createRoom($event)"
+    />
 
-      <mat-card-content>
-        <form [formGroup]="createRoomForm" (ngSubmit)="createRoom()" novalidate>
-          <mat-form-field appearance="outline">
-            <mat-label>Dein Name</mat-label>
-            <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
-            @if (createRoomForm.controls.playerName.hasError('required')) {
-              <mat-error>Name fehlt</mat-error>
-            }
-          </mat-form-field>
-
-          <button
-            mat-flat-button
-            color="primary"
-            type="submit"
-            [disabled]="pendingAction !== null"
-          >
-            @if (pendingAction === 'create') {
-              <mat-spinner diameter="18" />
-            } @else {
-              Raum erstellen
-            }
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card appearance="outlined" class="action-card">
-      <mat-card-header>
-        <mat-card-title>Raum beitreten</mat-card-title>
-      </mat-card-header>
-
-      <mat-card-content>
-        <form [formGroup]="joinRoomForm" (ngSubmit)="joinRoom()" novalidate>
-          <mat-form-field appearance="outline">
-            <mat-label>Raumcode</mat-label>
-            <input
-              matInput
-              formControlName="roomCode"
-              autocomplete="off"
-              autocapitalize="characters"
-              maxlength="8"
-              (blur)="normalizeJoinCode()"
-            />
-            @if (joinRoomForm.controls.roomCode.hasError('required')) {
-              <mat-error>Raumcode fehlt</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Dein Name</mat-label>
-            <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
-            @if (joinRoomForm.controls.playerName.hasError('required')) {
-              <mat-error>Name fehlt</mat-error>
-            }
-          </mat-form-field>
-
-          <button
-            mat-stroked-button
-            color="primary"
-            type="submit"
-            [disabled]="pendingAction !== null"
-          >
-            @if (pendingAction === 'join') {
-              <mat-spinner diameter="18" />
-            } @else {
-              Raum beitreten
-            }
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+    <app-join-room
+      [disabled]="pendingAction !== null"
+      [loading]="pendingAction === 'join'"
+      (joinRoomRequested)="joinRoom($event)"
+    />
 
     @if (errorMessage) {
       <p class="form-error" role="alert">{{ errorMessage }}</p>

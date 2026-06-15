@@ -49,33 +49,6 @@ h1 {
   gap: 16px;
 }
 
-.action-card {
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 18px 40px rgba(28, 40, 64, 0.1);
-}
-
-mat-card-content {
-  padding-top: 18px;
-}
-
-form {
-  display: grid;
-  gap: 14px;
-}
-
-mat-form-field {
-  width: 100%;
-}
-
-button {
-  min-height: 44px;
-}
-
-button mat-spinner {
-  display: inline-block;
-}
-
 .form-error {
   margin: 0;
   padding: 12px 14px;
