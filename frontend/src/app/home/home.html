@@ -1,40 +1,92 @@
 <main class="home-shell">
   <section class="hero" aria-labelledby="home-title">
     <p class="eyebrow">Party Games</p>
-    <h1 id="home-title">TopTen Online Game</h1>
+    <h1 id="home-title">Ranking Game</h1>
     <p class="intro">
       Erstellt einen Raum, sammelt Antworten und sortiert gemeinsam die besten Rankings.
     </p>
-
-    <div class="actions" aria-label="Raumaktionen">
-      <button mat-flat-button color="primary" type="button">Raum erstellen</button>
-      <button mat-stroked-button color="primary" type="button">Raum beitreten</button>
-    </div>
   </section>
 
-  <!--<mat-card appearance="outlined" class="status-card">
-    <mat-card-header>
-      <mat-card-title>Startseite bereit</mat-card-title>
-      <mat-card-subtitle>Angular, Routing und Material sind aktiv.</mat-card-subtitle>
-    </mat-card-header>
+  <section class="room-actions" aria-label="Raumaktionen">
+    <mat-card appearance="outlined" class="action-card">
+      <mat-card-header>
+        <mat-card-title>Raum erstellen</mat-card-title>
+      </mat-card-header>
 
-    <mat-divider />
+      <mat-card-content>
+        <form [formGroup]="createRoomForm" (ngSubmit)="createRoom()" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>Dein Name</mat-label>
+            <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
+            @if (createRoomForm.controls.playerName.hasError('required')) {
+              <mat-error>Name fehlt</mat-error>
+            }
+          </mat-form-field>
 
-    <mat-card-content>
-      <dl>
-        <div>
-          <dt>Frontend</dt>
-          <dd>Angular 20</dd>
-        </div>
-        <div>
-          <dt>UI</dt>
-          <dd>Angular Material</dd>
-        </div>
-        <div>
-          <dt>Route</dt>
-          <dd>/</dd>
-        </div>
-      </dl>
-    </mat-card-content>
-  </mat-card>-->
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="pendingAction !== null"
+          >
+            @if (pendingAction === 'create') {
+              <mat-spinner diameter="18" />
+            } @else {
+              Raum erstellen
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="action-card">
+      <mat-card-header>
+        <mat-card-title>Raum beitreten</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="joinRoomForm" (ngSubmit)="joinRoom()" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>Raumcode</mat-label>
+            <input
+              matInput
+              formControlName="roomCode"
+              autocomplete="off"
+              autocapitalize="characters"
+              maxlength="8"
+              (blur)="normalizeJoinCode()"
+            />
+            @if (joinRoomForm.controls.roomCode.hasError('required')) {
+              <mat-error>Raumcode fehlt</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Dein Name</mat-label>
+            <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
+            @if (joinRoomForm.controls.playerName.hasError('required')) {
+              <mat-error>Name fehlt</mat-error>
+            }
+          </mat-form-field>
+
+          <button
+            mat-stroked-button
+            color="primary"
+            type="submit"
+            [disabled]="pendingAction !== null"
+          >
+            @if (pendingAction === 'join') {
+              <mat-spinner diameter="18" />
+            } @else {
+              Raum beitreten
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    @if (errorMessage) {
+      <p class="form-error" role="alert">{{ errorMessage }}</p>
+    }
+  </section>
 </main>
