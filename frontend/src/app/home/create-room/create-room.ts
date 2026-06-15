@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { CreateRoomRequest } from '../../core/api/room.models';
+import { notBlankValidator } from '../../shared/validators/not-blank.validator';
 
 @Component({
   selector: 'app-create-room',
@@ -29,7 +30,7 @@ export class CreateRoom {
   @Output() createRoomRequested = new EventEmitter<CreateRoomRequest>();
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    playerName: ['', [Validators.required, Validators.maxLength(32)]],
+    playerName: ['', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
   });
 
   protected submit(): void {

@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ROOM_CODE_PATTERN, RoomCode, isRoomCode } from '../../core/api/room.models';
+import { notBlankValidator } from '../../shared/validators/not-blank.validator';
 
 export interface JoinRoomRequestPayload {
   roomCode: RoomCode;
@@ -35,7 +36,7 @@ export class JoinRoom {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     roomCode: ['', [Validators.required, Validators.pattern(ROOM_CODE_PATTERN)]],
-    playerName: ['', [Validators.required, Validators.maxLength(32)]],
+    playerName: ['', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
   });
 
   protected submit(): void {

@@ -53,4 +53,19 @@ describe('JoinRoom', () => {
     expect(fixture.componentInstance.joinRoomRequested.emit).not.toHaveBeenCalled();
     expect(compiled.querySelector('mat-error')?.textContent).toContain('4-8 Zeichen, A-Z oder 0-9');
   });
+
+  it('should reject a whitespace-only player name', () => {
+    spyOn(fixture.componentInstance.joinRoomRequested, 'emit');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const inputs = compiled.querySelectorAll<HTMLInputElement>('input');
+    inputs[0].value = 'ABCD';
+    inputs[0].dispatchEvent(new Event('input'));
+    inputs[1].value = '   ';
+    inputs[1].dispatchEvent(new Event('input'));
+
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    expect(fixture.componentInstance.joinRoomRequested.emit).not.toHaveBeenCalled();
+  });
 });
