@@ -4,6 +4,9 @@ import com.example.rankinggame.repositories.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.security.SecureRandom;
+import java.util.random.RandomGenerator;
+
 @Component
 public class RoomCodeGenerator {
     static final int CODE_LENGTH = 6;
@@ -12,10 +15,16 @@ public class RoomCodeGenerator {
     private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
     private final RoomRepository roomRepository;
+    private final RandomGenerator randomGenerator;
 
     @Autowired
     public RoomCodeGenerator(RoomRepository roomRepository) {
+        this(roomRepository, new SecureRandom());
+    }
+
+    RoomCodeGenerator(RoomRepository roomRepository, RandomGenerator randomGenerator) {
         this.roomRepository = roomRepository;
+        this.randomGenerator = randomGenerator;
     }
 
     public String generateUniqueCode() {
@@ -34,7 +43,7 @@ public class RoomCodeGenerator {
         StringBuilder code = new StringBuilder(CODE_LENGTH);
 
         for (int index = 0; index < CODE_LENGTH; index++) {
-            int randomIndex = (int) Math.round(Math.random() * (ALPHABET.length - 1));
+            int randomIndex = randomGenerator.nextInt(ALPHABET.length);
             code.append(ALPHABET[randomIndex]);
         }
 

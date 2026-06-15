@@ -48,7 +48,7 @@ public class CreateRoomService {
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 
-        return new CreateRoomResult(savedRoom.getCode(), savedHostPlayer.getId());
+        return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname());
     }
 
     private String normalizePlayerName(CreateRoomCommand command) {

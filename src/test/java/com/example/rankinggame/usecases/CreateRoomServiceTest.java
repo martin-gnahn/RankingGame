@@ -56,7 +56,9 @@ class CreateRoomServiceTest {
         CreateRoomResult result = service.createRoom(new CreateRoomCommand("  Marta  "));
 
         assertThat(result.roomCode()).isEqualTo("ABCD12");
+        assertThat(result.roomId()).isEqualTo(roomId);
         assertThat(result.playerId()).isEqualTo(playerId);
+        assertThat(result.playerName()).isEqualTo("Marta");
 
         ArgumentCaptor<Room> roomCaptor = ArgumentCaptor.forClass(Room.class);
         verify(roomRepository, times(2)).save(roomCaptor.capture());
