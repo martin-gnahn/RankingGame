@@ -1,0 +1,11 @@
+package com.example.rankinggame.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record JoinRoomRequest(
+        @NotBlank(message = "Player name is required")
+        @Size(max = 80, message = "Player name must be 80 characters or fewer")
+        String playerName
+) {
+}
