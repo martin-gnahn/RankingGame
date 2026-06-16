@@ -1,4 +1,4 @@
 export const environment = {
-  apiBaseUrl: '/api',
-  webSocketUrl: '/ws',
+  apiBaseUrl: 'https://api.martin-gnahn.dev/',
+  webSocketUrl: 'wss://api.martin-gnahn.dev/ws',
 };
