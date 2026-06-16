@@ -3,7 +3,13 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { CreateRoomRequest, JoinRoomRequest, RoomActionResponse, RoomCode } from './room.models';
+import {
+  CreateRoomRequest,
+  JoinRoomRequest,
+  RoomActionResponse,
+  RoomCode,
+  RoomResponse,
+} from './room.models';
 
 @Injectable({
   providedIn: 'root',
@@ -22,5 +28,9 @@ export class RoomApiService {
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/players`,
       request,
     );
+  }
+
+  getRoom(roomCode: RoomCode): Observable<RoomResponse> {
+    return this.http.get<RoomResponse>(`${this.roomsUrl}/${encodeURIComponent(roomCode)}`);
   }
 }

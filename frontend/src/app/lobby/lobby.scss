@@ -5,12 +5,12 @@
 
 .lobby-shell {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 24px;
-  width: min(720px, calc(100% - 40px));
+  width: min(820px, calc(100% - 40px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 48px 0;
+  padding: 48px 0 72px;
 }
 
 .back-link {
@@ -26,7 +26,7 @@
 
 .lobby-panel {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   padding: 32px;
   border: 1px solid rgba(23, 35, 58, 0.12);
   border-radius: 8px;
@@ -34,8 +34,18 @@
   box-shadow: 0 18px 40px rgba(28, 40, 64, 0.1);
 }
 
+.lobby-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .eyebrow,
-.status {
+.room-status,
+.waiting-note,
+.empty-state,
+.state-message p {
   margin: 0;
 }
 
@@ -53,9 +63,204 @@ h1 {
   font-size: clamp(3rem, 12vw, 7rem);
   font-weight: 800;
   line-height: 0.95;
+  overflow-wrap: anywhere;
 }
 
-.status {
+.room-status {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(22, 117, 111, 0.22);
+  border-radius: 999px;
+  background: #eef9f7;
+  color: #126d74;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.lobby-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lobby-summary span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f1f4f8;
   color: #41506a;
-  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.players-section {
+  display: grid;
+  gap: 14px;
+}
+
+h2 {
+  margin: 0;
+  color: #17233a;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.player-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid rgba(23, 35, 58, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.player-row.current-player {
+  border-color: rgba(32, 101, 188, 0.32);
+  background: #f5f9ff;
+}
+
+.player-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #17233a;
+  font-size: 1rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-badge,
+.connection-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.host-badge {
+  padding: 6px 8px;
+  background: #fff4d6;
+  color: #775200;
+}
+
+.connection-badge {
+  padding: 7px 9px;
+  background: #e9f8ee;
+  color: #1f6b38;
+}
+
+.connection-badge.disconnected {
+  background: #f1f4f8;
+  color: #41506a;
+}
+
+.state-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 96px;
+  padding: 18px;
+  border: 1px solid rgba(23, 35, 58, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #41506a;
+  font-weight: 700;
+}
+
+.state-message.error {
+  display: grid;
+  align-items: start;
+  border-color: rgba(180, 38, 38, 0.24);
+  background: #fff5f5;
+  color: #9d1f1f;
+}
+
+.loader {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(18, 109, 116, 0.2);
+  border-top-color: #126d74;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
+.primary-button,
+.secondary-button {
+  justify-self: start;
+  min-height: 44px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 800;
+}
+
+.primary-button {
+  padding: 0 18px;
+  border: 0;
+  background: #126d74;
+  color: #ffffff;
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.secondary-button {
+  width: fit-content;
+  padding: 0 14px;
+  border: 1px solid rgba(157, 31, 31, 0.32);
+  background: #ffffff;
+  color: #9d1f1f;
+}
+
+.waiting-note,
+.empty-state {
+  color: #41506a;
+  font-size: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 620px) {
+  .lobby-shell {
+    width: min(100% - 28px, 520px);
+    padding: 32px 0 48px;
+  }
+
+  .lobby-panel {
+    padding: 22px;
+  }
+
+  .lobby-header,
+  .player-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .room-status,
+  .connection-badge {
+    width: fit-content;
+  }
 }

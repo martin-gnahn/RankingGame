@@ -2,8 +2,65 @@
   <a routerLink="/" class="back-link">Zur Startseite</a>
 
   <section class="lobby-panel">
-    <p class="eyebrow">Lobby</p>
-    <h1 id="lobby-title">{{ roomCode() }}</h1>
-    <p class="status">Wartet auf Spieler</p>
+    <div class="lobby-header">
+      <div>
+        <p class="eyebrow">Lobby</p>
+        <h1 id="lobby-title">{{ room()?.roomCode ?? roomCode() }}</h1>
+      </div>
+
+      @if (room(); as room) {
+        <p class="room-status">{{ statusLabel(room.status) }}</p>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="state-message" role="status">
+        <span class="loader" aria-hidden="true"></span>
+        Lobby wird geladen
+      </div>
+    } @else if (errorMessage()) {
+      <div class="state-message error" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button class="secondary-button" type="button" (click)="retryLoad()">Erneut versuchen</button>
+      </div>
+    } @else if (room(); as room) {
+      <div class="lobby-summary" aria-label="Lobby Status">
+        <span>{{ playerCount() }} Spieler</span>
+        <span>{{ statusLabel(room.status) }}</span>
+      </div>
+
+      <section class="players-section" aria-labelledby="players-title">
+        <h2 id="players-title">Spieler</h2>
+
+        @if (room.players.length) {
+          <ul class="player-list">
+            @for (player of room.players; track player.playerId) {
+              <li class="player-row" [class.current-player]="player.playerId === currentPlayerId()">
+                <div class="player-main">
+                  <span class="player-name">{{ player.nickname }}</span>
+                  @if (player.host) {
+                    <span class="host-badge">Host</span>
+                  }
+                </div>
+                <span
+                  class="connection-badge"
+                  [class.disconnected]="player.connectionStatus !== 'CONNECTED'"
+                >
+                  {{ connectionLabel(player.connectionStatus) }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="empty-state">Noch keine Spieler im Raum.</p>
+        }
+      </section>
+
+      @if (isCurrentPlayerHost()) {
+        <button class="primary-button" type="button" disabled>Spiel starten</button>
+      } @else {
+        <p class="waiting-note">Der Host startet das Spiel.</p>
+      }
+    }
   </section>
 </main>

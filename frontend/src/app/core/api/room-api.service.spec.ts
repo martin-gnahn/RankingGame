@@ -49,4 +49,29 @@ describe('RoomApiService', () => {
 
     request.flush(response);
   });
+
+  it('should load room details with an encoded room code', () => {
+    const response = {
+      roomId: 'room-1',
+      roomCode: 'A/B1',
+      status: 'LOBBY' as const,
+      players: [
+        {
+          playerId: 'player-1',
+          nickname: 'Marta',
+          host: true,
+          connectionStatus: 'CONNECTED' as const,
+        },
+      ],
+    };
+
+    service.getRoom('A/B1').subscribe((result) => {
+      expect(result).toEqual(response);
+    });
+
+    const request = httpTesting.expectOne(`${environment.apiBaseUrl}/rooms/A%2FB1`);
+    expect(request.request.method).toBe('GET');
+
+    request.flush(response);
+  });
 });

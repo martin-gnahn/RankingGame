@@ -16,5 +16,25 @@ export interface JoinRoomRequest {
 
 export interface RoomActionResponse {
   roomCode: RoomCode;
+  roomId?: string;
   playerId?: string;
+  playerName?: string;
+  host?: boolean;
+}
+
+export type RoomStatus = 'LOBBY' | 'IN_GAME' | 'FINISHED' | 'CLOSED';
+export type PlayerConnectionStatus = 'CONNECTED' | 'DISCONNECTED';
+
+export interface RoomPlayerResponse {
+  playerId: string;
+  nickname: string;
+  host: boolean;
+  connectionStatus: PlayerConnectionStatus;
+}
+
+export interface RoomResponse {
+  roomId: string;
+  roomCode: RoomCode;
+  status: RoomStatus;
+  players: RoomPlayerResponse[];
 }
