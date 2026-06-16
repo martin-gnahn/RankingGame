@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface PlayerRepository {
     Player save(Player player);
 
+    void flush();
+
     Optional<Player> findById(UUID id);
 
     List<Player> findByRoomId(UUID roomId);

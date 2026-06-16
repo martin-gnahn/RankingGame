@@ -7,6 +7,7 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +46,13 @@ public class JoinRoomService {
         player.setHost(false);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
-        Player savedPlayer = playerRepository.save(player);
+        Player savedPlayer;
+        try {
+            savedPlayer = playerRepository.save(player);
+            playerRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalArgumentException("Player name is already taken", exception);
+        }
 
         return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname());
     }

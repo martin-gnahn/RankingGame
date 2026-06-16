@@ -9,6 +9,7 @@ import com.example.rankinggame.repositories.RoomRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 class JoinRoomServiceTest {
     @Test
@@ -96,5 +98,26 @@ class JoinRoomServiceTest {
                 .hasMessage("Player name is already taken");
 
         verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
+    }
+
+    @Test
+    void translatesDatabaseDuplicateNicknameRaceToDomainError() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        UUID roomId = UUID.randomUUID();
+        Room room = new Room();
+        room.setId(roomId);
+        room.setCode("ABCD12");
+        room.setStatus(RoomStatus.LOBBY);
+
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
+        when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
+        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new DataIntegrityViolationException("duplicate nickname")).when(playerRepository).flush();
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository);
+
+        assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "Alex")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Player name is already taken");
     }
 }
