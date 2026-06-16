@@ -81,13 +81,36 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+End-to-end tests use [Playwright](https://playwright.dev/) and live in `e2e/`.
+
+Install the Chromium browser once after installing dependencies:
 
 ```bash
-ng e2e
+npm run e2e:install
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Run the E2E suite headlessly:
+
+```bash
+npm run e2e
+```
+
+Open Playwright UI mode for local debugging:
+
+```bash
+npm run e2e:ui
+```
+
+`npm run e2e` starts the Angular dev server automatically on `http://127.0.0.1:4200`.
+The current smoke test only verifies that the home screen loads.
+
+Room-flow E2E tests also need the local backend stack:
+
+1. Start PostgreSQL from the repository root with `docker compose up -d`.
+2. Start the Spring Boot backend from the repository root with `.\mvnw.cmd spring-boot:run`.
+3. Run Playwright from this `frontend` directory with `npm run e2e`.
+
+Playwright writes HTML reports to `playwright-report/` and failure artifacts to `test-results/`.
 
 ## Additional Resources
 
