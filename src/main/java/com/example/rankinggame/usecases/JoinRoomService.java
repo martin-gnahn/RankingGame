@@ -4,9 +4,11 @@ import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class JoinRoomService {
 
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public JoinRoomResult joinRoom(JoinRoomCommand command) {
@@ -53,6 +56,13 @@ public class JoinRoomService {
         } catch (DataIntegrityViolationException exception) {
             throw new IllegalArgumentException("Player name is already taken", exception);
         }
+
+        eventPublisher.publishEvent(new PlayerJoinedRoomEvent(
+                room.getCode(),
+                savedPlayer.getId(),
+                savedPlayer.getNickname(),
+                false
+        ));
 
         return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname());
     }

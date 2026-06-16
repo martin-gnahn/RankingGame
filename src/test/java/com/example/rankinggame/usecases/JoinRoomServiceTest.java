@@ -4,11 +4,13 @@ import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
@@ -28,6 +30,7 @@ class JoinRoomServiceTest {
     void joinsLobbyRoomWithConnectedNonHostPlayer() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         Room room = new Room();
@@ -43,7 +46,7 @@ class JoinRoomServiceTest {
             return player;
         });
 
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
 
         JoinRoomResult result = service.joinRoom(new JoinRoomCommand(" abcd12 ", "  Alex  "));
 
@@ -61,14 +64,25 @@ class JoinRoomServiceTest {
                     assertThat(player.isHost()).isFalse();
                     assertThat(player.getConnectionStatus()).isEqualTo(PlayerConnectionStatus.CONNECTED);
                 });
+
+        ArgumentCaptor<PlayerJoinedRoomEvent> eventCaptor = ArgumentCaptor.forClass(PlayerJoinedRoomEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue())
+                .satisfies(event -> {
+                    assertThat(event.roomCode()).isEqualTo("ABCD12");
+                    assertThat(event.playerId()).isEqualTo(playerId);
+                    assertThat(event.nickname()).isEqualTo("Alex");
+                    assertThat(event.host()).isFalse();
+                });
     }
 
     @Test
     void rejectsUnknownRoom() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         when(roomRepository.findByCode("MISS1")).thenReturn(Optional.empty());
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("MISS1", "Alex")))
                 .isInstanceOf(RoomNotFoundException.class)
@@ -81,6 +95,7 @@ class JoinRoomServiceTest {
     void rejectsDuplicateNicknameInRoom() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
         Room room = new Room();
         room.setId(roomId);
@@ -91,7 +106,7 @@ class JoinRoomServiceTest {
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(existingPlayer));
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "alex")))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -104,6 +119,7 @@ class JoinRoomServiceTest {
     void translatesDatabaseDuplicateNicknameRaceToDomainError() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
         Room room = new Room();
         room.setId(roomId);
@@ -114,7 +130,7 @@ class JoinRoomServiceTest {
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
         when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doThrow(new DataIntegrityViolationException("duplicate nickname")).when(playerRepository).flush();
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "Alex")))
                 .isInstanceOf(IllegalArgumentException.class)

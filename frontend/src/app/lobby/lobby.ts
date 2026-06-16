@@ -6,6 +6,8 @@ import { Subscription, map } from 'rxjs';
 
 import { RoomApiService } from '../core/api/room-api.service';
 import { RoomResponse } from '../core/api/room.models';
+import { RealtimeEvent } from '../core/websocket/web-socket.models';
+import { WebSocketService } from '../core/websocket/web-socket.service';
 
 @Component({
   selector: 'app-lobby',
@@ -15,6 +17,7 @@ import { RoomResponse } from '../core/api/room.models';
 })
 export class Lobby {
   private readonly roomApi = inject(RoomApiService);
+  private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly roomCodeParam = toSignal(this.route.paramMap.pipe(map((params) => params.get('roomCode'))));
   private readonly queryParamMap = toSignal(this.route.queryParamMap);
@@ -23,6 +26,7 @@ export class Lobby {
   protected readonly room = signal<RoomResponse | null>(null);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly refreshErrorMessage = signal('');
   protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
   protected readonly isCurrentPlayerHost = computed(() => {
     const room = this.room();
@@ -49,6 +53,29 @@ export class Lobby {
 
       this.loadRoom(roomCode, onCleanup);
     });
+
+    effect((onCleanup) => {
+      const roomCode = this.roomCode();
+      const playerId = this.currentPlayerId();
+
+      if (!roomCode) {
+        return;
+      }
+
+      const subscription = this.webSocket.subscribeToRoom(roomCode).subscribe({
+        next: (event) => this.handleRealtimeEvent(roomCode, event),
+        error: () => this.refreshErrorMessage.set('Live-Update konnte nicht gelesen werden.'),
+      });
+
+      if (playerId) {
+        this.webSocket.joinLive(roomCode, playerId);
+      }
+
+      onCleanup(() => {
+        subscription.unsubscribe();
+        this.webSocket.disconnect();
+      });
+    });
   }
 
   protected retryLoad(): void {
@@ -74,23 +101,44 @@ export class Lobby {
     return status === 'CONNECTED' ? 'Online' : 'Getrennt';
   }
 
-  private loadRoom(roomCode: string, onCleanup?: (cleanupFn: () => void) => void): void {
-    this.loading.set(true);
-    this.errorMessage.set('');
+  private loadRoom(
+    roomCode: string,
+    onCleanup?: (cleanupFn: () => void) => void,
+    options: { showLoading: boolean } = { showLoading: true },
+  ): void {
+    if (options.showLoading) {
+      this.loading.set(true);
+      this.errorMessage.set('');
+    }
 
     const subscription: Subscription = this.roomApi.getRoom(roomCode).subscribe({
       next: (room) => {
         this.room.set(room);
         this.loading.set(false);
+        this.refreshErrorMessage.set('');
       },
       error: (error: unknown) => {
-        this.room.set(null);
-        this.errorMessage.set(this.toErrorMessage(error));
+        if (this.room()) {
+          this.refreshErrorMessage.set('Live-Update konnte nicht geladen werden.');
+        } else {
+          this.room.set(null);
+          this.errorMessage.set(this.toErrorMessage(error));
+        }
         this.loading.set(false);
       },
     });
 
     onCleanup?.(() => subscription.unsubscribe());
+  }
+
+  private refreshRoom(roomCode: string): void {
+    this.loadRoom(roomCode, undefined, { showLoading: false });
+  }
+
+  private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
+    if (event.type === 'PLAYER_JOINED' || event.type === 'PLAYER_LEFT') {
+      this.refreshRoom(roomCode);
+    }
   }
 
   private toErrorMessage(error: unknown): string {

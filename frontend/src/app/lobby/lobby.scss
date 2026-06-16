@@ -45,6 +45,7 @@
 .room-status,
 .waiting-note,
 .empty-state,
+.refresh-error,
 .state-message p {
   margin: 0;
 }
@@ -235,6 +236,16 @@ h2 {
 .empty-state {
   color: #41506a;
   font-size: 1rem;
+}
+
+.refresh-error {
+  padding: 10px 12px;
+  border: 1px solid rgba(180, 117, 38, 0.26);
+  border-radius: 8px;
+  background: #fff8ed;
+  color: #775200;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 @keyframes spin {

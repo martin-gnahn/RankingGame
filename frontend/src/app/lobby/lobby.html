@@ -29,6 +29,10 @@
         <span>{{ statusLabel(room.status) }}</span>
       </div>
 
+      @if (refreshErrorMessage()) {
+        <p class="refresh-error" role="status">{{ refreshErrorMessage() }}</p>
+      }
+
       <section class="players-section" aria-labelledby="players-title">
         <h2 id="players-title">Spieler</h2>
 

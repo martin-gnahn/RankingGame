@@ -6,13 +6,17 @@ import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { RoomApiService } from '../core/api/room-api.service';
 import { RoomResponse } from '../core/api/room.models';
+import { RealtimeEvent } from '../core/websocket/web-socket.models';
+import { WebSocketService } from '../core/websocket/web-socket.service';
 import { Lobby } from './lobby';
 
 describe('Lobby', () => {
   let fixture: ComponentFixture<Lobby>;
   let roomApi: jasmine.SpyObj<RoomApiService>;
+  let webSocket: jasmine.SpyObj<WebSocketService>;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let realtimeEvents: Subject<RealtimeEvent>;
 
   const roomResponse: RoomResponse = {
     roomId: 'room-1',
@@ -36,6 +40,13 @@ describe('Lobby', () => {
 
   beforeEach(async () => {
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', ['getRoom']);
+    webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
+      'disconnect',
+      'joinLive',
+      'subscribeToRoom',
+    ]);
+    realtimeEvents = new Subject<RealtimeEvent>();
+    webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'host-1', role: 'host' }));
 
@@ -44,6 +55,7 @@ describe('Lobby', () => {
       providers: [
         provideRouter([]),
         { provide: RoomApiService, useValue: roomApi },
+        { provide: WebSocketService, useValue: webSocket },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -78,6 +90,8 @@ describe('Lobby', () => {
     createComponent();
 
     expect(roomApi.getRoom).toHaveBeenCalledOnceWith('ABCD12');
+    expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'host-1');
     expect(textContent()).toContain('ABCD12');
   });
 
@@ -134,5 +148,57 @@ describe('Lobby', () => {
 
     expect(textContent()).toContain('Room not found');
     expect(textContent()).toContain('Erneut versuchen');
+  });
+
+  it('should refresh the room when a player joined event arrives', () => {
+    const updatedRoom: RoomResponse = {
+      ...roomResponse,
+      players: [
+        ...roomResponse.players,
+        {
+          playerId: 'player-3',
+          nickname: 'Sam',
+          host: false,
+          connectionStatus: 'CONNECTED',
+        },
+      ],
+    };
+    roomApi.getRoom.and.returnValues(of(roomResponse), of(updatedRoom));
+
+    createComponent();
+    realtimeEvents.next({ type: 'PLAYER_JOINED', payload: { playerId: 'player-3' } });
+    fixture.detectChanges();
+
+    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('3 Spieler');
+    expect(textContent()).toContain('Sam');
+  });
+
+  it('should refresh the room when a player left event arrives', () => {
+    const updatedRoom: RoomResponse = {
+      ...roomResponse,
+      players: roomResponse.players.map((player) =>
+        player.playerId === 'player-2'
+          ? { ...player, connectionStatus: 'DISCONNECTED' }
+          : player,
+      ),
+    };
+    roomApi.getRoom.and.returnValues(of(roomResponse), of(updatedRoom));
+
+    createComponent();
+    realtimeEvents.next({ type: 'PLAYER_LEFT', payload: { playerId: 'player-2' } });
+    fixture.detectChanges();
+
+    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('Getrennt');
+  });
+
+  it('should disconnect the websocket when the lobby is destroyed', () => {
+    roomApi.getRoom.and.returnValue(of(roomResponse));
+
+    createComponent();
+    fixture.destroy();
+
+    expect(webSocket.disconnect).toHaveBeenCalled();
   });
 });
