@@ -28,7 +28,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Dein Name</mat-label>
-        <input matInput formControlName="playerName" autocomplete="name" maxlength="32" />
+        <input matInput formControlName="playerName" autocomplete="off" maxlength="32" />
         @if (form.controls.playerName.hasError('required')) {
           <mat-error>Name fehlt</mat-error>
         }
