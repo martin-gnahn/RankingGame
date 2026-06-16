@@ -29,8 +29,9 @@ class GetRoomServiceTest {
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
-        Player host = player(hostId, roomId, "Marta", true);
-        Player guest = player(playerId, roomId, "Alex", false);
+        room.setHostPlayerId(hostId);
+        Player host = player(hostId, roomId, "Marta", false);
+        Player guest = player(playerId, roomId, "Alex", true);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(guest, host));
@@ -44,6 +45,9 @@ class GetRoomServiceTest {
         assertThat(result.players())
                 .extracting(PlayerDetailsResult::playerId)
                 .containsExactly(hostId, playerId);
+        assertThat(result.players())
+                .extracting(PlayerDetailsResult::host)
+                .containsExactly(true, false);
     }
 
     @Test

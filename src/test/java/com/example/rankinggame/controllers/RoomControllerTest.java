@@ -11,6 +11,7 @@ import com.example.rankinggame.usecases.JoinRoomResult;
 import com.example.rankinggame.usecases.JoinRoomService;
 import com.example.rankinggame.usecases.PlayerDetailsResult;
 import com.example.rankinggame.usecases.RoomDetailsResult;
+import com.example.rankinggame.usecases.RoomCodeUnavailableException;
 import com.example.rankinggame.usecases.RoomNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -59,6 +60,70 @@ class RoomControllerTest {
     }
 
     @Test
+    void createsRoomWithDocumentedHostNicknameAlias() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(createRoomService.createRoom(any(CreateRoomCommand.class)))
+                .thenReturn(new CreateRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Marta"));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hostNickname\":\"Marta\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nickname").value("Marta"));
+
+        ArgumentCaptor<CreateRoomCommand> commandCaptor = ArgumentCaptor.forClass(CreateRoomCommand.class);
+        org.mockito.Mockito.verify(createRoomService).createRoom(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().playerName()).isEqualTo("Marta");
+    }
+
+    @Test
+    void rejectsBlankCreateRoomPlayerName() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"   \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Player name is required"));
+    }
+
+    @Test
+    void rejectsMalformedCreateRoomBody() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request body"));
+    }
+
+    @Test
+    void returnsServiceUnavailableWhenRoomCodeCannotBeAllocated() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(createRoomService.createRoom(any(CreateRoomCommand.class)))
+                .thenThrow(new RoomCodeUnavailableException(new RuntimeException("duplicate")));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Marta\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value("Unable to allocate a unique room code"));
+    }
+
+    @Test
     void joinsRoomViaApiEndpoint() throws Exception {
         CreateRoomService createRoomService = mock(CreateRoomService.class);
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
@@ -72,7 +137,7 @@ class RoomControllerTest {
         mockMvc.perform(post("/api/rooms/ABCD12/players")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"Alex\"}"))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
                 .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.playerId").value(playerId.toString()))
@@ -83,6 +148,58 @@ class RoomControllerTest {
         org.mockito.Mockito.verify(joinRoomService).joinRoom(commandCaptor.capture());
         assertThat(commandCaptor.getValue().roomCode()).isEqualTo("ABCD12");
         assertThat(commandCaptor.getValue().playerName()).isEqualTo("Alex");
+    }
+
+    @Test
+    void joinsRoomWithDocumentedNicknameAlias() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
+                .thenReturn(new JoinRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Alex"));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms/abcd12/players")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nickname\":\"Alex\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nickname").value("Alex"));
+
+        ArgumentCaptor<JoinRoomCommand> commandCaptor = ArgumentCaptor.forClass(JoinRoomCommand.class);
+        org.mockito.Mockito.verify(joinRoomService).joinRoom(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().roomCode()).isEqualTo("abcd12");
+        assertThat(commandCaptor.getValue().playerName()).isEqualTo("Alex");
+    }
+
+    @Test
+    void returnsNotFoundWhenJoiningMissingRoom() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(joinRoomService.joinRoom(any(JoinRoomCommand.class))).thenThrow(new RoomNotFoundException("MISS1"));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms/MISS1/players")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Alex\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Room not found: MISS1"));
+    }
+
+    @Test
+    void returnsBadRequestWhenJoiningWithDuplicateName() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
+                .thenThrow(new IllegalArgumentException("Player name is already taken"));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms/ABCD12/players")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Alex\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Player name is already taken"));
     }
 
     @Test

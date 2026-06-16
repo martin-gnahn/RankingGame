@@ -42,7 +42,7 @@ public class RoomController {
     }
 
     @PostMapping("/{roomCode}/players")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.CREATED)
     public RoomActionResponse joinRoom(
             @PathVariable String roomCode,
             @Valid @RequestBody(required = false) JoinRoomRequest request

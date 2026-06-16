@@ -11,11 +11,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionOperations;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -24,6 +29,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CreateRoomServiceTest {
+    private static final TransactionOperations NO_TRANSACTION = new TransactionOperations() {
+        @Override
+        public <T> T execute(TransactionCallback<T> action) {
+            return action.doInTransaction(nullTransactionStatus());
+        }
+
+        private TransactionStatus nullTransactionStatus() {
+            return null;
+        }
+    };
+
     @Test
     void createsLobbyRoomWithConnectedHostPlayer() {
         RoomRepository roomRepository = mock(RoomRepository.class);
@@ -51,7 +67,7 @@ class CreateRoomServiceTest {
             return player;
         });
 
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator);
+        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
 
         CreateRoomResult result = service.createRoom(new CreateRoomCommand("  Marta  "));
 
@@ -82,8 +98,76 @@ class CreateRoomServiceTest {
 
         InOrder inOrder = inOrder(roomRepository, playerRepository);
         inOrder.verify(roomRepository).save(ArgumentMatchers.any(Room.class));
+        inOrder.verify(roomRepository).flush();
         inOrder.verify(playerRepository).save(ArgumentMatchers.any(Player.class));
         inOrder.verify(roomRepository).save(ArgumentMatchers.any(Room.class));
+    }
+
+    @Test
+    void retriesWhenRoomCodeInsertCollides() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
+        UUID firstRoomId = UUID.randomUUID();
+        UUID secondRoomId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        when(roomCodeGenerator.generateUniqueCode()).thenReturn("DUPL1", "UNIQ2");
+        when(roomRepository.save(ArgumentMatchers.any(Room.class))).thenAnswer(invocation -> {
+            Room room = invocation.getArgument(0);
+            if (room.getId() == null) {
+                Room persistedRoom = new Room();
+                persistedRoom.setId(room.getCode().equals("DUPL1") ? firstRoomId : secondRoomId);
+                persistedRoom.setCode(room.getCode());
+                persistedRoom.setHostPlayerId(room.getHostPlayerId());
+                persistedRoom.setStatus(room.getStatus());
+                return persistedRoom;
+            }
+            return room;
+        });
+        doThrow(new DataIntegrityViolationException("duplicate code"))
+                .doNothing()
+                .when(roomRepository).flush();
+        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> {
+            Player player = invocation.getArgument(0);
+            player.setId(playerId);
+            return player;
+        });
+
+        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+
+        CreateRoomResult result = service.createRoom(new CreateRoomCommand("Marta"));
+
+        assertThat(result.roomCode()).isEqualTo("UNIQ2");
+        assertThat(result.roomId()).isEqualTo(secondRoomId);
+        assertThat(result.playerId()).isEqualTo(playerId);
+        verify(roomCodeGenerator, times(2)).generateUniqueCode();
+        verify(roomRepository, times(2)).flush();
+        verify(playerRepository).save(ArgumentMatchers.any(Player.class));
+    }
+
+    @Test
+    void failsClearlyWhenRoomCodeInsertKeepsColliding() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
+
+        when(roomCodeGenerator.generateUniqueCode()).thenReturn("DUPL1");
+        when(roomRepository.save(ArgumentMatchers.any(Room.class))).thenAnswer(invocation -> {
+            Room room = invocation.getArgument(0);
+            room.setId(UUID.randomUUID());
+            return room;
+        });
+        doThrow(new DataIntegrityViolationException("duplicate code")).when(roomRepository).flush();
+
+        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+
+        assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("Marta")))
+                .isInstanceOf(RoomCodeUnavailableException.class)
+                .hasMessage("Unable to allocate a unique room code");
+
+        verify(roomCodeGenerator, times(5)).generateUniqueCode();
+        verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
     }
 
     @Test
@@ -91,7 +175,7 @@ class CreateRoomServiceTest {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator);
+        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
 
         assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("   ")))
                 .isInstanceOf(IllegalArgumentException.class)

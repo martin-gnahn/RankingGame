@@ -7,28 +7,67 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.services.RoomCodeGenerator;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionOperations;
+import org.springframework.transaction.support.TransactionTemplate;
 
-@RequiredArgsConstructor
 @Service
 public class CreateRoomService {
     private static final int MAX_PLAYER_NAME_LENGTH = 80;
+    private static final int MAX_ROOM_CREATION_ATTEMPTS = 5;
 
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final RoomCodeGenerator roomCodeGenerator;
+    private final TransactionOperations transactionOperations;
 
-    @Transactional
+    @Autowired
+    public CreateRoomService(
+            RoomRepository roomRepository,
+            PlayerRepository playerRepository,
+            RoomCodeGenerator roomCodeGenerator,
+            PlatformTransactionManager transactionManager
+    ) {
+        this(roomRepository, playerRepository, roomCodeGenerator, new TransactionTemplate(transactionManager));
+    }
+
+    CreateRoomService(
+            RoomRepository roomRepository,
+            PlayerRepository playerRepository,
+            RoomCodeGenerator roomCodeGenerator,
+            TransactionOperations transactionOperations
+    ) {
+        this.roomRepository = roomRepository;
+        this.playerRepository = playerRepository;
+        this.roomCodeGenerator = roomCodeGenerator;
+        this.transactionOperations = transactionOperations;
+    }
+
     public CreateRoomResult createRoom(CreateRoomCommand command) {
         String playerName = normalizePlayerName(command);
 
+        DataIntegrityViolationException lastFailure = null;
+        for (int attempt = 0; attempt < MAX_ROOM_CREATION_ATTEMPTS; attempt++) {
+            try {
+                return transactionOperations.execute(status -> createRoomInTransaction(playerName));
+            } catch (DataIntegrityViolationException exception) {
+                lastFailure = exception;
+            }
+        }
+
+        throw new RoomCodeUnavailableException(lastFailure);
+    }
+
+    private CreateRoomResult createRoomInTransaction(String playerName) {
         Room room = new Room();
         room.setCode(roomCodeGenerator.generateUniqueCode());
         room.setStatus(RoomStatus.LOBBY);
 
         Room savedRoom = roomRepository.save(room);
+        roomRepository.flush();
 
         Player hostPlayer = new Player();
         hostPlayer.setRoomId(savedRoom.getId());

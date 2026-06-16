@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -25,13 +26,13 @@ public class GetRoomService {
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
 
         List<PlayerDetailsResult> players = playerRepository.findByRoomId(room.getId()).stream()
-                .sorted(Comparator.comparing(Player::isHost).reversed()
+                .sorted(Comparator.comparing((Player player) -> isHost(room, player)).reversed()
                         .thenComparing(Player::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(Player::getNickname))
                 .map(player -> new PlayerDetailsResult(
                         player.getId(),
                         player.getNickname(),
-                        player.isHost(),
+                        isHost(room, player),
                         player.getConnectionStatus()
                 ))
                 .toList();
@@ -51,5 +52,9 @@ public class GetRoomService {
         }
 
         return roomCode;
+    }
+
+    private boolean isHost(Room room, Player player) {
+        return Objects.equals(room.getHostPlayerId(), player.getId());
     }
 }

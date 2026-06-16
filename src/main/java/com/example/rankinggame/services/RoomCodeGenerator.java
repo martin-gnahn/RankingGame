@@ -1,12 +1,13 @@
 package com.example.rankinggame.services;
 
 import com.example.rankinggame.repositories.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.random.RandomGenerator;
 
+@RequiredArgsConstructor
 @Component
 public class RoomCodeGenerator {
     static final int CODE_LENGTH = 6;
@@ -15,15 +16,9 @@ public class RoomCodeGenerator {
     private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
     private final RoomRepository roomRepository;
-    private final RandomGenerator randomGenerator;
+    private RandomGenerator randomGenerator = new SecureRandom();
 
-    @Autowired
-    public RoomCodeGenerator(RoomRepository roomRepository) {
-        this(roomRepository, new SecureRandom());
-    }
-
-    RoomCodeGenerator(RoomRepository roomRepository, RandomGenerator randomGenerator) {
-        this.roomRepository = roomRepository;
+    void setRandomGenerator(RandomGenerator randomGenerator) {
         this.randomGenerator = randomGenerator;
     }
 

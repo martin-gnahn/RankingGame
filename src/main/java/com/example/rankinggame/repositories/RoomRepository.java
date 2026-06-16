@@ -8,6 +8,8 @@ import java.util.UUID;
 public interface RoomRepository {
     Room save(Room room);
 
+    void flush();
+
     Optional<Room> findById(UUID id);
 
     Optional<Room> findByCode(String code);

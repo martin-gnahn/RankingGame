@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -15,6 +16,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Testcontainers
@@ -65,5 +67,29 @@ class JpaPlayerRepositoryTest {
         assertThat(playerRepository.findByRoomId(savedRoom.getId()))
                 .extracting(Player::getId)
                 .containsExactly(savedPlayer.getId());
+    }
+
+    @Test
+    void rejectsDuplicateNicknameInSameRoomIgnoringCase() {
+        Room room = new Room();
+        room.setCode("DUP1");
+        room.setStatus(RoomStatus.LOBBY);
+        Room savedRoom = roomRepository.saveAndFlush(room);
+
+        Player firstPlayer = new Player();
+        firstPlayer.setRoomId(savedRoom.getId());
+        firstPlayer.setNickname("Alex");
+        firstPlayer.setHost(false);
+        firstPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        playerRepository.saveAndFlush(firstPlayer);
+
+        Player duplicatePlayer = new Player();
+        duplicatePlayer.setRoomId(savedRoom.getId());
+        duplicatePlayer.setNickname("alex");
+        duplicatePlayer.setHost(false);
+        duplicatePlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+
+        assertThatThrownBy(() -> playerRepository.saveAndFlush(duplicatePlayer))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }
