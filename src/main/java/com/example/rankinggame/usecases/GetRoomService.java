@@ -4,6 +4,7 @@ import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,15 +12,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+@RequiredArgsConstructor
 @Service
 public class GetRoomService {
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
-
-    public GetRoomService(RoomRepository roomRepository, PlayerRepository playerRepository) {
-        this.roomRepository = roomRepository;
-        this.playerRepository = playerRepository;
-    }
 
     @Transactional(readOnly = true)
     public RoomDetailsResult getRoom(String rawRoomCode) {

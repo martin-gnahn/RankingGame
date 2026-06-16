@@ -6,22 +6,19 @@ import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
+@RequiredArgsConstructor
 @Service
 public class JoinRoomService {
     private static final int MAX_PLAYER_NAME_LENGTH = 80;
 
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
-
-    public JoinRoomService(RoomRepository roomRepository, PlayerRepository playerRepository) {
-        this.roomRepository = roomRepository;
-        this.playerRepository = playerRepository;
-    }
 
     @Transactional
     public JoinRoomResult joinRoom(JoinRoomCommand command) {

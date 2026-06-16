@@ -7,9 +7,11 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.services.RoomCodeGenerator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@RequiredArgsConstructor
 @Service
 public class CreateRoomService {
     private static final int MAX_PLAYER_NAME_LENGTH = 80;
@@ -17,16 +19,6 @@ public class CreateRoomService {
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final RoomCodeGenerator roomCodeGenerator;
-
-    public CreateRoomService(
-            RoomRepository roomRepository,
-            PlayerRepository playerRepository,
-            RoomCodeGenerator roomCodeGenerator
-    ) {
-        this.roomRepository = roomRepository;
-        this.playerRepository = playerRepository;
-        this.roomCodeGenerator = roomCodeGenerator;
-    }
 
     @Transactional
     public CreateRoomResult createRoom(CreateRoomCommand command) {

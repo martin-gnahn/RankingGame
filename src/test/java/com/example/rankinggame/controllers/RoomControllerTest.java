@@ -70,9 +70,9 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/ABCD12/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"Alex\"}"))
-                .andExpect(status().isCreated())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerName\":\"Alex\"}"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
                 .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.playerId").value(playerId.toString()))
@@ -135,6 +135,8 @@ class RoomControllerTest {
             JoinRoomService joinRoomService,
             GetRoomService getRoomService
     ) {
-        return MockMvcBuilders.standaloneSetup(new RoomController(createRoomService, joinRoomService, getRoomService)).build();
+        return MockMvcBuilders.standaloneSetup(new RoomController(createRoomService, joinRoomService, getRoomService))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 }

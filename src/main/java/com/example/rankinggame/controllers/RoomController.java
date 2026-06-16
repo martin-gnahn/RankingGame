@@ -1,7 +1,6 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.CreateRoomRequest;
-import com.example.rankinggame.dto.ErrorResponse;
 import com.example.rankinggame.dto.JoinRoomRequest;
 import com.example.rankinggame.dto.RoomActionResponse;
 import com.example.rankinggame.dto.RoomPlayerResponse;
@@ -15,12 +14,9 @@ import com.example.rankinggame.usecases.JoinRoomResult;
 import com.example.rankinggame.usecases.JoinRoomService;
 import com.example.rankinggame.usecases.PlayerDetailsResult;
 import com.example.rankinggame.usecases.RoomDetailsResult;
-import com.example.rankinggame.usecases.RoomNotFoundException;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,22 +25,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/rooms")
 public class RoomController {
     private final CreateRoomService createRoomService;
     private final JoinRoomService joinRoomService;
     private final GetRoomService getRoomService;
-
-    public RoomController(
-            CreateRoomService createRoomService,
-            JoinRoomService joinRoomService,
-            GetRoomService getRoomService
-    ) {
-        this.createRoomService = createRoomService;
-        this.joinRoomService = joinRoomService;
-        this.getRoomService = getRoomService;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -55,7 +42,7 @@ public class RoomController {
     }
 
     @PostMapping("/{roomCode}/players")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public RoomActionResponse joinRoom(
             @PathVariable String roomCode,
             @Valid @RequestBody(required = false) JoinRoomRequest request
@@ -76,25 +63,6 @@ public class RoomController {
                         .map(this::toPlayerResponse)
                         .toList()
         );
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception) {
-        return ResponseEntity.badRequest().body(new ErrorResponse(exception.getMessage()));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
-        String message = exception.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage() == null ? "Invalid request" : error.getDefaultMessage())
-                .orElse("Invalid request");
-        return ResponseEntity.badRequest().body(new ErrorResponse(message));
-    }
-
-    @ExceptionHandler(RoomNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRoomNotFound(RoomNotFoundException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(exception.getMessage()));
     }
 
     private RoomPlayerResponse toPlayerResponse(PlayerDetailsResult player) {
