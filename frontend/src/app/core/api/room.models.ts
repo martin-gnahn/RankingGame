@@ -38,3 +38,17 @@ export interface RoomResponse {
   status: RoomStatus;
   players: RoomPlayerResponse[];
 }
+
+export interface StartGameRequest {
+  hostPlayerId: string;
+}
+
+export interface StartGameResponse {
+  roomId: string;
+  roomCode: RoomCode;
+  gameSessionId: string;
+  gameType: 'RANKING_GAME';
+  roundId: string;
+  roundNumber: number;
+  questionId: string;
+}

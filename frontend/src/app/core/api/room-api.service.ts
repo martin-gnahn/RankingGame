@@ -9,6 +9,8 @@ import {
   RoomActionResponse,
   RoomCode,
   RoomResponse,
+  StartGameRequest,
+  StartGameResponse,
 } from './room.models';
 
 @Injectable({
@@ -32,5 +34,12 @@ export class RoomApiService {
 
   getRoom(roomCode: RoomCode): Observable<RoomResponse> {
     return this.http.get<RoomResponse>(`${this.roomsUrl}/${encodeURIComponent(roomCode)}`);
+  }
+
+  startRankingGame(roomCode: RoomCode, request: StartGameRequest): Observable<StartGameResponse> {
+    return this.http.post<StartGameResponse>(
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/start`,
+      request,
+    );
   }
 }

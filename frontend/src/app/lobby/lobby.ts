@@ -19,14 +19,18 @@ export class Lobby {
   private readonly roomApi = inject(RoomApiService);
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
-  private readonly roomCodeParam = toSignal(this.route.paramMap.pipe(map((params) => params.get('roomCode'))));
+  private readonly roomCodeParam = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
+  );
   private readonly queryParamMap = toSignal(this.route.queryParamMap);
 
   protected readonly roomCode = computed(() => this.roomCodeParam() ?? '');
   protected readonly room = signal<RoomResponse | null>(null);
   protected readonly loading = signal(false);
+  protected readonly startingGame = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly refreshErrorMessage = signal('');
+  protected readonly startErrorMessage = signal('');
   protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
   protected readonly isCurrentPlayerHost = computed(() => {
     const room = this.room();
@@ -86,6 +90,30 @@ export class Lobby {
     }
   }
 
+  protected startGame(): void {
+    const roomCode = this.roomCode();
+    const hostPlayerId = this.currentPlayerId();
+
+    if (!roomCode || !hostPlayerId || this.startingGame()) {
+      this.startErrorMessage.set('Das Spiel konnte nicht gestartet werden.');
+      return;
+    }
+
+    this.startErrorMessage.set('');
+    this.startingGame.set(true);
+
+    this.roomApi.startRankingGame(roomCode, { hostPlayerId }).subscribe({
+      next: () => {
+        this.startingGame.set(false);
+        this.refreshRoom(roomCode);
+      },
+      error: (error: unknown) => {
+        this.startingGame.set(false);
+        this.startErrorMessage.set(this.toErrorMessage(error));
+      },
+    });
+  }
+
   protected statusLabel(status: string): string {
     const labels: Record<string, string> = {
       LOBBY: 'Wartet auf Spieler',
@@ -136,7 +164,11 @@ export class Lobby {
   }
 
   private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
-    if (event.type === 'PLAYER_JOINED' || event.type === 'PLAYER_LEFT') {
+    if (
+      event.type === 'PLAYER_JOINED' ||
+      event.type === 'PLAYER_LEFT' ||
+      event.type === 'GAME_STARTED'
+    ) {
       this.refreshRoom(roomCode);
     }
   }

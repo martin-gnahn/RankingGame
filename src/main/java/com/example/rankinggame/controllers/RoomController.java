@@ -5,6 +5,8 @@ import com.example.rankinggame.dto.JoinRoomRequest;
 import com.example.rankinggame.dto.RoomActionResponse;
 import com.example.rankinggame.dto.RoomPlayerResponse;
 import com.example.rankinggame.dto.RoomResponse;
+import com.example.rankinggame.dto.StartGameRequest;
+import com.example.rankinggame.dto.StartGameResponse;
 import com.example.rankinggame.usecases.CreateRoomCommand;
 import com.example.rankinggame.usecases.CreateRoomResult;
 import com.example.rankinggame.usecases.CreateRoomService;
@@ -14,6 +16,9 @@ import com.example.rankinggame.usecases.JoinRoomResult;
 import com.example.rankinggame.usecases.JoinRoomService;
 import com.example.rankinggame.usecases.PlayerDetailsResult;
 import com.example.rankinggame.usecases.RoomDetailsResult;
+import com.example.rankinggame.usecases.StartRankingGameCommand;
+import com.example.rankinggame.usecases.StartRankingGameResult;
+import com.example.rankinggame.usecases.StartRankingGameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,6 +37,7 @@ public class RoomController {
     private final CreateRoomService createRoomService;
     private final JoinRoomService joinRoomService;
     private final GetRoomService getRoomService;
+    private final StartRankingGameService startRankingGameService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -62,6 +68,28 @@ public class RoomController {
                 result.players().stream()
                         .map(this::toPlayerResponse)
                         .toList()
+        );
+    }
+
+    @PostMapping("/{roomCode}/ranking-game/start")
+    @ResponseStatus(HttpStatus.CREATED)
+    public StartGameResponse startRankingGame(
+            @PathVariable String roomCode,
+            @Valid @RequestBody(required = false) StartGameRequest request
+    ) {
+        StartRankingGameResult result = startRankingGameService.startGame(new StartRankingGameCommand(
+                roomCode,
+                request == null ? null : request.hostPlayerId()
+        ));
+
+        return new StartGameResponse(
+                result.roomId(),
+                result.roomCode(),
+                result.gameSessionId(),
+                result.gameType().name(),
+                result.roundId(),
+                result.roundNumber(),
+                result.questionId()
         );
     }
 

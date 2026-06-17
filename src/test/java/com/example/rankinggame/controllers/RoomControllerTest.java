@@ -2,6 +2,7 @@ package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.usecases.CreateRoomCommand;
 import com.example.rankinggame.usecases.CreateRoomResult;
 import com.example.rankinggame.usecases.CreateRoomService;
@@ -13,6 +14,9 @@ import com.example.rankinggame.usecases.PlayerDetailsResult;
 import com.example.rankinggame.usecases.RoomDetailsResult;
 import com.example.rankinggame.usecases.RoomCodeUnavailableException;
 import com.example.rankinggame.usecases.RoomNotFoundException;
+import com.example.rankinggame.usecases.StartRankingGameCommand;
+import com.example.rankinggame.usecases.StartRankingGameResult;
+import com.example.rankinggame.usecases.StartRankingGameService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -254,6 +258,62 @@ class RoomControllerTest {
     }
 
     @Test
+    void startsRankingGameViaApiEndpoint() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        StartRankingGameService startRankingGameService = mock(StartRankingGameService.class);
+        UUID roomId = UUID.randomUUID();
+        UUID hostPlayerId = UUID.randomUUID();
+        UUID gameSessionId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
+                .thenReturn(new StartRankingGameResult(
+                        roomId,
+                        "ABCD12",
+                        gameSessionId,
+                        GameType.RANKING_GAME,
+                        roundId,
+                        1,
+                        questionId
+                ));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService, startRankingGameService);
+
+        mockMvc.perform(post("/api/rooms/abcd12/ranking-game/start")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hostPlayerId\":\"" + hostPlayerId + "\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.roomId").value(roomId.toString()))
+                .andExpect(jsonPath("$.roomCode").value("ABCD12"))
+                .andExpect(jsonPath("$.gameSessionId").value(gameSessionId.toString()))
+                .andExpect(jsonPath("$.gameType").value("RANKING_GAME"))
+                .andExpect(jsonPath("$.roundId").value(roundId.toString()))
+                .andExpect(jsonPath("$.roundNumber").value(1))
+                .andExpect(jsonPath("$.questionId").value(questionId.toString()));
+
+        ArgumentCaptor<StartRankingGameCommand> commandCaptor = ArgumentCaptor.forClass(StartRankingGameCommand.class);
+        org.mockito.Mockito.verify(startRankingGameService).startGame(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().roomCode()).isEqualTo("abcd12");
+        assertThat(commandCaptor.getValue().hostPlayerId()).isEqualTo(hostPlayerId);
+    }
+
+    @Test
+    void rejectsMissingStartGameHostPlayerId() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Host player id is required"));
+    }
+
+    @Test
     void returnsJsonForUnexpectedErrors() throws Exception {
         CreateRoomService createRoomService = mock(CreateRoomService.class);
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
@@ -285,7 +345,21 @@ class RoomControllerTest {
             JoinRoomService joinRoomService,
             GetRoomService getRoomService
     ) {
-        return MockMvcBuilders.standaloneSetup(new RoomController(createRoomService, joinRoomService, getRoomService))
+        return mockMvc(createRoomService, joinRoomService, getRoomService, mock(StartRankingGameService.class));
+    }
+
+    private MockMvc mockMvc(
+            CreateRoomService createRoomService,
+            JoinRoomService joinRoomService,
+            GetRoomService getRoomService,
+            StartRankingGameService startRankingGameService
+    ) {
+        return MockMvcBuilders.standaloneSetup(new RoomController(
+                        createRoomService,
+                        joinRoomService,
+                        getRoomService,
+                        startRankingGameService
+                ))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }

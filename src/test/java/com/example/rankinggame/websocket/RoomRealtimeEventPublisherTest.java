@@ -1,5 +1,7 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.entities.GameType;
+import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.events.PlayerLeftRoomEvent;
 import org.junit.jupiter.api.Test;
@@ -39,5 +41,19 @@ class RoomRealtimeEventPublisherTest {
         verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
         assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.PLAYER_LEFT);
         assertThat(eventCaptor.getValue().payload()).isEqualTo(new PlayerLeftPayload(playerId));
+    }
+
+    @Test
+    void publishesGameStartedToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID gameSessionId = UUID.randomUUID();
+
+        publisher.publishGameStarted(new GameStartedRoomEvent("ABCD12", gameSessionId, GameType.RANKING_GAME));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.GAME_STARTED);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new GameStartedPayload(gameSessionId, GameType.RANKING_GAME));
     }
 }

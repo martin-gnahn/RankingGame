@@ -21,7 +21,9 @@
     } @else if (errorMessage()) {
       <div class="state-message error" role="alert">
         <p>{{ errorMessage() }}</p>
-        <button class="secondary-button" type="button" (click)="retryLoad()">Erneut versuchen</button>
+        <button class="secondary-button" type="button" (click)="retryLoad()">
+          Erneut versuchen
+        </button>
       </div>
     } @else if (room(); as room) {
       <div class="lobby-summary" aria-label="Lobby Status">
@@ -60,8 +62,19 @@
         }
       </section>
 
+      @if (startErrorMessage()) {
+        <p class="refresh-error" role="alert">{{ startErrorMessage() }}</p>
+      }
+
       @if (isCurrentPlayerHost()) {
-        <button class="primary-button" type="button" disabled>Spiel starten</button>
+        <button
+          class="primary-button"
+          type="button"
+          [disabled]="startingGame() || room.status !== 'LOBBY'"
+          (click)="startGame()"
+        >
+          Spiel starten
+        </button>
       } @else {
         <p class="waiting-note">Der Host startet das Spiel.</p>
       }

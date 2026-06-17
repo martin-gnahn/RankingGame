@@ -39,7 +39,10 @@ describe('Lobby', () => {
   };
 
   beforeEach(async () => {
-    roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', ['getRoom']);
+    roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
+      'getRoom',
+      'startRankingGame',
+    ]);
     webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
       'disconnect',
       'joinLive',
@@ -124,6 +127,53 @@ describe('Lobby', () => {
     expect(textContent()).toContain('Der Host startet das Spiel.');
   });
 
+  it('should start the game as the current host and refresh the room', () => {
+    const startedRoom: RoomResponse = { ...roomResponse, status: 'IN_GAME' };
+    roomApi.getRoom.and.returnValues(of(roomResponse), of(startedRoom));
+    roomApi.startRankingGame.and.returnValue(
+      of({
+        roomId: 'room-1',
+        roomCode: 'ABCD12',
+        gameSessionId: 'session-1',
+        gameType: 'RANKING_GAME',
+        roundId: 'round-1',
+        roundNumber: 1,
+        questionId: 'question-1',
+      }),
+    );
+
+    createComponent();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.primary-button')
+      ?.click();
+    fixture.detectChanges();
+
+    expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12', { hostPlayerId: 'host-1' });
+    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('Spiel laeuft');
+  });
+
+  it('should show a start error when starting the game fails', () => {
+    roomApi.getRoom.and.returnValue(of(roomResponse));
+    roomApi.startRankingGame.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: { message: 'Only the host can start the game' },
+          }),
+      ),
+    );
+
+    createComponent();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.primary-button')
+      ?.click();
+    fixture.detectChanges();
+
+    expect(textContent()).toContain('Only the host can start the game');
+  });
+
   it('should show a loading state while the room request is pending', () => {
     const roomSubject = new Subject<RoomResponse>();
     roomApi.getRoom.and.returnValue(roomSubject.asObservable());
@@ -141,7 +191,9 @@ describe('Lobby', () => {
 
   it('should show an error state when loading fails', () => {
     roomApi.getRoom.and.returnValue(
-      throwError(() => new HttpErrorResponse({ status: 404, error: { message: 'Room not found' } })),
+      throwError(
+        () => new HttpErrorResponse({ status: 404, error: { message: 'Room not found' } }),
+      ),
     );
 
     createComponent();
@@ -178,9 +230,7 @@ describe('Lobby', () => {
     const updatedRoom: RoomResponse = {
       ...roomResponse,
       players: roomResponse.players.map((player) =>
-        player.playerId === 'player-2'
-          ? { ...player, connectionStatus: 'DISCONNECTED' }
-          : player,
+        player.playerId === 'player-2' ? { ...player, connectionStatus: 'DISCONNECTED' } : player,
       ),
     };
     roomApi.getRoom.and.returnValues(of(roomResponse), of(updatedRoom));
@@ -191,6 +241,18 @@ describe('Lobby', () => {
 
     expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
     expect(textContent()).toContain('Getrennt');
+  });
+
+  it('should refresh the room when a game started event arrives', () => {
+    const startedRoom: RoomResponse = { ...roomResponse, status: 'IN_GAME' };
+    roomApi.getRoom.and.returnValues(of(roomResponse), of(startedRoom));
+
+    createComponent();
+    realtimeEvents.next({ type: 'GAME_STARTED', payload: { gameSessionId: 'session-1' } });
+    fixture.detectChanges();
+
+    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('Spiel laeuft');
   });
 
   it('should disconnect the websocket when the lobby is destroyed', () => {

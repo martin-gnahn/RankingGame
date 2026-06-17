@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.events.PlayerLeftRoomEvent;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class RoomRealtimeEventPublisher {
     public static final String PLAYER_JOINED = "PLAYER_JOINED";
     public static final String PLAYER_LEFT = "PLAYER_LEFT";
+    public static final String GAME_STARTED = "GAME_STARTED";
 
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -29,6 +31,14 @@ public class RoomRealtimeEventPublisher {
         publish(event.roomCode(), new RoomRealtimeEvent(
                 PLAYER_LEFT,
                 new PlayerLeftPayload(event.playerId())
+        ));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishGameStarted(GameStartedRoomEvent event) {
+        publish(event.roomCode(), new RoomRealtimeEvent(
+                GAME_STARTED,
+                new GameStartedPayload(event.gameSessionId(), event.gameType())
         ));
     }
 
