@@ -8,19 +8,23 @@ test('shows a joined player in the host lobby', async ({ browser }) => {
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
 
+  const hostPage = await hostContext.newPage();
+  const guestPage = await guestContext.newPage();
+
   try {
-    const hostPage = await hostContext.newPage();
     await hostPage.goto('/');
 
     const roomCode = await createRoom(hostPage, hostName);
 
-    const guestPage = await guestContext.newPage();
     await guestPage.goto('/');
     await joinRoom(guestPage, roomCode, guestName);
+
+    // await hostPage.pause(); // reicht meistens
 
     await hostPage.reload();
     await expectPlayerVisible(hostPage, guestName);
   } finally {
+    // these cause this error
     await guestContext.close();
     await hostContext.close();
   }
