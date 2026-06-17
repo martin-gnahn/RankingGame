@@ -6,19 +6,15 @@ test('shows a joined player in the host lobby', async ({ context, page: hostPage
   const guestName = `Guest ${suffix}`;
   const guestPage = await context.newPage();
 
-  try {
-    await hostPage.goto('/');
+  await hostPage.goto('/');
 
-    const roomCode = await createRoom(hostPage, hostName);
+  const roomCode = await createRoom(hostPage, hostName);
 
-    await guestPage.goto('/');
-    await joinRoom(guestPage, roomCode, guestName);
+  await guestPage.goto('/');
+  await joinRoom(guestPage, roomCode, guestName);
 
-    await hostPage.reload();
-    await expectPlayerVisible(hostPage, guestName);
-  } finally {
-    await guestPage.close();
-  }
+  await hostPage.reload();
+  await expectPlayerVisible(hostPage, guestName);
 });
 
 async function createRoom(page: Page, playerName: string): Promise<string> {

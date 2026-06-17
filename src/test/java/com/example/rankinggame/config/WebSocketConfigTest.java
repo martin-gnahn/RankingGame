@@ -19,7 +19,7 @@ class WebSocketConfigTest {
     private final WebSocketConfig config = new WebSocketConfig();
 
     @Test
-    void registersStompEndpointWithLocalFrontendCors() {
+    void registersStompEndpointWithAllowedFrontendCors() {
         StompEndpointRegistry registry = mock(StompEndpointRegistry.class);
         StompWebSocketEndpointRegistration registration = mock(StompWebSocketEndpointRegistration.class);
         when(registry.addEndpoint(WebSocketConfig.WEBSOCKET_ENDPOINT)).thenReturn(registration);
@@ -27,7 +27,11 @@ class WebSocketConfigTest {
         config.registerStompEndpoints(registry);
 
         verify(registry).addEndpoint(WebSocketConfig.WEBSOCKET_ENDPOINT);
-        verify(registration).setAllowedOrigins(WebSocketConfig.LOCAL_FRONTEND_ORIGIN);
+        verify(registration).setAllowedOrigins(
+                WebSocketConfig.LOCAL_FRONTEND_ORIGIN,
+                WebSocketConfig.RAILWAY_FRONTEND_ORIGIN,
+                WebSocketConfig.WWW_RAILWAY_FRONTEND_ORIGIN
+        );
     }
 
     @Test

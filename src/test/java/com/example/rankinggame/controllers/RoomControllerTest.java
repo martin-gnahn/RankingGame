@@ -87,9 +87,10 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"   \"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerName\":\"   \"}"))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("Player name is required"));
     }
 
@@ -101,9 +102,10 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{"))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST_BODY"))
                 .andExpect(jsonPath("$.message").value("Invalid request body"));
     }
 
@@ -117,9 +119,10 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"Marta\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerName\":\"Marta\"}"))
                 .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("ROOM_CODE_UNAVAILABLE"))
                 .andExpect(jsonPath("$.message").value("Unable to allocate a unique room code"));
     }
 
@@ -180,9 +183,10 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/MISS1/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"Alex\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerName\":\"Alex\"}"))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ROOM_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Room not found: MISS1"));
     }
 
@@ -196,9 +200,10 @@ class RoomControllerTest {
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/ABCD12/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerName\":\"Alex\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"playerName\":\"Alex\"}"))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("Player name is already taken"));
     }
 
@@ -244,7 +249,35 @@ class RoomControllerTest {
 
         mockMvc.perform(get("/api/rooms/MISS1"))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ROOM_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Room not found: MISS1"));
+    }
+
+    @Test
+    void returnsJsonForUnexpectedErrors() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(getRoomService.getRoom("ABCD12")).thenThrow(new RuntimeException("database unavailable"));
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(get("/api/rooms/ABCD12"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
+    }
+
+    @Test
+    void keepsMissingResourcesAsNotFoundJson() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(get("/missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Resource not found"));
     }
 
     private MockMvc mockMvc(
