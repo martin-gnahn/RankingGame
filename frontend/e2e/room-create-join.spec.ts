@@ -14,8 +14,6 @@ test('shows a joined player in the host lobby', async ({ context, page: hostPage
     await guestPage.goto('/');
     await joinRoom(guestPage, roomCode, guestName);
 
-    // await hostPage.pause(); // reicht meistens
-
     await hostPage.reload();
     await expectPlayerVisible(hostPage, guestName);
   } finally {
