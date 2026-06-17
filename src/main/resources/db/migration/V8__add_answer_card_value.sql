@@ -1,0 +1,5 @@
+ALTER TABLE answers
+    ADD COLUMN card_value INTEGER NOT NULL DEFAULT 1;
+
+ALTER TABLE answers
+    ALTER COLUMN card_value DROP DEFAULT;

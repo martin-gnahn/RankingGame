@@ -1,0 +1,139 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
+
+import { RoomApiService } from '../core/api/room-api.service';
+import { ActiveRoundResponse } from '../core/api/room.models';
+import { notBlankValidator } from '../shared/validators/not-blank.validator';
+
+interface ScoreCard {
+  value: number;
+  tone: 'low' | 'middle' | 'high';
+}
+
+@Component({
+  selector: 'app-game',
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './game.html',
+  styleUrl: './game.scss',
+})
+export class Game {
+  private readonly roomApi = inject(RoomApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly roomCodeParam = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
+  );
+  private readonly queryParamMap = toSignal(this.route.queryParamMap);
+
+  protected readonly roomCode = computed(() => this.roomCodeParam() ?? '');
+  protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
+  protected readonly activeRound = signal<ActiveRoundResponse | null>(null);
+  protected readonly loading = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly submitted = signal(false);
+  protected readonly errorMessage = signal('');
+  protected readonly submitErrorMessage = signal('');
+  protected readonly selectedCard = signal<number | null>(null);
+  protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
+    const value = index + 1;
+    return {
+      value,
+      tone: value <= 3 ? 'low' : value <= 7 ? 'middle' : 'high',
+    };
+  });
+  protected readonly form = this.formBuilder.nonNullable.group({
+    answerText: ['', [Validators.required, notBlankValidator(), Validators.maxLength(500)]],
+  });
+
+  constructor() {
+    this.loadActiveRound();
+  }
+
+  protected selectCard(value: number): void {
+    if (!this.submitted()) {
+      this.selectedCard.set(value);
+      this.submitErrorMessage.set('');
+    }
+  }
+
+  protected submitAnswer(): void {
+    if (this.submitted()) {
+      return;
+    }
+
+    const roomCode = this.roomCode();
+    const activeRound = this.activeRound();
+    const playerId = this.currentPlayerId();
+    const selectedCard = this.selectedCard();
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    if (!roomCode || !activeRound || !playerId || selectedCard === null || this.submitting()) {
+      this.submitErrorMessage.set('Antwort und Karte werden benoetigt.');
+      return;
+    }
+
+    this.submitErrorMessage.set('');
+    this.submitting.set(true);
+
+    this.roomApi
+      .submitAnswer(roomCode, activeRound.roundId, {
+        playerId,
+        answerText: this.form.getRawValue().answerText.trim(),
+        cardValue: selectedCard,
+      })
+      .subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.submitted.set(true);
+          this.form.disable();
+        },
+        error: (error: unknown) => {
+          this.submitting.set(false);
+          this.submitErrorMessage.set(this.toErrorMessage(error));
+        },
+      });
+  }
+
+  private loadActiveRound(): void {
+    const roomCode = this.roomCode();
+
+    if (!roomCode) {
+      this.errorMessage.set('Der Raumcode fehlt.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    this.roomApi.getActiveRound(roomCode).subscribe({
+      next: (activeRound) => {
+        this.activeRound.set(activeRound);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        this.errorMessage.set(this.toErrorMessage(error));
+      },
+    });
+  }
+
+  private toErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
+      return error.error.message;
+    }
+
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return 'Der Server ist gerade nicht erreichbar.';
+    }
+
+    return 'Die Runde konnte nicht geladen werden.';
+  }
+}
