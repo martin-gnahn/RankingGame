@@ -1,15 +1,10 @@
 import { Page, expect, test } from '@playwright/test';
 
-test('shows a joined player in the host lobby', async ({ browser }) => {
+test('shows a joined player in the host lobby', async ({ context, page: hostPage }) => {
   const suffix = Date.now().toString(36).slice(-6);
   const hostName = `Host ${suffix}`;
   const guestName = `Guest ${suffix}`;
-
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
+  const guestPage = await context.newPage();
 
   try {
     await hostPage.goto('/');
@@ -24,11 +19,7 @@ test('shows a joined player in the host lobby', async ({ browser }) => {
     await hostPage.reload();
     await expectPlayerVisible(hostPage, guestName);
   } finally {
-    // these cause this error:
-    // Error: apiRequestContext._wrapApiCall: file data stream has unexpected number of bytes
-    // Error: End of central directory record signature not found. Either not a zip file, or file is truncated
-    await guestContext.close();
-    await hostContext.close();
+    await guestPage.close();
   }
 });
 
