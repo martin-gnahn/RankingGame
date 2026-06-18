@@ -87,8 +87,10 @@ public class RoundCardAssignmentService {
                 requestedAssignment = Optional.of(assignment);
             }
             index++;
+            // TODO: temp solution. Prefer batch with .saveAll(.)
+            roundCardAssignmentRepository.save(assignment);
         }
-        roundCardAssignmentRepository.saveAll(assignments);
+        // roundCardAssignmentRepository.saveAll(assignments);
 
         if (requestedAssignment.isEmpty()) {
             // TODO: use custom exception here.
