@@ -10,6 +10,7 @@ import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.StartRankingGameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,13 +20,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/rooms/{roomCode}/ranking-game")
 public class RankingGameController {
+    private final ObjectMapper objectMapper;
     private final StartRankingGameService startRankingGameService;
     private final GetActiveRoundService getActiveRoundService;
 
@@ -39,7 +43,6 @@ public class RankingGameController {
                 roomCode,
                 request == null ? null : request.hostPlayerId()
         ));
-
         return new StartGameResponse(
                 result.roomId(),
                 result.roomCode(),
@@ -57,6 +60,7 @@ public class RankingGameController {
             @RequestParam UUID playerId
     ) {
         ActiveRoundResult result = getActiveRoundService.getActiveRound(roomCode, playerId);
+        log.info("ActiveRoundResult {}", objectMapper.writeValueAsString(result));
         return new ActiveRoundResponse(
                 result.roomId(),
                 result.roomCode(),
