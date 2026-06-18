@@ -2,7 +2,6 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.RoundCardAssignment;
-import com.example.rankinggame.repositories.JpaRoundCardAssignmentRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoundCardAssignmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,7 @@ import java.util.stream.IntStream;
 public class RoundCardAssignmentService {
     private static final int MIN_CARD_VALUE = 1;
     private static final int MAX_CARD_VALUE = 10;
-    private static final IntStream ONE_TO_TEN_INT_STREAM = IntStream.rangeClosed(MIN_CARD_VALUE, MAX_CARD_VALUE);
+    private static final List<Integer> CARD_VALUE_NUMBERS_LIST = IntStream.rangeClosed(MIN_CARD_VALUE, MAX_CARD_VALUE).boxed().toList();
 
     private final PlayerRepository playerRepository;
     private final RoundCardAssignmentRepository roundCardAssignmentRepository;
@@ -63,9 +62,9 @@ public class RoundCardAssignmentService {
         Set<Integer> assignedCardValues = existingAssignments.stream()
                 .map(RoundCardAssignment::getCardValue)
                 .collect(Collectors.toSet());
-        List<Integer> availableCardValues = ONE_TO_TEN_INT_STREAM
+        List<Integer> availableCardValues = CARD_VALUE_NUMBERS_LIST
+                .stream()
                 .filter(cardValue -> !assignedCardValues.contains(cardValue))
-                .boxed()
                 .collect(Collectors.toCollection(ArrayList::new));
         shuffle(availableCardValues);
 
