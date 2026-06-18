@@ -26,7 +26,7 @@ public class RoundCardAssignmentService {
     private RandomGenerator randomGenerator = new SecureRandom();
 
     @Transactional
-    public int assignedCardValue(UUID roomId, UUID roundId, UUID playerId) {
+    public synchronized int assignedCardValue(UUID roomId, UUID roundId, UUID playerId) {
         if (playerId == null) {
             throw new IllegalArgumentException("Player id is required");
         }

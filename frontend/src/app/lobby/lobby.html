@@ -70,7 +70,7 @@
         <button
           class="primary-button"
           type="button"
-          [disabled]="startingGame() || room.status !== 'LOBBY'"
+          [disabled]="startingGame() || !canStartGame()"
           (click)="startGame()"
         >
           Spiel starten

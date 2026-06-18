@@ -69,7 +69,7 @@ describe('Game', () => {
     expect(textContent()).toContain('Runde 1');
     expect(textContent()).toContain('Welche Ausrede funktioniert immer?');
     expect(textContent()).toContain('Antwort');
-    expect(textContent()).toContain('Deine Karte: 7');
+    expect(textContent()).toContain('Deine Karte:');
     expect(compiledAssignedCardText(fixture)).toContain('7');
   });
 

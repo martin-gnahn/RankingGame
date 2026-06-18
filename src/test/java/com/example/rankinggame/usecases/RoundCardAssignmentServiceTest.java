@@ -48,7 +48,12 @@ class RoundCardAssignmentServiceTest {
                 player(secondPlayerId, roomId, "Alex", Instant.parse("2026-06-18T08:00:01Z")),
                 player(thirdPlayerId, roomId, "Sam", Instant.parse("2026-06-18T08:00:02Z"))
         ));
-        when(assignmentRepository.findByRoundId(roundId)).thenAnswer(invocation -> assignments);
+        when(assignmentRepository.findByRoundId(any(UUID.class))).thenAnswer(invocation -> {
+            UUID requestedRoundId = invocation.getArgument(0);
+            return assignments.stream()
+                    .filter(assignment -> assignment.getRoundId().equals(requestedRoundId))
+                    .toList();
+        });
         when(assignmentRepository.findByRoundIdAndPlayerId(any(UUID.class), any(UUID.class))).thenAnswer(invocation -> {
             UUID requestedRoundId = invocation.getArgument(0);
             UUID requestedPlayerId = invocation.getArgument(1);
@@ -75,6 +80,9 @@ class RoundCardAssignmentServiceTest {
 
         service.assignedCardValue(roomId, roundId, secondPlayerId);
         verify(assignmentRepository, times(3)).save(any(RoundCardAssignment.class));
+
+        service.assignedCardValue(roomId, UUID.randomUUID(), thirdPlayerId);
+        verify(assignmentRepository, times(6)).save(any(RoundCardAssignment.class));
     }
 
     private Player player(UUID playerId, UUID roomId, String nickname, Instant joinedAt) {

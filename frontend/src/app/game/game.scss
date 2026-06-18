@@ -223,6 +223,10 @@ textarea:disabled {
   color: #ffffff;
   font: inherit;
   font-weight: 800;
+  cursor: pointer;
+  :hover {
+    text-decoration: underline;
+  }
 }
 
 .primary-button:disabled {
