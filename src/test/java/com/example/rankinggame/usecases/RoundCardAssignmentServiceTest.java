@@ -5,6 +5,10 @@ import com.example.rankinggame.entities.RoundCardAssignment;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoundCardAssignmentRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,12 +23,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RoundCardAssignmentServiceTest {
+    @Mock
+    private PlayerRepository playerRepository;
+    @Mock
+    private RoundCardAssignmentRepository assignmentRepository;
+
+    @InjectMocks
+    private RoundCardAssignmentService service;
+
     @Test
     void assignsUniqueCardsToPlayersInRound() {
-        PlayerRepository playerRepository = mock(PlayerRepository.class);
-        RoundCardAssignmentRepository assignmentRepository = mock(RoundCardAssignmentRepository.class);
-        RoundCardAssignmentService service = new RoundCardAssignmentService(playerRepository, assignmentRepository);
         service.setRandomGenerator(new FixedRandomGenerator());
         UUID roomId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
