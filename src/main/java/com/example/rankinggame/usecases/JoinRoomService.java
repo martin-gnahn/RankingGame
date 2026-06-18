@@ -1,10 +1,13 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.JoinRoomCommand;
+import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
+import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +55,10 @@ public class JoinRoomService {
         Player savedPlayer;
         try {
             savedPlayer = playerRepository.save(player);
+            // TODO: what does this flush? It looks dirty.
             playerRepository.flush();
         } catch (DataIntegrityViolationException exception) {
+            // TODO: using this exception looks dirty. Prefer custom exception with no hardcoded error message. Same as for errors above.
             throw new IllegalArgumentException("Player name is already taken", exception);
         }
 
@@ -81,6 +86,7 @@ public class JoinRoomService {
         return roomCode;
     }
 
+    // TODO: duplicate #1 B
     private String normalizePlayerName(JoinRoomCommand command) {
         if (command == null || command.playerName() == null) {
             throw new IllegalArgumentException("Player name is required");

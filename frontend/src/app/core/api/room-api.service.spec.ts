@@ -98,4 +98,58 @@ describe('RoomApiService', () => {
 
     request.flush(response);
   });
+
+  it('should load the active round with an encoded room code', () => {
+    const response = {
+      roomId: 'room-1',
+      roomCode: 'A/B1',
+      gameSessionId: 'session-1',
+      roundId: 'round-1',
+      roundNumber: 1,
+      questionId: 'question-1',
+      questionText: 'Welche Ausrede funktioniert immer?',
+    };
+
+    service.getActiveRound('A/B1').subscribe((result) => {
+      expect(result).toEqual(response);
+    });
+
+    const request = httpTesting.expectOne(
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/current-round`,
+    );
+    expect(request.request.method).toBe('GET');
+
+    request.flush(response);
+  });
+
+  it('should submit an answer with an encoded room code and round id', () => {
+    const response = {
+      answerId: 'answer-1',
+      roundId: 'round/1',
+      playerId: 'player-1',
+      submitted: true,
+    };
+
+    service
+      .submitAnswer('A/B1', 'round/1', {
+        playerId: 'player-1',
+        answerText: 'Mit WLAN-Problemen.',
+        cardValue: 7,
+      })
+      .subscribe((result) => {
+        expect(result).toEqual(response);
+      });
+
+    const request = httpTesting.expectOne(
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round%2F1/answers`,
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      playerId: 'player-1',
+      answerText: 'Mit WLAN-Problemen.',
+      cardValue: 7,
+    });
+
+    request.flush(response);
+  });
 });

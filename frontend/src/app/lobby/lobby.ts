@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, map } from 'rxjs';
 
 import { RoomApiService } from '../core/api/room-api.service';
@@ -19,6 +19,7 @@ export class Lobby {
   private readonly roomApi = inject(RoomApiService);
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
@@ -105,7 +106,7 @@ export class Lobby {
     this.roomApi.startRankingGame(roomCode, { hostPlayerId }).subscribe({
       next: () => {
         this.startingGame.set(false);
-        this.refreshRoom(roomCode);
+        this.navigateToGame(roomCode);
       },
       error: (error: unknown) => {
         this.startingGame.set(false);
@@ -166,11 +167,31 @@ export class Lobby {
   private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
     if (
       event.type === 'PLAYER_JOINED' ||
-      event.type === 'PLAYER_LEFT' ||
-      event.type === 'GAME_STARTED'
+      event.type === 'PLAYER_LEFT'
     ) {
       this.refreshRoom(roomCode);
+      return;
     }
+
+    if (event.type === 'GAME_STARTED') {
+      this.navigateToGame(roomCode);
+    }
+  }
+
+  private navigateToGame(roomCode: string): void {
+    const queryParams: Record<string, string> = {};
+    const playerId = this.currentPlayerId();
+    const role = this.queryParamMap()?.get('role') ?? '';
+
+    if (playerId) {
+      queryParams['playerId'] = playerId;
+    }
+
+    if (role) {
+      queryParams['role'] = role;
+    }
+
+    void this.router.navigate(['/game', roomCode], { queryParams });
   }
 
   private toErrorMessage(error: unknown): string {

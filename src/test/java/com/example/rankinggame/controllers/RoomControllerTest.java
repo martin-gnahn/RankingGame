@@ -3,20 +3,25 @@ package com.example.rankinggame.controllers;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.usecases.CreateRoomCommand;
-import com.example.rankinggame.usecases.CreateRoomResult;
+import com.example.rankinggame.dto.ActiveRoundResult;
+import com.example.rankinggame.dto.CreateRoomCommand;
+import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.usecases.CreateRoomService;
+import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.GetRoomService;
-import com.example.rankinggame.usecases.JoinRoomCommand;
-import com.example.rankinggame.usecases.JoinRoomResult;
+import com.example.rankinggame.dto.JoinRoomCommand;
+import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.usecases.JoinRoomService;
-import com.example.rankinggame.usecases.PlayerDetailsResult;
-import com.example.rankinggame.usecases.RoomDetailsResult;
-import com.example.rankinggame.usecases.RoomCodeUnavailableException;
-import com.example.rankinggame.usecases.RoomNotFoundException;
-import com.example.rankinggame.usecases.StartRankingGameCommand;
-import com.example.rankinggame.usecases.StartRankingGameResult;
+import com.example.rankinggame.dto.PlayerDetailsResult;
+import com.example.rankinggame.dto.RoomDetailsResult;
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
+import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.dto.StartRankingGameCommand;
+import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.dto.SubmitAnswerCommand;
+import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.usecases.StartRankingGameService;
+import com.example.rankinggame.usecases.SubmitAnswerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -314,6 +319,89 @@ class RoomControllerTest {
     }
 
     @Test
+    void returnsCurrentRankingGameRoundViaApiEndpoint() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        GetActiveRoundService getActiveRoundService = mock(GetActiveRoundService.class);
+        UUID roomId = UUID.randomUUID();
+        UUID gameSessionId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        when(getActiveRoundService.getActiveRound("ABCD12")).thenReturn(new ActiveRoundResult(
+                roomId,
+                "ABCD12",
+                gameSessionId,
+                roundId,
+                1,
+                questionId,
+                "Welche Ausrede funktioniert immer?"
+        ));
+        MockMvc mockMvc = mockMvc(
+                createRoomService,
+                joinRoomService,
+                getRoomService,
+                mock(StartRankingGameService.class),
+                getActiveRoundService,
+                mock(SubmitAnswerService.class)
+        );
+
+        mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roomId").value(roomId.toString()))
+                .andExpect(jsonPath("$.roomCode").value("ABCD12"))
+                .andExpect(jsonPath("$.gameSessionId").value(gameSessionId.toString()))
+                .andExpect(jsonPath("$.roundId").value(roundId.toString()))
+                .andExpect(jsonPath("$.roundNumber").value(1))
+                .andExpect(jsonPath("$.questionId").value(questionId.toString()))
+                .andExpect(jsonPath("$.questionText").value("Welche Ausrede funktioniert immer?"));
+    }
+
+    @Test
+    void submitsAnswerViaApiEndpoint() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
+        UUID roundId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID answerId = UUID.randomUUID();
+        when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
+                .thenReturn(new SubmitAnswerResult(answerId, roundId, playerId, true));
+        MockMvc mockMvc = mockMvc(
+                createRoomService,
+                joinRoomService,
+                getRoomService,
+                mock(StartRankingGameService.class),
+                mock(GetActiveRoundService.class),
+                submitAnswerService
+        );
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "playerId": "%s",
+                                  "answerText": "Mit WLAN-Problemen.",
+                                  "cardValue": 7
+                                }
+                                """.formatted(playerId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.answerId").value(answerId.toString()))
+                .andExpect(jsonPath("$.roundId").value(roundId.toString()))
+                .andExpect(jsonPath("$.playerId").value(playerId.toString()))
+                .andExpect(jsonPath("$.submitted").value(true));
+
+        ArgumentCaptor<SubmitAnswerCommand> commandCaptor = ArgumentCaptor.forClass(SubmitAnswerCommand.class);
+        org.mockito.Mockito.verify(submitAnswerService).submitAnswer(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().roomCode()).isEqualTo("ABCD12");
+        assertThat(commandCaptor.getValue().roundId()).isEqualTo(roundId);
+        assertThat(commandCaptor.getValue().playerId()).isEqualTo(playerId);
+        assertThat(commandCaptor.getValue().answerText()).isEqualTo("Mit WLAN-Problemen.");
+        assertThat(commandCaptor.getValue().cardValue()).isEqualTo(7);
+    }
+
+    @Test
     void returnsJsonForUnexpectedErrors() throws Exception {
         CreateRoomService createRoomService = mock(CreateRoomService.class);
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
@@ -354,11 +442,31 @@ class RoomControllerTest {
             GetRoomService getRoomService,
             StartRankingGameService startRankingGameService
     ) {
+        return mockMvc(
+                createRoomService,
+                joinRoomService,
+                getRoomService,
+                startRankingGameService,
+                mock(GetActiveRoundService.class),
+                mock(SubmitAnswerService.class)
+        );
+    }
+
+    private MockMvc mockMvc(
+            CreateRoomService createRoomService,
+            JoinRoomService joinRoomService,
+            GetRoomService getRoomService,
+            StartRankingGameService startRankingGameService,
+            GetActiveRoundService getActiveRoundService,
+            SubmitAnswerService submitAnswerService
+    ) {
         return MockMvcBuilders.standaloneSetup(new RoomController(
                         createRoomService,
                         joinRoomService,
                         getRoomService,
-                        startRankingGameService
+                        startRankingGameService,
+                        getActiveRoundService,
+                        submitAnswerService
                 ))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

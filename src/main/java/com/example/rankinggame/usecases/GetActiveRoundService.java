@@ -25,6 +25,7 @@ public class GetActiveRoundService {
     private final RoundRepository roundRepository;
     private final QuestionRepository questionRepository;
 
+    /// TODO: Why do we need transactional here
     @Transactional(readOnly = true)
     public ActiveRoundResult getActiveRound(String roomCode) {
         String normalizedRoomCode = normalizeRoomCode(roomCode);
@@ -35,6 +36,7 @@ public class GetActiveRoundService {
             throw new IllegalArgumentException("No active game is running");
         }
 
+        // TODO: Prefer custom exceptions. maybe no hardcoded error message strings at this service.
         GameSession gameSession = gameSessionRepository.findByRoomId(room.getId())
                 .orElseThrow(() -> new IllegalArgumentException("No active game is running"));
         Round round = roundRepository.findByGameSessionId(gameSession.getId()).stream()

@@ -1,10 +1,13 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.JoinRoomCommand;
+import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
+import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import org.junit.jupiter.api.Test;

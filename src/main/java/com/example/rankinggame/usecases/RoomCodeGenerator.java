@@ -1,4 +1,4 @@
-package com.example.rankinggame.services;
+package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +16,7 @@ public class RoomCodeGenerator {
     private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
     private final RoomRepository roomRepository;
-    private RandomGenerator randomGenerator = new SecureRandom();
-
-    void setRandomGenerator(RandomGenerator randomGenerator) {
-        this.randomGenerator = randomGenerator;
-    }
+    private final RandomGenerator randomGenerator = new SecureRandom();
 
     public String generateUniqueCode() {
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -31,6 +27,7 @@ public class RoomCodeGenerator {
             }
         }
 
+        // TODO: use a custom exception for that.
         throw new IllegalStateException("Unable to generate a unique room code");
     }
 

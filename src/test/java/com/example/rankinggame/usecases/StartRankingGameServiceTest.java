@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.StartRankingGameCommand;
+import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;

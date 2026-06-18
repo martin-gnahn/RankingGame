@@ -1,9 +1,9 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.ApiError;
-import com.example.rankinggame.usecases.QuestionUnavailableException;
-import com.example.rankinggame.usecases.RoomCodeUnavailableException;
-import com.example.rankinggame.usecases.RoomNotFoundException;
+import com.example.rankinggame.exceptions.QuestionUnavailableException;
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
+import com.example.rankinggame.exceptions.RoomNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

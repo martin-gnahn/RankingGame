@@ -28,9 +28,9 @@ class WebSocketConfigTest {
 
         verify(registry).addEndpoint(WebSocketConfig.WEBSOCKET_ENDPOINT);
         verify(registration).setAllowedOrigins(
-                WebSocketConfig.LOCAL_FRONTEND_ORIGIN,
-                WebSocketConfig.RAILWAY_FRONTEND_ORIGIN,
-                WebSocketConfig.WWW_RAILWAY_FRONTEND_ORIGIN
+                AllowedOriginConstants.LOCAL_FRONTEND_ORIGIN,
+                AllowedOriginConstants.RAILWAY_FRONTEND_ORIGIN,
+                AllowedOriginConstants.WWW_RAILWAY_FRONTEND_ORIGIN
         );
     }
 

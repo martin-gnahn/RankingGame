@@ -52,3 +52,26 @@ export interface StartGameResponse {
   roundNumber: number;
   questionId: string;
 }
+
+export interface ActiveRoundResponse {
+  roomId: string;
+  roomCode: RoomCode;
+  gameSessionId: string;
+  roundId: string;
+  roundNumber: number;
+  questionId: string;
+  questionText: string;
+}
+
+export interface SubmitAnswerRequest {
+  playerId: string;
+  answerText: string;
+  cardValue: number;
+}
+
+export interface SubmitAnswerResponse {
+  answerId: string;
+  roundId: string;
+  playerId: string;
+  submitted: boolean;
+}

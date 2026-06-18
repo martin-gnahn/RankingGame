@@ -1,12 +1,14 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.CreateRoomCommand;
+import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.services.RoomCodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,7 @@ public class CreateRoomService {
     public CreateRoomResult createRoom(CreateRoomCommand command) {
         String playerName = normalizePlayerName(command);
 
+        // TODO: initializing with null looks dirty
         DataIntegrityViolationException lastFailure = null;
         for (int attempt = 0; attempt < MAX_ROOM_CREATION_ATTEMPTS; attempt++) {
             try {
@@ -82,6 +85,7 @@ public class CreateRoomService {
         return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname());
     }
 
+    // TODO: resolve: duplicate #1 A
     private String normalizePlayerName(CreateRoomCommand command) {
         if (command == null || command.playerName() == null) {
             throw new IllegalArgumentException("Player name is required");

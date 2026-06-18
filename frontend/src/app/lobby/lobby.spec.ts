@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { RoomApiService } from '../core/api/room-api.service';
@@ -14,6 +14,7 @@ describe('Lobby', () => {
   let fixture: ComponentFixture<Lobby>;
   let roomApi: jasmine.SpyObj<RoomApiService>;
   let webSocket: jasmine.SpyObj<WebSocketService>;
+  let router: Router;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let realtimeEvents: Subject<RealtimeEvent>;
@@ -68,6 +69,9 @@ describe('Lobby', () => {
         },
       ],
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.resolveTo(true);
   });
 
   function createComponent(): void {
@@ -127,9 +131,8 @@ describe('Lobby', () => {
     expect(textContent()).toContain('Der Host startet das Spiel.');
   });
 
-  it('should start the game as the current host and refresh the room', () => {
-    const startedRoom: RoomResponse = { ...roomResponse, status: 'IN_GAME' };
-    roomApi.getRoom.and.returnValues(of(roomResponse), of(startedRoom));
+  it('should start the game as the current host and navigate to the game page', () => {
+    roomApi.getRoom.and.returnValue(of(roomResponse));
     roomApi.startRankingGame.and.returnValue(
       of({
         roomId: 'room-1',
@@ -149,8 +152,9 @@ describe('Lobby', () => {
     fixture.detectChanges();
 
     expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12', { hostPlayerId: 'host-1' });
-    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
-    expect(textContent()).toContain('Spiel laeuft');
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
+      queryParams: { playerId: 'host-1', role: 'host' },
+    });
   });
 
   it('should show a start error when starting the game fails', () => {
@@ -243,16 +247,17 @@ describe('Lobby', () => {
     expect(textContent()).toContain('Getrennt');
   });
 
-  it('should refresh the room when a game started event arrives', () => {
-    const startedRoom: RoomResponse = { ...roomResponse, status: 'IN_GAME' };
-    roomApi.getRoom.and.returnValues(of(roomResponse), of(startedRoom));
+  it('should navigate to the game page when a game started event arrives', () => {
+    roomApi.getRoom.and.returnValue(of(roomResponse));
 
     createComponent();
     realtimeEvents.next({ type: 'GAME_STARTED', payload: { gameSessionId: 'session-1' } });
     fixture.detectChanges();
 
-    expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
-    expect(textContent()).toContain('Spiel laeuft');
+    expect(roomApi.getRoom).toHaveBeenCalledTimes(1);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
+      queryParams: { playerId: 'host-1', role: 'host' },
+    });
   });
 
   it('should disconnect the websocket when the lobby is destroyed', () => {

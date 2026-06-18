@@ -4,11 +4,14 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  ActiveRoundResponse,
   CreateRoomRequest,
   JoinRoomRequest,
   RoomActionResponse,
   RoomCode,
   RoomResponse,
+  SubmitAnswerRequest,
+  SubmitAnswerResponse,
   StartGameRequest,
   StartGameResponse,
 } from './room.models';
@@ -39,6 +42,23 @@ export class RoomApiService {
   startRankingGame(roomCode: RoomCode, request: StartGameRequest): Observable<StartGameResponse> {
     return this.http.post<StartGameResponse>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/start`,
+      request,
+    );
+  }
+
+  getActiveRound(roomCode: RoomCode): Observable<ActiveRoundResponse> {
+    return this.http.get<ActiveRoundResponse>(
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round`,
+    );
+  }
+
+  submitAnswer(
+    roomCode: RoomCode,
+    roundId: string,
+    request: SubmitAnswerRequest,
+  ): Observable<SubmitAnswerResponse> {
+    return this.http.post<SubmitAnswerResponse>(
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answers`,
       request,
     );
   }

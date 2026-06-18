@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.StartRankingGameCommand;
+import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
@@ -10,6 +12,8 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.Round;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
+import com.example.rankinggame.exceptions.QuestionUnavailableException;
+import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -83,6 +87,7 @@ public class StartRankingGameService {
                 savedGameSession.getGameType()
         ));
 
+        // TODO: can we decrease the arguments of this constructor. It looks a bit obese.
         return new StartRankingGameResult(
                 savedRoom.getId(),
                 savedRoom.getCode(),
@@ -108,6 +113,7 @@ public class StartRankingGameService {
         return roomCode;
     }
 
+    // TODO: custom exception (domain specific, understandable)
     private UUID requireHostPlayerId(StartRankingGameCommand command) {
         if (command == null || command.hostPlayerId() == null) {
             throw new IllegalArgumentException("Host player id is required");

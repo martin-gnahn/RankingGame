@@ -1,12 +1,14 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.CreateRoomCommand;
+import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.Player;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.services.RoomCodeGenerator;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;

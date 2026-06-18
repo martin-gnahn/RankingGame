@@ -1,4 +1,4 @@
-package com.example.rankinggame.usecases;
+package com.example.rankinggame.exceptions;
 
 public class RoomCodeUnavailableException extends RuntimeException {
     public RoomCodeUnavailableException(Throwable cause) {

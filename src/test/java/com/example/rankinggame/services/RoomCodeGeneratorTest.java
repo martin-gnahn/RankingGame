@@ -1,4 +1,4 @@
-package com.example.rankinggame.services;
+package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.repositories.RoomRepository;
 import org.junit.jupiter.api.Test;

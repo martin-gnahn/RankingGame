@@ -3,6 +3,10 @@
   min-height: 100vh;
 }
 
+#game-title {
+  font-weight: bold;
+}
+
 .game-shell {
   display: grid;
   align-content: start;

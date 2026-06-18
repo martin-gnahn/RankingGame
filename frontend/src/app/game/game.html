@@ -13,7 +13,7 @@
   } @else if (activeRound(); as round) {
     <section class="question-section">
       <p class="eyebrow">Runde {{ round.roundNumber }}</p>
-      <h1 id="game-title">{{ round.questionText }}</h1>
+      <p id="game-title">{{ round.questionText }}</p>
     </section>
 
     <form class="answer-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>

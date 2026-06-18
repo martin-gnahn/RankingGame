@@ -1,24 +1,32 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.dto.ActiveRoundResponse;
+import com.example.rankinggame.dto.ActiveRoundResult;
+import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomRequest;
+import com.example.rankinggame.dto.CreateRoomResult;
+import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomRequest;
+import com.example.rankinggame.dto.JoinRoomResult;
+import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomActionResponse;
+import com.example.rankinggame.dto.RoomDetailsResult;
 import com.example.rankinggame.dto.RoomPlayerResponse;
 import com.example.rankinggame.dto.RoomResponse;
+import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartGameRequest;
 import com.example.rankinggame.dto.StartGameResponse;
-import com.example.rankinggame.usecases.CreateRoomCommand;
-import com.example.rankinggame.usecases.CreateRoomResult;
+import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.dto.SubmitAnswerCommand;
+import com.example.rankinggame.dto.SubmitAnswerRequest;
+import com.example.rankinggame.dto.SubmitAnswerResponse;
+import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.usecases.CreateRoomService;
+import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.GetRoomService;
-import com.example.rankinggame.usecases.JoinRoomCommand;
-import com.example.rankinggame.usecases.JoinRoomResult;
 import com.example.rankinggame.usecases.JoinRoomService;
-import com.example.rankinggame.usecases.PlayerDetailsResult;
-import com.example.rankinggame.usecases.RoomDetailsResult;
-import com.example.rankinggame.usecases.StartRankingGameCommand;
-import com.example.rankinggame.usecases.StartRankingGameResult;
 import com.example.rankinggame.usecases.StartRankingGameService;
+import com.example.rankinggame.usecases.SubmitAnswerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/rooms")
@@ -38,6 +48,8 @@ public class RoomController {
     private final JoinRoomService joinRoomService;
     private final GetRoomService getRoomService;
     private final StartRankingGameService startRankingGameService;
+    private final GetActiveRoundService getActiveRoundService;
+    private final SubmitAnswerService submitAnswerService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -90,6 +102,43 @@ public class RoomController {
                 result.roundId(),
                 result.roundNumber(),
                 result.questionId()
+        );
+    }
+
+    @GetMapping("/{roomCode}/ranking-game/current-round")
+    public ActiveRoundResponse getActiveRound(@PathVariable String roomCode) {
+        ActiveRoundResult result = getActiveRoundService.getActiveRound(roomCode);
+        return new ActiveRoundResponse(
+                result.roomId(),
+                result.roomCode(),
+                result.gameSessionId(),
+                result.roundId(),
+                result.roundNumber(),
+                result.questionId(),
+                result.questionText()
+        );
+    }
+
+    @PostMapping("/{roomCode}/ranking-game/rounds/{roundId}/answers")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SubmitAnswerResponse submitAnswer(
+            @PathVariable String roomCode,
+            @PathVariable UUID roundId,
+            @Valid @RequestBody(required = false) SubmitAnswerRequest request
+    ) {
+        SubmitAnswerResult result = submitAnswerService.submitAnswer(new SubmitAnswerCommand(
+                roomCode,
+                roundId,
+                request == null ? null : request.playerId(),
+                request == null ? null : request.answerText(),
+                request == null ? 0 : request.cardValue()
+        ));
+
+        return new SubmitAnswerResponse(
+                result.answerId(),
+                result.roundId(),
+                result.playerId(),
+                result.submitted()
         );
     }
 

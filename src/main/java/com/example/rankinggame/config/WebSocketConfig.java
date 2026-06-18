@@ -12,14 +12,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public static final String WEBSOCKET_ENDPOINT = "/ws";
     public static final String TOPIC_PREFIX = "/topic";
     public static final String APPLICATION_DESTINATION_PREFIX = "/app";
-    public static final String LOCAL_FRONTEND_ORIGIN = "http://localhost:4200";
-    public static final String RAILWAY_FRONTEND_ORIGIN = "https://martin-gnahn.dev";
-    public static final String WWW_RAILWAY_FRONTEND_ORIGIN = "https://www.martin-gnahn.dev";
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint(WEBSOCKET_ENDPOINT)
-                .setAllowedOrigins(LOCAL_FRONTEND_ORIGIN, RAILWAY_FRONTEND_ORIGIN, WWW_RAILWAY_FRONTEND_ORIGIN);
+                .setAllowedOrigins(AllowedOriginConstants.LOCAL_FRONTEND_ORIGIN, AllowedOriginConstants.RAILWAY_FRONTEND_ORIGIN, AllowedOriginConstants.WWW_RAILWAY_FRONTEND_ORIGIN);
     }
 
     @Override
