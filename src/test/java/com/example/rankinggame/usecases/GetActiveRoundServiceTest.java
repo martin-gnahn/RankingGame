@@ -31,16 +31,19 @@ class GetActiveRoundServiceTest {
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
+        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         GetActiveRoundService service = new GetActiveRoundService(
                 roomRepository,
                 gameSessionRepository,
                 roundRepository,
-                questionRepository
+                questionRepository,
+                roundCardAssignmentService
         );
         UUID roomId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
         Room room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
         GameSession gameSession = gameSession(gameSessionId, roomId, 1);
         Round round = round(roundId, gameSessionId, questionId, 1);
@@ -49,8 +52,9 @@ class GetActiveRoundServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundRepository.findByGameSessionId(gameSessionId)).thenReturn(List.of(round));
         when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
+        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
 
-        ActiveRoundResult result = service.getActiveRound(" abcd12 ");
+        ActiveRoundResult result = service.getActiveRound(" abcd12 ", playerId);
 
         assertThat(result.roomId()).isEqualTo(roomId);
         assertThat(result.roomCode()).isEqualTo("ABCD12");
@@ -59,6 +63,7 @@ class GetActiveRoundServiceTest {
         assertThat(result.roundNumber()).isEqualTo(1);
         assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.questionText()).isEqualTo("Welche Ausrede funktioniert immer?");
+        assertThat(result.assignedCardValue()).isEqualTo(7);
     }
 
     @Test
@@ -68,11 +73,12 @@ class GetActiveRoundServiceTest {
                 roomRepository,
                 mock(GameSessionRepository.class),
                 mock(RoundRepository.class),
-                mock(QuestionRepository.class)
+                mock(QuestionRepository.class),
+                mock(RoundCardAssignmentService.class)
         );
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", RoomStatus.LOBBY)));
 
-        assertThatThrownBy(() -> service.getActiveRound("ABCD12"))
+        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No active game is running");
     }

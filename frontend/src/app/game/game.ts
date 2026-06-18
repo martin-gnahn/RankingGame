@@ -37,7 +37,6 @@ export class Game {
   protected readonly submitted = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly submitErrorMessage = signal('');
-  protected readonly selectedCard = signal<number | null>(null);
   protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
     return {
@@ -53,11 +52,8 @@ export class Game {
     this.loadActiveRound();
   }
 
-  protected selectCard(value: number): void {
-    if (!this.submitted()) {
-      this.selectedCard.set(value);
-      this.submitErrorMessage.set('');
-    }
+  protected isAssignedCard(assignedCardValue: number, cardValue: number): boolean {
+    return Number(assignedCardValue) === cardValue;
   }
 
   protected submitAnswer(): void {
@@ -68,15 +64,14 @@ export class Game {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
     const playerId = this.currentPlayerId();
-    const selectedCard = this.selectedCard();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    if (!roomCode || !activeRound || !playerId || selectedCard === null || this.submitting()) {
-      this.submitErrorMessage.set('Antwort und Karte werden benoetigt.');
+    if (!roomCode || !activeRound || !playerId || this.submitting()) {
+      this.submitErrorMessage.set('Antwort konnte nicht gesendet werden.');
       return;
     }
 
@@ -87,7 +82,6 @@ export class Game {
       .submitAnswer(roomCode, activeRound.roundId, {
         playerId,
         answerText: this.form.getRawValue().answerText.trim(),
-        cardValue: selectedCard,
       })
       .subscribe({
         next: () => {
@@ -110,10 +104,16 @@ export class Game {
       return;
     }
 
+    const playerId = this.currentPlayerId();
+    if (!playerId) {
+      this.errorMessage.set('Die Spieler-ID fehlt.');
+      return;
+    }
+
     this.loading.set(true);
     this.errorMessage.set('');
 
-    this.roomApi.getActiveRound(roomCode).subscribe({
+    this.roomApi.getActiveRound(roomCode, playerId).subscribe({
       next: (activeRound) => {
         this.activeRound.set(activeRound);
         this.loading.set(false);

@@ -39,12 +39,14 @@ class SubmitAnswerServiceTest {
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
+        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 roomRepository,
                 playerRepository,
                 gameSessionRepository,
                 roundRepository,
-                answerRepository
+                answerRepository,
+                roundCardAssignmentService
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -59,6 +61,7 @@ class SubmitAnswerServiceTest {
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
+        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(false);
         when(answerRepository.save(any(Answer.class))).thenAnswer(invocation -> {
             Answer answer = invocation.getArgument(0);
@@ -70,8 +73,7 @@ class SubmitAnswerServiceTest {
                 " abcd12 ",
                 roundId,
                 playerId,
-                " Mit WLAN-Problemen. ",
-                7
+                " Mit WLAN-Problemen. "
         ));
 
         assertThat(result.answerId()).isEqualTo(answerId);
@@ -92,29 +94,32 @@ class SubmitAnswerServiceTest {
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
+        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 roomRepository,
                 playerRepository,
                 gameSessionRepository,
                 roundRepository,
-                answerRepository
+                answerRepository,
+                roundCardAssignmentService
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
+        GameSession gameSession = gameSession(gameSessionId, roomId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId)));
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player(playerId, roomId)));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, gameSessionId)));
-        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession(gameSessionId, roomId)));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
+        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(true);
 
         assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
                 "ABCD12",
                 roundId,
                 playerId,
-                "Mit WLAN-Problemen.",
-                7
+                "Mit WLAN-Problemen."
         )))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Player already submitted an answer for this round");

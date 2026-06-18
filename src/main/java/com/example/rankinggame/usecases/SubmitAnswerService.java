@@ -24,14 +24,12 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class SubmitAnswerService {
     private static final int MAX_ANSWER_LENGTH = 500;
-    private static final int MIN_CARD_VALUE = 1;
-    private static final int MAX_CARD_VALUE = 10;
-
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final GameSessionRepository gameSessionRepository;
     private final RoundRepository roundRepository;
     private final AnswerRepository answerRepository;
+    private final RoundCardAssignmentService roundCardAssignmentService;
 
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
@@ -50,9 +48,9 @@ public class SubmitAnswerService {
                 .orElseThrow(() -> new IllegalArgumentException("Player is not part of this room"));
         Round round = roundRepository.findById(command.roundId())
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
-        gameSessionRepository.findByRoomId(room.getId())
-                .filter(gameSession -> gameSession.getId().equals(round.getGameSessionId()))
-                .filter(gameSession -> gameSession.getCurrentRoundNumber() == round.getRoundNumber())
+        var gameSession = gameSessionRepository.findByRoomId(room.getId())
+                .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
+                .filter(candidate -> candidate.getCurrentRoundNumber() == round.getRoundNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
 
         if (round.getState() != RoundState.QUESTION_REVEALED) {
@@ -60,10 +58,7 @@ public class SubmitAnswerService {
         }
 
         String answerText = normalizeAnswerText(command.answerText());
-        int cardValue = command.cardValue();
-        if (cardValue < MIN_CARD_VALUE || cardValue > MAX_CARD_VALUE) {
-            throw new IllegalArgumentException("Card value must be between 1 and 10");
-        }
+        int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
 
         if (answerRepository.existsByRoundIdAndPlayerId(round.getId(), player.getId())) {
             throw new IllegalArgumentException("Player already submitted an answer for this round");

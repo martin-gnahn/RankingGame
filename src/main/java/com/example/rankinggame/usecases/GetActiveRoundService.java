@@ -24,10 +24,11 @@ public class GetActiveRoundService {
     private final GameSessionRepository gameSessionRepository;
     private final RoundRepository roundRepository;
     private final QuestionRepository questionRepository;
+    private final RoundCardAssignmentService roundCardAssignmentService;
 
     /// TODO: Why do we need transactional here
     @Transactional(readOnly = true)
-    public ActiveRoundResult getActiveRound(String roomCode) {
+    public ActiveRoundResult getActiveRound(String roomCode, java.util.UUID playerId) {
         String normalizedRoomCode = normalizeRoomCode(roomCode);
         Room room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
@@ -45,6 +46,7 @@ public class GetActiveRoundService {
                 .orElseThrow(() -> new IllegalArgumentException("No active round is available"));
         Question question = questionRepository.findById(round.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
+        int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
 
         return new ActiveRoundResult(
                 room.getId(),
@@ -53,7 +55,8 @@ public class GetActiveRoundService {
                 round.getId(),
                 round.getRoundNumber(),
                 question.getId(),
-                question.getText()
+                question.getText(),
+                assignedCardValue
         );
     }
 

@@ -22,6 +22,7 @@ describe('Game', () => {
     roundNumber: 1,
     questionId: 'question-1',
     questionText: 'Welche Ausrede funktioniert immer?',
+    assignedCardValue: 7,
   };
 
   beforeEach(async () => {
@@ -64,22 +65,24 @@ describe('Game', () => {
   it('should render the active round question', () => {
     createComponent();
 
-    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12');
+    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
     expect(textContent()).toContain('Runde 1');
     expect(textContent()).toContain('Welche Ausrede funktioniert immer?');
     expect(textContent()).toContain('Antwort');
+    expect(textContent()).toContain('Deine Karte: 7');
+    expect(compiledAssignedCardText(fixture)).toContain('7');
   });
 
-  it('should highlight the selected card', () => {
+  it('should highlight the assigned card without a selectable button', () => {
     createComponent();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const seventhCard = compiled.querySelectorAll<HTMLButtonElement>('.score-card')[6];
-    seventhCard.click();
-    fixture.detectChanges();
+    const seventhCard = compiled.querySelectorAll<HTMLElement>('.score-card')[6];
 
     expect(seventhCard.classList).toContain('active');
-    expect(seventhCard.getAttribute('aria-pressed')).toBe('true');
+    expect(seventhCard.getAttribute('aria-label')).toBe('Deine Karte 7');
+    expect(seventhCard.textContent).toContain('Deine Karte');
+    expect(compiled.querySelector('button.score-card')).toBeNull();
   });
 
   it('should submit an answer once and show the waiting state', () => {
@@ -89,14 +92,12 @@ describe('Game', () => {
     const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="answerText"]');
     textarea!.value = 'Mit WLAN-Problemen.';
     textarea!.dispatchEvent(new Event('input'));
-    compiled.querySelectorAll<HTMLButtonElement>('.score-card')[6].click();
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
     fixture.detectChanges();
 
     expect(roomApi.submitAnswer).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
       playerId: 'player-1',
       answerText: 'Mit WLAN-Problemen.',
-      cardValue: 7,
     });
     expect(textContent()).toContain('Antwort gespeichert');
 
@@ -104,18 +105,15 @@ describe('Game', () => {
     expect(roomApi.submitAnswer).toHaveBeenCalledTimes(1);
   });
 
-  it('should require a selected card before submitting', () => {
+  it('should require answer text before submitting', () => {
     createComponent();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="answerText"]');
-    textarea!.value = 'Mit WLAN-Problemen.';
-    textarea!.dispatchEvent(new Event('input'));
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
     fixture.detectChanges();
 
     expect(roomApi.submitAnswer).not.toHaveBeenCalled();
-    expect(textContent()).toContain('Antwort und Karte werden benoetigt.');
+    expect(textContent()).toContain('Bitte gib eine Reaktion ein.');
   });
 
   it('should show an error when the active round cannot be loaded', () => {
@@ -128,4 +126,11 @@ describe('Game', () => {
 
     expect(textContent()).toContain('No active game is running');
   });
+
+  function compiledAssignedCardText(fixture: ComponentFixture<Game>): string {
+    return (
+      (fixture.nativeElement as HTMLElement).querySelector('.assigned-card-summary')?.textContent ??
+      ''
+    );
+  }
 });

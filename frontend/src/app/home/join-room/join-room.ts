@@ -36,7 +36,7 @@ export class JoinRoom {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     roomCode: ['', [Validators.required, Validators.pattern(ROOM_CODE_PATTERN)]],
-    playerName: ['', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
+    playerName: ['Felix', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
   });
 
   protected submit(): void {

@@ -26,26 +26,32 @@
         placeholder="Deine Antwort"
       ></textarea>
       @if (form.controls.answerText.touched && form.controls.answerText.invalid) {
-        <p class="field-error">Bitte gib eine Antwort ein.</p>
+        <p class="field-error">Bitte gib eine Reaktion ein.</p>
       }
 
       <section class="score-section" aria-labelledby="score-title">
-        <h2 id="score-title">Karte waehlen</h2>
+        <h2 id="score-title">Deine Karte:</h2>
+        <div class="assigned-card-summary" aria-label="Deine zugewiesene Karte">
+          <span>Deine Karte {{round.assignedCardValue}}</span>
+          <strong>{{ round.assignedCardValue }}</strong>
+        </div>
         <div class="score-grid">
           @for (card of scoreCards; track card.value) {
-            <button
+            <span
               class="score-card"
               [class.low]="card.tone === 'low'"
               [class.middle]="card.tone === 'middle'"
               [class.high]="card.tone === 'high'"
-              [class.active]="selectedCard() === card.value"
-              type="button"
-              [attr.aria-pressed]="selectedCard() === card.value"
-              [disabled]="submitted()"
-              (click)="selectCard(card.value)"
+              [class.active]="isAssignedCard(round.assignedCardValue, card.value)"
+              [attr.aria-label]="
+                isAssignedCard(round.assignedCardValue, card.value) ? 'Deine Karte ' + card.value : null
+              "
             >
-              {{ card.value }}
-            </button>
+              <span class="score-card-number">{{ card.value }}</span>
+              @if (isAssignedCard(round.assignedCardValue, card.value)) {
+                <span class="assigned-card-label">Deine Karte</span>
+              }
+            </span>
           }
         </div>
       </section>

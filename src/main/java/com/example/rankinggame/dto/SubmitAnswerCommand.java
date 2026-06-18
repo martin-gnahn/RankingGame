@@ -6,7 +6,6 @@ public record SubmitAnswerCommand(
         String roomCode,
         UUID roundId,
         UUID playerId,
-        String answerText,
-        int cardValue
+        String answerText
 ) {
 }

@@ -61,12 +61,12 @@ export interface ActiveRoundResponse {
   roundNumber: number;
   questionId: string;
   questionText: string;
+  assignedCardValue: number;
 }
 
 export interface SubmitAnswerRequest {
   playerId: string;
   answerText: string;
-  cardValue: number;
 }
 
 export interface SubmitAnswerResponse {

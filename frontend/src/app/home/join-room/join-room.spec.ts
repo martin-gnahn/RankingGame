@@ -18,6 +18,13 @@ describe('JoinRoom', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should prefill the test player name', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const inputs = compiled.querySelectorAll<HTMLInputElement>('input');
+
+    expect(inputs[1].value).toBe('Felix');
+  });
+
   it('should emit sanitized room code and trimmed player name', () => {
     spyOn(fixture.componentInstance.joinRoomRequested, 'emit');
 

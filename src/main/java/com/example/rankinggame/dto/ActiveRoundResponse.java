@@ -9,6 +9,7 @@ public record ActiveRoundResponse(
         UUID roundId,
         int roundNumber,
         UUID questionId,
-        String questionText
+        String questionText,
+        int assignedCardValue
 ) {
 }

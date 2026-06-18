@@ -108,14 +108,15 @@ describe('RoomApiService', () => {
       roundNumber: 1,
       questionId: 'question-1',
       questionText: 'Welche Ausrede funktioniert immer?',
+      assignedCardValue: 7,
     };
 
-    service.getActiveRound('A/B1').subscribe((result) => {
+    service.getActiveRound('A/B1', 'player-1').subscribe((result) => {
       expect(result).toEqual(response);
     });
 
     const request = httpTesting.expectOne(
-      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/current-round`,
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/current-round?playerId=player-1`,
     );
     expect(request.request.method).toBe('GET');
 
@@ -134,7 +135,6 @@ describe('RoomApiService', () => {
       .submitAnswer('A/B1', 'round/1', {
         playerId: 'player-1',
         answerText: 'Mit WLAN-Problemen.',
-        cardValue: 7,
       })
       .subscribe((result) => {
         expect(result).toEqual(response);
@@ -147,7 +147,6 @@ describe('RoomApiService', () => {
     expect(request.request.body).toEqual({
       playerId: 'player-1',
       answerText: 'Mit WLAN-Problemen.',
-      cardValue: 7,
     });
 
     request.flush(response);

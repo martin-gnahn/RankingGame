@@ -18,6 +18,13 @@ describe('CreateRoom', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should prefill the test player name', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('input[formControlName="playerName"]');
+
+    expect(input?.value).toBe('Martin');
+  });
+
   it('should emit the trimmed player name', () => {
     spyOn(fixture.componentInstance.createRoomRequested, 'emit');
 

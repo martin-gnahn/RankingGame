@@ -16,7 +16,11 @@ public class RoomCodeGenerator {
     private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
     private final RoomRepository roomRepository;
-    private final RandomGenerator randomGenerator = new SecureRandom();
+    private RandomGenerator randomGenerator = new SecureRandom();
+
+    void setRandomGenerator(RandomGenerator randomGenerator) {
+        this.randomGenerator = randomGenerator;
+    }
 
     public String generateUniqueCode() {
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {

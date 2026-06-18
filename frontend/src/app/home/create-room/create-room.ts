@@ -30,7 +30,7 @@ export class CreateRoom {
   @Output() createRoomRequested = new EventEmitter<CreateRoomRequest>();
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    playerName: ['', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
+    playerName: ['Martin', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
   });
 
   protected submit(): void {
