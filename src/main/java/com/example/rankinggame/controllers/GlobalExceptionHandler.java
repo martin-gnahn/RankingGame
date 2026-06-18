@@ -4,6 +4,7 @@ import com.example.rankinggame.dto.ApiError;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -48,22 +50,26 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(QuestionUnavailableException.class)
     public ResponseEntity<ApiError> handleQuestionUnavailable(QuestionUnavailableException exception) {
+        log.error("Question unavailable: {}", String.valueOf(exception));
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(error(ErrorConstants.QUESTION_UNAVAILABLE, exception.getMessage()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException exception) {
+        log.error("Not found: {}", String.valueOf(exception));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error(ErrorConstants.RESOURCE_NOT_FOUND, "Resource not found"));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiError> handleNoHandlerFound(NoHandlerFoundException exception) {
+        log.error("Not found: {}", String.valueOf(exception));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error(ErrorConstants.RESOURCE_NOT_FOUND, "Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception) {
+        log.error("Unknown internal error: {}", String.valueOf(exception));
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error(ErrorConstants.INTERNAL_ERROR, "An unexpected error occurred"));
     }
