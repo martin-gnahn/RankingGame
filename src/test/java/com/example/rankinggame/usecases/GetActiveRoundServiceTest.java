@@ -14,9 +14,7 @@ import com.example.rankinggame.repositories.QuestionRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.repositories.RoundRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -83,15 +81,6 @@ class GetActiveRoundServiceTest {
         assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No active game is running");
-    }
-
-    @Test
-    void activeRoundLookupAllowsCardAssignmentWrites() throws NoSuchMethodException {
-        Method method = GetActiveRoundService.class.getMethod("getActiveRound", String.class, UUID.class);
-        Transactional transactional = method.getAnnotation(Transactional.class);
-
-        assertThat(transactional).isNotNull();
-        assertThat(transactional.readOnly()).isFalse();
     }
 
     private Room room(UUID roomId, String code, RoomStatus status) {

@@ -20,13 +20,14 @@ import java.util.stream.IntStream;
 public class RoundCardAssignmentService {
     private static final int MIN_CARD_VALUE = 1;
     private static final int MAX_CARD_VALUE = 10;
+    private static final IntStream ONE_TO_TEN_INT_STREAM = IntStream.rangeClosed(MIN_CARD_VALUE, MAX_CARD_VALUE);
 
     private final PlayerRepository playerRepository;
     private final RoundCardAssignmentRepository roundCardAssignmentRepository;
     private RandomGenerator randomGenerator = new SecureRandom();
 
     @Transactional
-    public synchronized int assignedCardValue(UUID roomId, UUID roundId, UUID playerId) {
+    public int assignedCardValue(UUID roomId, UUID roundId, UUID playerId) {
         if (playerId == null) {
             throw new IllegalArgumentException("Player id is required");
         }
@@ -62,7 +63,7 @@ public class RoundCardAssignmentService {
         Set<Integer> assignedCardValues = existingAssignments.stream()
                 .map(RoundCardAssignment::getCardValue)
                 .collect(Collectors.toSet());
-        List<Integer> availableCardValues = IntStream.rangeClosed(MIN_CARD_VALUE, MAX_CARD_VALUE)
+        List<Integer> availableCardValues = ONE_TO_TEN_INT_STREAM
                 .filter(cardValue -> !assignedCardValues.contains(cardValue))
                 .boxed()
                 .collect(Collectors.toCollection(ArrayList::new));

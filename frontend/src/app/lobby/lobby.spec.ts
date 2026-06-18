@@ -34,7 +34,7 @@ describe('Lobby', () => {
         playerId: 'player-2',
         nickname: 'Alex',
         host: false,
-        connectionStatus: 'CONNECTED',
+        connectionStatus: 'DISCONNECTED',
       },
     ],
   };
@@ -113,6 +113,7 @@ describe('Lobby', () => {
     expect(textContent()).toContain('Alex');
     expect(textContent()).toContain('Host');
     expect(textContent()).toContain('Online');
+    expect(textContent()).toContain('Getrennt');
     expect(compiled.querySelector('.player-row.current-player')?.textContent).toContain('Marta');
   });
 
@@ -154,28 +155,6 @@ describe('Lobby', () => {
     expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
       queryParams: { playerId: 'host-1', role: 'host' },
     });
-  });
-
-  it('should disable start when no other player is online', () => {
-    const disconnectedGuestRoom: RoomResponse = {
-      ...roomResponse,
-      players: roomResponse.players.map((player) =>
-        player.playerId === 'player-2'
-          ? { ...player, connectionStatus: 'DISCONNECTED' }
-          : player,
-      ),
-    };
-
-    roomApi.getRoom.and.returnValue(
-      of(disconnectedGuestRoom),
-    );
-
-    createComponent();
-
-    const startButton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '.primary-button',
-    );
-    expect(startButton?.disabled).toBeTrue();
   });
 
   it('should show a start error when starting the game fails', () => {

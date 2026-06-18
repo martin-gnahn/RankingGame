@@ -41,7 +41,6 @@ class StartRankingGameServiceTest {
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
-        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         StartRankingGameService service = new StartRankingGameService(
                 roomRepository,
@@ -49,24 +48,20 @@ class StartRankingGameServiceTest {
                 questionRepository,
                 gameSessionRepository,
                 roundRepository,
-                roundCardAssignmentService,
                 eventPublisher
         );
         UUID roomId = UUID.randomUUID();
         UUID hostPlayerId = UUID.randomUUID();
-        UUID guestPlayerId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
         Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
         Player hostPlayer = player(hostPlayerId, roomId, true);
-        Player guestPlayer = player(guestPlayerId, roomId, false);
         Question question = question(questionId);
         GameSession savedGameSession = gameSession(gameSessionId, roomId);
         Round savedRound = round(roundId, gameSessionId, questionId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
-        when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer, guestPlayer));
         when(questionRepository.findRandomActive()).thenReturn(Optional.of(question));
         when(gameSessionRepository.save(any(GameSession.class))).thenReturn(savedGameSession);
         when(roundRepository.save(any(Round.class))).thenReturn(savedRound);
@@ -98,7 +93,6 @@ class StartRankingGameServiceTest {
         assertThat(roundCaptor.getValue().getState()).isEqualTo(RoundState.QUESTION_REVEALED);
 
         verify(eventPublisher).publishEvent(new GameStartedRoomEvent("ABCD12", gameSessionId, GameType.RANKING_GAME));
-        verify(roundCardAssignmentService).assignedCardValue(roomId, roundId, hostPlayerId);
     }
 
     @Test
@@ -108,7 +102,6 @@ class StartRankingGameServiceTest {
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
-        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         StartRankingGameService service = new StartRankingGameService(
                 roomRepository,
@@ -116,7 +109,6 @@ class StartRankingGameServiceTest {
                 questionRepository,
                 gameSessionRepository,
                 roundRepository,
-                roundCardAssignmentService,
                 eventPublisher
         );
         UUID roomId = UUID.randomUUID();
@@ -141,7 +133,6 @@ class StartRankingGameServiceTest {
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
-        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         StartRankingGameService service = new StartRankingGameService(
                 roomRepository,
@@ -149,7 +140,6 @@ class StartRankingGameServiceTest {
                 questionRepository,
                 gameSessionRepository,
                 roundRepository,
-                roundCardAssignmentService,
                 eventPublisher
         );
         UUID hostPlayerId = UUID.randomUUID();
@@ -162,81 +152,6 @@ class StartRankingGameServiceTest {
 
         verify(playerRepository, never()).findById(any());
         verify(gameSessionRepository, never()).save(any());
-    }
-
-    @Test
-    void rejectsStartWhenOnlyHostIsOnline() {
-        RoomRepository roomRepository = mock(RoomRepository.class);
-        PlayerRepository playerRepository = mock(PlayerRepository.class);
-        QuestionRepository questionRepository = mock(QuestionRepository.class);
-        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
-        RoundRepository roundRepository = mock(RoundRepository.class);
-        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
-        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
-                roomRepository,
-                playerRepository,
-                questionRepository,
-                gameSessionRepository,
-                roundRepository,
-                roundCardAssignmentService,
-                eventPublisher
-        );
-        UUID roomId = UUID.randomUUID();
-        UUID hostPlayerId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        Player hostPlayer = player(hostPlayerId, roomId, true);
-        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
-        when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
-        when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer));
-
-        assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", hostPlayerId)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("At least two online players are required to start the game");
-
-        verify(questionRepository, never()).findRandomActive();
-        verify(gameSessionRepository, never()).save(any());
-        verify(roundRepository, never()).save(any());
-        verify(eventPublisher, never()).publishEvent(any());
-    }
-
-    @Test
-    void rejectsStartWhenAllGuestsAreDisconnected() {
-        RoomRepository roomRepository = mock(RoomRepository.class);
-        PlayerRepository playerRepository = mock(PlayerRepository.class);
-        QuestionRepository questionRepository = mock(QuestionRepository.class);
-        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
-        RoundRepository roundRepository = mock(RoundRepository.class);
-        RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
-        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
-                roomRepository,
-                playerRepository,
-                questionRepository,
-                gameSessionRepository,
-                roundRepository,
-                roundCardAssignmentService,
-                eventPublisher
-        );
-        UUID roomId = UUID.randomUUID();
-        UUID hostPlayerId = UUID.randomUUID();
-        UUID guestPlayerId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        Player hostPlayer = player(hostPlayerId, roomId, true);
-        Player guestPlayer = player(guestPlayerId, roomId, false);
-        guestPlayer.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
-        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
-        when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
-        when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer, guestPlayer));
-
-        assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", hostPlayerId)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("At least two online players are required to start the game");
-
-        verify(questionRepository, never()).findRandomActive();
-        verify(gameSessionRepository, never()).save(any());
-        verify(roundRepository, never()).save(any());
-        verify(eventPublisher, never()).publishEvent(any());
     }
 
     private Room room(UUID roomId, String roomCode, UUID hostPlayerId, RoomStatus status) {

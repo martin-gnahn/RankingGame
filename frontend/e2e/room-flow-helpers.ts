@@ -34,36 +34,6 @@ export async function expectPlayerVisible(page: Page, playerName: string): Promi
   await expect(page.locator('.player-list')).toContainText(playerName);
 }
 
-export async function expectPlayerConnectionStatus(
-  page: Page,
-  playerName: string,
-  statusLabel: 'Online' | 'Getrennt',
-): Promise<void> {
-  await expect(
-    page.locator('.player-row').filter({ hasText: playerName }).getByText(statusLabel),
-  ).toBeVisible();
-}
-
-export async function startGame(page: Page): Promise<void> {
-  const startButton = page.getByRole('button', { name: 'Spiel starten' });
-  await expect(startButton).toBeEnabled();
-  await startButton.click();
-}
-
-export async function expectGameScreen(page: Page): Promise<void> {
-  await page.waitForURL(/\/game\/[A-Z0-9]{4,8}(?:\?.*)?$/);
-  await expect(page.getByText(/^Runde \d+$/)).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Antwort' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Antwort abgeben' })).toBeVisible();
-}
-
-export async function submitAnswer(page: Page, answerText: string): Promise<void> {
-  await page.getByRole('textbox', { name: 'Antwort' }).fill(answerText);
-  await page.getByRole('button', { name: 'Antwort abgeben' }).click();
-  await expect(page.getByRole('button', { name: 'Antwort gesendet' })).toBeVisible();
-  await expect(page.getByText('Antwort gespeichert. Warte auf die anderen Spieler.')).toBeVisible();
-}
-
 export function roomCodeFromUrl(page: Page): string {
   const roomCode = new URL(page.url()).pathname.match(/\/lobby\/([A-Z0-9]{4,8})$/)?.[1];
 
