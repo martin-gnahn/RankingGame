@@ -12,4 +12,6 @@ public interface RoundCardAssignmentRepository {
     List<RoundCardAssignment> findByRoundId(UUID roundId);
 
     Optional<RoundCardAssignment> findByRoundIdAndPlayerId(UUID roundId, UUID playerId);
+
+    void saveAll(List<RoundCardAssignment> assignments);
 }

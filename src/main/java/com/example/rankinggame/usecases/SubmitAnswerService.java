@@ -41,6 +41,7 @@ public class SubmitAnswerService {
             throw new IllegalArgumentException("Player id is required");
         }
 
+        // TODO: extract to other service
         Room room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
         Player player = playerRepository.findById(command.playerId())

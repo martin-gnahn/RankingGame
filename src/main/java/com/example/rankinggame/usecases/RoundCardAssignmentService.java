@@ -23,7 +23,7 @@ public class RoundCardAssignmentService {
     private static final IntStream ONE_TO_TEN_INT_STREAM = IntStream.rangeClosed(MIN_CARD_VALUE, MAX_CARD_VALUE);
 
     private final PlayerRepository playerRepository;
-    private final JpaRoundCardAssignmentRepository roundCardAssignmentRepository;
+    private final RoundCardAssignmentRepository roundCardAssignmentRepository;
     private RandomGenerator randomGenerator = new SecureRandom();
 
     @Transactional
