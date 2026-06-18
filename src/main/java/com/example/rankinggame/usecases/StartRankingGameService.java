@@ -6,6 +6,7 @@ import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Question;
 import com.example.rankinggame.entities.Room;
 import com.example.rankinggame.entities.RoomStatus;
@@ -38,6 +39,7 @@ public class StartRankingGameService {
     private final QuestionRepository questionRepository;
     private final GameSessionRepository gameSessionRepository;
     private final RoundRepository roundRepository;
+    private final RoundCardAssignmentService roundCardAssignmentService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -61,6 +63,10 @@ public class StartRankingGameService {
             throw new IllegalArgumentException("Only the host can start the game");
         }
 
+        if (!hasConnectedGuest(room, hostPlayer)) {
+            throw new IllegalArgumentException("At least two online players are required to start the game");
+        }
+
         Question question = questionRepository.findRandomActive()
                 .orElseThrow(QuestionUnavailableException::new);
 
@@ -80,6 +86,8 @@ public class StartRankingGameService {
 
         room.setStatus(RoomStatus.IN_GAME);
         Room savedRoom = roomRepository.save(room);
+
+        roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
 
         eventPublisher.publishEvent(new GameStartedRoomEvent(
                 savedRoom.getCode(),
@@ -111,6 +119,13 @@ public class StartRankingGameService {
         }
 
         return roomCode;
+    }
+
+    // TODO: extract to pure game logic (GameEngine) class
+    private boolean hasConnectedGuest(Room room, Player hostPlayer) {
+        return playerRepository.findByRoomId(room.getId()).stream()
+                .anyMatch(player -> !Objects.equals(player.getId(), hostPlayer.getId())
+                        && player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED);
     }
 
     // TODO: custom exception (domain specific, understandable)

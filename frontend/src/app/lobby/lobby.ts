@@ -44,6 +44,18 @@ export class Lobby {
     return room.players.some((player) => player.playerId === currentPlayerId && player.host);
   });
   protected readonly playerCount = computed(() => this.room()?.players.length ?? 0);
+  protected readonly canStartGame = computed(() => {
+    const room = this.room();
+    const currentPlayerId = this.currentPlayerId();
+
+    if (!room || room.status !== 'LOBBY' || !this.isCurrentPlayerHost()) {
+      return false;
+    }
+
+    return room.players.some(
+      (player) => player.playerId !== currentPlayerId && player.connectionStatus === 'CONNECTED',
+    );
+  });
 
   constructor() {
     effect((onCleanup) => {
