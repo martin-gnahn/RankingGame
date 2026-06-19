@@ -10,10 +10,6 @@ import java.util.UUID;
 public class RankingGameEngine {
     private static final int MAX_ANSWER_LENGTH = 500;
 
-    Game startGame(List<Player> players) {
-        return new Game(players);
-    }
-
 //    Round startNewRound(Game game, PlayerId captainId) {
 //        Round round = new Round(captainId);
 //        game.getAllRounds().add(round);

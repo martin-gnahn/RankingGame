@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class Game {
-    GameId gameId;
+    final GameId gameId;
     private List<Player> players;
     private List<GameParticipant> participants;
     boolean isActive;
@@ -27,10 +27,9 @@ public class Game {
         return allRounds.get(currentRoundNumber);
     }
 
-    public Game(List<Player> players) {
-        this.players = players;
+    private Game(List<GameParticipant> participants) {
         this.gameId = new GameId(UUID.randomUUID());
-        this.isActive = true;
+        this.participants = participants;
     }
 
     public boolean canStart() {
@@ -53,10 +52,6 @@ public class Game {
 
     public Round startNextRound(QuestionId questionId) {
         final GameParticipant newCaptain = getNextCaptain();
-//        Player lastCaptain = players.stream()
-//                .filter(p -> p.playerId() == lastRound.getCaptainPlayerId())
-//                .findFirst().orElseThrow(CaptainNotFoundException::new);
-        // TODO: optimize later
         Round newRound = Round.start(newCaptain.playerId());
         allRounds.add(newRound);
         return newRound;
