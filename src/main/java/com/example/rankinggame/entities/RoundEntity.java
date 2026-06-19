@@ -30,7 +30,7 @@ public class RoundEntity {
     @Column(name = "question_id", nullable = false)
     private UUID questionId;
 
-    @Column(name = "question_id", nullable = false)
+    @Column(name = "captain_player_id", nullable = false)
     private UUID captainPlayerId;
 
     @Column(name = "round_number", nullable = false)

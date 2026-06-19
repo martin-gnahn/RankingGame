@@ -34,8 +34,14 @@ public class GameSession {
     private int currentRoundNumber;
 
     @OneToMany
+    @JoinTable(
+            name = "game_session_players",
+            joinColumns = @JoinColumn(name = "game_session_id"),
+            inverseJoinColumns = @JoinColumn(name = "player_id")
+    )
     List<PlayerEntity> players;
 
     @OneToMany
+    @JoinColumn(name = "game_session_id", referencedColumnName = "id", insertable = false, updatable = false)
     List<RoundEntity> rounds;
 }

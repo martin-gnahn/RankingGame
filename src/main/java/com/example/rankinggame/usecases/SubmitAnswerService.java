@@ -1,10 +1,7 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.RankingGameEngine;
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.RoundId;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
@@ -33,16 +30,10 @@ public class SubmitAnswerService {
     private final RoundRepository roundRepository;
     private final AnswerRepository answerRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
-    private final RankingGameEngine rankingGameEngine;
 
     // TODO: extract game logic to other service
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
-        rankingGameEngine.submitAnswer(
-                game,
-                new PlayerId(command.playerId()), command.answerText(), new RoundId(command.roundId())
-        );
-
         String normalizedRoomCode = normalizeRoomCode(command.roomCode());
         if (command.roundId() == null) {
             throw new IllegalArgumentException("Round id is required");

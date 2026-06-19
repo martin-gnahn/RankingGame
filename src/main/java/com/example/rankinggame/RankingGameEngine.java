@@ -14,11 +14,11 @@ public class RankingGameEngine {
         return new Game(players);
     }
 
-    Round startNewRound(Game game, PlayerId captainId) {
-        Round round = new Round(captainId);
-        game.getAllRounds().add(round);
-        return round;
-    }
+//    Round startNewRound(Game game, PlayerId captainId) {
+//        Round round = new Round(captainId);
+//        game.getAllRounds().add(round);
+//        return round;
+//    }
 
     public void submitAnswer(Game game, PlayerId playerId, String answerText, RoundId roundId) {
         String answerTextTrimmed = normalizeAnswerText(answerText);

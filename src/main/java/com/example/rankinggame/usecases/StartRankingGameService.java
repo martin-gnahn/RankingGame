@@ -2,9 +2,6 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
-import com.example.rankinggame.engine.Game;
-import com.example.rankinggame.engine.Player;
-import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
@@ -72,23 +69,21 @@ public class StartRankingGameService {
         Question question = questionRepository.findRandomActive()
                 .orElseThrow(QuestionUnavailableException::new);
 
-        var playerEntities = getPlayerList(room, hostPlayer);
-        var players = playerEntities.stream().map(p -> new Player(new PlayerId(p.getId()), p.getNickname())).toList();
-        Game game = new Game(players);
-        game.start();
-
-
+        List<PlayerEntity> playerEntities = getPlayerList(room, hostPlayer);
 
         GameSession gameSession = new GameSession();
         gameSession.setRoomId(room.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
         gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
+        gameSession.setPlayers(playerEntities);
         GameSession savedGameSession = gameSessionRepository.save(gameSession);
 
+        // TODO: THis will be part of Game later
         RoundEntity round = new RoundEntity();
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionId(question.getId());
+        round.setCaptainPlayerId(hostPlayer.getId());
         round.setRoundNumber(FIRST_ROUND_NUMBER);
         round.setState(RoundState.QUESTION_REVEALED);
         RoundEntity savedRound = roundRepository.save(round);

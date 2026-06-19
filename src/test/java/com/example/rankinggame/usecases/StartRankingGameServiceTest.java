@@ -89,11 +89,13 @@ class StartRankingGameServiceTest {
         assertThat(gameSessionCaptor.getValue().getGameType()).isEqualTo(GameType.RANKING_GAME);
         assertThat(gameSessionCaptor.getValue().getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
         assertThat(gameSessionCaptor.getValue().getCurrentRoundNumber()).isEqualTo(1);
+        assertThat(gameSessionCaptor.getValue().getPlayers()).containsExactly(guestPlayer, hostPlayer);
 
         ArgumentCaptor<RoundEntity> roundCaptor = ArgumentCaptor.forClass(RoundEntity.class);
         verify(roundRepository).save(roundCaptor.capture());
         assertThat(roundCaptor.getValue().getGameSessionId()).isEqualTo(gameSessionId);
         assertThat(roundCaptor.getValue().getQuestionId()).isEqualTo(questionId);
+        assertThat(roundCaptor.getValue().getCaptainPlayerId()).isEqualTo(hostPlayerId);
         assertThat(roundCaptor.getValue().getRoundNumber()).isEqualTo(1);
         assertThat(roundCaptor.getValue().getState()).isEqualTo(RoundState.QUESTION_REVEALED);
 
