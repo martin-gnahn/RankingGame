@@ -1,6 +1,6 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +33,11 @@ class JpaRoomRepositoryTest {
 
     @Test
     void savesAndLoadsRoomByCode() {
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setCode("ABCD");
         room.setStatus(RoomStatus.LOBBY);
 
-        Room savedRoom = roomRepository.saveAndFlush(room);
+        RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
         assertThat(savedRoom.getId()).isNotNull();
         assertThat(savedRoom.getCreatedAt()).isNotNull();

@@ -17,26 +17,29 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "rooms")
+@Table(name = "players")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Room {
+public class PlayerEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 8)
-    private String code;
+    @Column(name = "room_id", nullable = false)
+    private UUID roomId;
 
-    @Column(name = "host_player_id")
-    private UUID hostPlayerId;
+    @Column(nullable = false, length = 80)
+    private String nickname;
+
+    @Column(name = "is_host", nullable = false)
+    private boolean host;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private RoomStatus status;
+    @Column(name = "connection_status", nullable = false, length = 32)
+    private PlayerConnectionStatus connectionStatus;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    @Column(name = "joined_at", nullable = false, updatable = false)
+    private Instant joinedAt;
 }

@@ -19,7 +19,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Round {
+public class RoundEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -29,6 +29,9 @@ public class Round {
 
     @Column(name = "question_id", nullable = false)
     private UUID questionId;
+
+    @Column(name = "question_id", nullable = false)
+    private UUID captainPlayerId;
 
     @Column(name = "round_number", nullable = false)
     private int roundNumber;

@@ -2,9 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -51,10 +51,10 @@ class CreateRoomServiceTest {
         UUID playerId = UUID.randomUUID();
 
         when(roomCodeGenerator.generateUniqueCode()).thenReturn("ABCD12");
-        when(roomRepository.save(ArgumentMatchers.any(Room.class))).thenAnswer(invocation -> {
-            Room room = invocation.getArgument(0);
+        when(roomRepository.save(ArgumentMatchers.any(RoomEntity.class))).thenAnswer(invocation -> {
+            RoomEntity room = invocation.getArgument(0);
             if (room.getId() == null) {
-                Room persistedRoom = new Room();
+                RoomEntity persistedRoom = new RoomEntity();
                 persistedRoom.setId(roomId);
                 persistedRoom.setCode(room.getCode());
                 persistedRoom.setHostPlayerId(room.getHostPlayerId());
@@ -63,8 +63,8 @@ class CreateRoomServiceTest {
             }
             return room;
         });
-        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> {
-            Player player = invocation.getArgument(0);
+        when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> {
+            PlayerEntity player = invocation.getArgument(0);
             player.setId(playerId);
             return player;
         });
@@ -78,7 +78,7 @@ class CreateRoomServiceTest {
         assertThat(result.playerId()).isEqualTo(playerId);
         assertThat(result.playerName()).isEqualTo("Marta");
 
-        ArgumentCaptor<Room> roomCaptor = ArgumentCaptor.forClass(Room.class);
+        ArgumentCaptor<RoomEntity> roomCaptor = ArgumentCaptor.forClass(RoomEntity.class);
         verify(roomRepository, times(2)).save(roomCaptor.capture());
         assertThat(roomCaptor.getAllValues().get(0))
                 .satisfies(room -> {
@@ -88,7 +88,7 @@ class CreateRoomServiceTest {
                 });
         assertThat(roomCaptor.getAllValues().get(1).getHostPlayerId()).isEqualTo(playerId);
 
-        ArgumentCaptor<Player> playerCaptor = ArgumentCaptor.forClass(Player.class);
+        ArgumentCaptor<PlayerEntity> playerCaptor = ArgumentCaptor.forClass(PlayerEntity.class);
         verify(playerRepository).save(playerCaptor.capture());
         assertThat(playerCaptor.getValue())
                 .satisfies(player -> {
@@ -99,10 +99,10 @@ class CreateRoomServiceTest {
                 });
 
         InOrder inOrder = inOrder(roomRepository, playerRepository);
-        inOrder.verify(roomRepository).save(ArgumentMatchers.any(Room.class));
+        inOrder.verify(roomRepository).save(ArgumentMatchers.any(RoomEntity.class));
         inOrder.verify(roomRepository).flush();
-        inOrder.verify(playerRepository).save(ArgumentMatchers.any(Player.class));
-        inOrder.verify(roomRepository).save(ArgumentMatchers.any(Room.class));
+        inOrder.verify(playerRepository).save(ArgumentMatchers.any(PlayerEntity.class));
+        inOrder.verify(roomRepository).save(ArgumentMatchers.any(RoomEntity.class));
     }
 
     @Test
@@ -115,10 +115,10 @@ class CreateRoomServiceTest {
         UUID playerId = UUID.randomUUID();
 
         when(roomCodeGenerator.generateUniqueCode()).thenReturn("DUPL1", "UNIQ2");
-        when(roomRepository.save(ArgumentMatchers.any(Room.class))).thenAnswer(invocation -> {
-            Room room = invocation.getArgument(0);
+        when(roomRepository.save(ArgumentMatchers.any(RoomEntity.class))).thenAnswer(invocation -> {
+            RoomEntity room = invocation.getArgument(0);
             if (room.getId() == null) {
-                Room persistedRoom = new Room();
+                RoomEntity persistedRoom = new RoomEntity();
                 persistedRoom.setId(room.getCode().equals("DUPL1") ? firstRoomId : secondRoomId);
                 persistedRoom.setCode(room.getCode());
                 persistedRoom.setHostPlayerId(room.getHostPlayerId());
@@ -130,8 +130,8 @@ class CreateRoomServiceTest {
         doThrow(new DataIntegrityViolationException("duplicate code"))
                 .doNothing()
                 .when(roomRepository).flush();
-        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> {
-            Player player = invocation.getArgument(0);
+        when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> {
+            PlayerEntity player = invocation.getArgument(0);
             player.setId(playerId);
             return player;
         });
@@ -145,7 +145,7 @@ class CreateRoomServiceTest {
         assertThat(result.playerId()).isEqualTo(playerId);
         verify(roomCodeGenerator, times(2)).generateUniqueCode();
         verify(roomRepository, times(2)).flush();
-        verify(playerRepository).save(ArgumentMatchers.any(Player.class));
+        verify(playerRepository).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 
     @Test
@@ -155,8 +155,8 @@ class CreateRoomServiceTest {
         RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
 
         when(roomCodeGenerator.generateUniqueCode()).thenReturn("DUPL1");
-        when(roomRepository.save(ArgumentMatchers.any(Room.class))).thenAnswer(invocation -> {
-            Room room = invocation.getArgument(0);
+        when(roomRepository.save(ArgumentMatchers.any(RoomEntity.class))).thenAnswer(invocation -> {
+            RoomEntity room = invocation.getArgument(0);
             room.setId(UUID.randomUUID());
             return room;
         });
@@ -169,7 +169,7 @@ class CreateRoomServiceTest {
                 .hasMessage("Unable to allocate a unique room code");
 
         verify(roomCodeGenerator, times(5)).generateUniqueCode();
-        verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
+        verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 
     @Test
@@ -184,7 +184,7 @@ class CreateRoomServiceTest {
                 .hasMessage("Player name is required");
 
         verify(roomCodeGenerator, never()).generateUniqueCode();
-        verify(roomRepository, never()).save(ArgumentMatchers.any(Room.class));
-        verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
+        verify(roomRepository, never()).save(ArgumentMatchers.any(RoomEntity.class));
+        verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 }

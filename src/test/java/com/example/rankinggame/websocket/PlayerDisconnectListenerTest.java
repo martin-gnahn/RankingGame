@@ -1,6 +1,6 @@
 package com.example.rankinggame.websocket;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.events.PlayerLeftRoomEvent;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -31,7 +31,7 @@ class PlayerDisconnectListenerTest {
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         PlayerDisconnectListener listener = new PlayerDisconnectListener(registry, playerRepository, eventPublisher);
         UUID playerId = UUID.randomUUID();
-        Player player = new Player();
+        PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 

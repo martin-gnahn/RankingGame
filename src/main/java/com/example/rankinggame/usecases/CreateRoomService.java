@@ -2,9 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -65,20 +65,20 @@ public class CreateRoomService {
     }
 
     private CreateRoomResult createRoomInTransaction(String playerName) {
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setCode(roomCodeGenerator.generateUniqueCode());
         room.setStatus(RoomStatus.LOBBY);
 
-        Room savedRoom = roomRepository.save(room);
+        RoomEntity savedRoom = roomRepository.save(room);
         roomRepository.flush();
 
-        Player hostPlayer = new Player();
+        PlayerEntity hostPlayer = new PlayerEntity();
         hostPlayer.setRoomId(savedRoom.getId());
         hostPlayer.setNickname(playerName);
         hostPlayer.setHost(true);
         hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
-        Player savedHostPlayer = playerRepository.save(hostPlayer);
+        PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 

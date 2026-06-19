@@ -2,15 +2,15 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.entities.Answer;
+import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.repositories.AnswerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
@@ -53,18 +53,18 @@ class SubmitAnswerServiceTest {
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
         UUID answerId = UUID.randomUUID();
-        Room room = room(roomId);
-        Player player = player(playerId, roomId);
+        RoomEntity room = room(roomId);
+        PlayerEntity player = player(playerId, roomId);
         GameSession gameSession = gameSession(gameSessionId, roomId);
-        Round round = round(roundId, gameSessionId);
+        RoundEntity round = round(roundId, gameSessionId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(false);
-        when(answerRepository.save(any(Answer.class))).thenAnswer(invocation -> {
-            Answer answer = invocation.getArgument(0);
+        when(answerRepository.save(any(AnswerEntity.class))).thenAnswer(invocation -> {
+            AnswerEntity answer = invocation.getArgument(0);
             answer.setId(answerId);
             return answer;
         });
@@ -81,7 +81,7 @@ class SubmitAnswerServiceTest {
         assertThat(result.playerId()).isEqualTo(playerId);
         assertThat(result.submitted()).isTrue();
 
-        ArgumentCaptor<Answer> answerCaptor = ArgumentCaptor.forClass(Answer.class);
+        ArgumentCaptor<AnswerEntity> answerCaptor = ArgumentCaptor.forClass(AnswerEntity.class);
         verify(answerRepository).save(answerCaptor.capture());
         assertThat(answerCaptor.getValue().getText()).isEqualTo("Mit WLAN-Problemen.");
         assertThat(answerCaptor.getValue().getCardValue()).isEqualTo(7);
@@ -126,16 +126,16 @@ class SubmitAnswerServiceTest {
         verify(answerRepository, never()).save(any());
     }
 
-    private Room room(UUID roomId) {
-        Room room = new Room();
+    private RoomEntity room(UUID roomId) {
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.IN_GAME);
         return room;
     }
 
-    private Player player(UUID playerId, UUID roomId) {
-        Player player = new Player();
+    private PlayerEntity player(UUID playerId, UUID roomId) {
+        PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
         player.setNickname("Marta");
@@ -153,8 +153,8 @@ class SubmitAnswerServiceTest {
         return gameSession;
     }
 
-    private Round round(UUID roundId, UUID gameSessionId) {
-        Round round = new Round();
+    private RoundEntity round(UUID roundId, UUID gameSessionId) {
+        RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setRoundNumber(1);

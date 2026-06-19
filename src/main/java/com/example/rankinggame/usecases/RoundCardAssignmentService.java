@@ -1,6 +1,6 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoundCardAssignment;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoundCardAssignmentRepository;
@@ -41,10 +41,10 @@ public class RoundCardAssignmentService {
     }
 
     private int assignMissingCards(UUID roomId, UUID roundId, UUID requestedPlayerId) {
-        List<Player> players = playerRepository.findByRoomId(roomId).stream()
-                .sorted(Comparator.comparing(Player::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Player::getNickname)
-                        .thenComparing(Player::getId))
+        List<PlayerEntity> players = playerRepository.findByRoomId(roomId).stream()
+                .sorted(Comparator.comparing(PlayerEntity::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(PlayerEntity::getNickname)
+                        .thenComparing(PlayerEntity::getId))
                 .toList();
 
         if (players.stream().noneMatch(player -> player.getId().equals(requestedPlayerId))) {
@@ -68,7 +68,7 @@ public class RoundCardAssignmentService {
                 .collect(Collectors.toCollection(ArrayList::new));
         shuffle(availableCardValues);
 
-        List<Player> playersWithoutCard = players.stream()
+        List<PlayerEntity> playersWithoutCard = players.stream()
                 .filter(player -> !assignedPlayerIds.contains(player.getId()))
                 .toList();
 

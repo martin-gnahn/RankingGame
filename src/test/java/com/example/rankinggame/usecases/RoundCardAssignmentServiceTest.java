@@ -1,6 +1,6 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoundCardAssignment;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoundCardAssignmentRepository;
@@ -85,8 +85,8 @@ class RoundCardAssignmentServiceTest {
         verify(assignmentRepository, times(6)).save(any(RoundCardAssignment.class));
     }
 
-    private Player player(UUID playerId, UUID roomId, String nickname, Instant joinedAt) {
-        Player player = new Player();
+    private PlayerEntity player(UUID playerId, UUID roomId, String nickname, Instant joinedAt) {
+        PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
         player.setNickname(nickname);

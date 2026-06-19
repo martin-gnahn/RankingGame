@@ -3,9 +3,9 @@ package com.example.rankinggame.usecases;
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.Question;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -31,7 +31,7 @@ public class GetActiveRoundService {
     @Transactional
     public ActiveRoundResult getActiveRound(String roomCode, java.util.UUID playerId) {
         String normalizedRoomCode = normalizeRoomCode(roomCode);
-        Room room = roomRepository.findByCode(normalizedRoomCode)
+        RoomEntity room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
         log.info("Retrieved Room entity with code '{}' and id '{}'", room.getCode(), room.getId());
 
@@ -44,7 +44,7 @@ public class GetActiveRoundService {
                 .orElseThrow(() -> new IllegalArgumentException("No active game is running"));
         log.info("Retrieved GameSession entity with id '{}'", gameSession.getId());
 
-        Round round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
+        RoundEntity round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
                 .filter(candidate -> candidate.getRoundNumber() == gameSession.getCurrentRoundNumber())
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No active round is available"));

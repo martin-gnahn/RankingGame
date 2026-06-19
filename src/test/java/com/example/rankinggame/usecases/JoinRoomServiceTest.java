@@ -2,9 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
@@ -36,15 +36,15 @@ class JoinRoomServiceTest {
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
-        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> {
-            Player player = invocation.getArgument(0);
+        when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> {
+            PlayerEntity player = invocation.getArgument(0);
             player.setId(playerId);
             return player;
         });
@@ -58,7 +58,7 @@ class JoinRoomServiceTest {
         assertThat(result.playerId()).isEqualTo(playerId);
         assertThat(result.playerName()).isEqualTo("Alex");
 
-        ArgumentCaptor<Player> playerCaptor = ArgumentCaptor.forClass(Player.class);
+        ArgumentCaptor<PlayerEntity> playerCaptor = ArgumentCaptor.forClass(PlayerEntity.class);
         verify(playerRepository).save(playerCaptor.capture());
         assertThat(playerCaptor.getValue())
                 .satisfies(player -> {
@@ -91,7 +91,7 @@ class JoinRoomServiceTest {
                 .isInstanceOf(RoomNotFoundException.class)
                 .hasMessage("Room not found: MISS1");
 
-        verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
+        verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 
     @Test
@@ -100,11 +100,11 @@ class JoinRoomServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
-        Player existingPlayer = new Player();
+        PlayerEntity existingPlayer = new PlayerEntity();
         existingPlayer.setNickname("Alex");
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
@@ -115,7 +115,7 @@ class JoinRoomServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Player name is already taken");
 
-        verify(playerRepository, never()).save(ArgumentMatchers.any(Player.class));
+        verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 
     @Test
@@ -124,14 +124,14 @@ class JoinRoomServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         UUID roomId = UUID.randomUUID();
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
-        when(playerRepository.save(ArgumentMatchers.any(Player.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doThrow(new DataIntegrityViolationException("duplicate nickname")).when(playerRepository).flush();
         JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
 

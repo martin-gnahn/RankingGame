@@ -1,17 +1,11 @@
 package com.example.rankinggame.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,6 +18,7 @@ public class GameSession {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    // TODO: extract to room. Game should not know room id.
     @Column(name = "room_id", nullable = false)
     private UUID roomId;
 
@@ -37,4 +32,10 @@ public class GameSession {
 
     @Column(name = "current_round_number", nullable = false)
     private int currentRoundNumber;
+
+    @OneToMany
+    List<PlayerEntity> players;
+
+    @OneToMany
+    List<RoundEntity> rounds;
 }

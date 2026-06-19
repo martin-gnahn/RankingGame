@@ -2,6 +2,8 @@ package com.example.rankinggame.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,28 +17,26 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "answers")
+@Table(name = "rooms")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Answer {
+public class RoomEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "round_id", nullable = false)
-    private UUID roundId;
+    @Column(nullable = false, unique = true, length = 8)
+    private String code;
 
-    @Column(name = "player_id", nullable = false)
-    private UUID playerId;
+    @Column(name = "host_player_id")
+    private UUID hostPlayerId;
 
-    @Column(nullable = false, length = 500)
-    private String text;
-
-    @Column(name = "card_value", nullable = false)
-    private int cardValue;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private RoomStatus status;
 
     @CreationTimestamp
-    @Column(name = "submitted_at", nullable = false, updatable = false)
-    private Instant submittedAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 }

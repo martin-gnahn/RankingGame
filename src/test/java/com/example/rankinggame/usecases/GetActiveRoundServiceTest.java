@@ -5,9 +5,9 @@ import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.Question;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -46,9 +46,9 @@ class GetActiveRoundServiceTest {
         UUID roundId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
+        RoomEntity room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
         GameSession gameSession = gameSession(gameSessionId, roomId, 1);
-        Round round = round(roundId, gameSessionId, questionId, 1);
+        RoundEntity round = round(roundId, gameSessionId, questionId, 1);
         Question question = question(questionId, "Welche Ausrede funktioniert immer?");
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
@@ -94,8 +94,8 @@ class GetActiveRoundServiceTest {
         assertThat(transactional.readOnly()).isFalse();
     }
 
-    private Room room(UUID roomId, String code, RoomStatus status) {
-        Room room = new Room();
+    private RoomEntity room(UUID roomId, String code, RoomStatus status) {
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode(code);
         room.setStatus(status);
@@ -112,8 +112,8 @@ class GetActiveRoundServiceTest {
         return gameSession;
     }
 
-    private Round round(UUID roundId, UUID gameSessionId, UUID questionId, int roundNumber) {
-        Round round = new Round();
+    private RoundEntity round(UUID roundId, UUID gameSessionId, UUID questionId, int roundNumber) {
+        RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);

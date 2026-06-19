@@ -1,6 +1,6 @@
 package com.example.rankinggame.websocket;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.events.PlayerLeftRoomEvent;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -26,9 +26,9 @@ public class PlayerDisconnectListener {
                         .map(player -> disconnectPlayer(session, player)));
     }
 
-    private Player disconnectPlayer(LivePlayerSession session, Player player) {
+    private PlayerEntity disconnectPlayer(LivePlayerSession session, PlayerEntity player) {
         player.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
-        Player savedPlayer = playerRepository.save(player);
+        PlayerEntity savedPlayer = playerRepository.save(player);
         eventPublisher.publishEvent(new PlayerLeftRoomEvent(session.roomCode(), savedPlayer.getId()));
         return savedPlayer;
     }

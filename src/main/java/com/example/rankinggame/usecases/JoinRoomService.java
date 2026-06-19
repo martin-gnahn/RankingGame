@@ -2,9 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
@@ -32,7 +32,7 @@ public class JoinRoomService {
         String roomCode = normalizeRoomCode(command);
         String playerName = normalizePlayerName(command);
 
-        Room room = roomRepository.findByCode(roomCode)
+        RoomEntity room = roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
 
         if (room.getStatus() != RoomStatus.LOBBY) {
@@ -46,13 +46,13 @@ public class JoinRoomService {
             throw new IllegalArgumentException("Player name is already taken");
         }
 
-        Player player = new Player();
+        PlayerEntity player = new PlayerEntity();
         player.setRoomId(room.getId());
         player.setNickname(playerName);
         player.setHost(false);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
-        Player savedPlayer;
+        PlayerEntity savedPlayer;
         try {
             savedPlayer = playerRepository.save(player);
             // TODO: what does this flush? It looks dirty.

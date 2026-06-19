@@ -2,8 +2,8 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomDetailsResult;
-import com.example.rankinggame.entities.Player;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.PlayerEntity;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
@@ -26,14 +26,14 @@ public class GetRoomService {
     @Transactional(readOnly = true)
     public RoomDetailsResult getRoom(String rawRoomCode) {
         String roomCode = normalizeRoomCode(rawRoomCode);
-        Room room = roomRepository.findByCode(roomCode)
+        RoomEntity room = roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
 
         // TODO: maybe extract the complex sorting logic to outer method.
         List<PlayerDetailsResult> players = playerRepository.findByRoomId(room.getId()).stream()
-                .sorted(Comparator.comparing((Player player) -> isHost(room, player)).reversed()
-                        .thenComparing(Player::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Player::getNickname))
+                .sorted(Comparator.comparing((PlayerEntity player) -> isHost(room, player)).reversed()
+                        .thenComparing(PlayerEntity::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(PlayerEntity::getNickname))
                 .map(player -> new PlayerDetailsResult(
                         player.getId(),
                         player.getNickname(),
@@ -59,7 +59,7 @@ public class GetRoomService {
         return roomCode;
     }
 
-    private boolean isHost(Room room, Player player) {
+    private boolean isHost(RoomEntity room, PlayerEntity player) {
         return Objects.equals(room.getHostPlayerId(), player.getId());
     }
 }

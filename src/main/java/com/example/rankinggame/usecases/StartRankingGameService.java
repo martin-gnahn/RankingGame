@@ -2,15 +2,18 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.engine.Game;
+import com.example.rankinggame.engine.Player;
+import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Question;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
@@ -25,9 +28,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -42,21 +43,22 @@ public class StartRankingGameService {
     private final RoundCardAssignmentService roundCardAssignmentService;
     private final ApplicationEventPublisher eventPublisher;
 
+    // TODO: here new game
     @Transactional
     public StartRankingGameResult startGame(StartRankingGameCommand command) {
         String roomCode = normalizeRoomCode(command);
         UUID hostPlayerId = requireHostPlayerId(command);
 
-        Room room = roomRepository.findByCode(roomCode)
+        RoomEntity room = roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
 
         if (room.getStatus() != RoomStatus.LOBBY) {
             throw new IllegalArgumentException("Room is not in lobby");
         }
 
-        Player hostPlayer = playerRepository.findById(hostPlayerId)
+        PlayerEntity hostPlayer = playerRepository.findById(hostPlayerId)
                 .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
-                .filter(Player::isHost)
+                .filter(PlayerEntity::isHost)
                 .orElseThrow(() -> new IllegalArgumentException("Only the host can start the game"));
 
         if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
@@ -70,6 +72,13 @@ public class StartRankingGameService {
         Question question = questionRepository.findRandomActive()
                 .orElseThrow(QuestionUnavailableException::new);
 
+        var playerEntities = getPlayerList(room, hostPlayer);
+        var players = playerEntities.stream().map(p -> new Player(new PlayerId(p.getId()), p.getNickname())).toList();
+        Game game = new Game(players);
+        game.start();
+
+
+
         GameSession gameSession = new GameSession();
         gameSession.setRoomId(room.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
@@ -77,15 +86,15 @@ public class StartRankingGameService {
         gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
         GameSession savedGameSession = gameSessionRepository.save(gameSession);
 
-        Round round = new Round();
+        RoundEntity round = new RoundEntity();
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionId(question.getId());
         round.setRoundNumber(FIRST_ROUND_NUMBER);
         round.setState(RoundState.QUESTION_REVEALED);
-        Round savedRound = roundRepository.save(round);
+        RoundEntity savedRound = roundRepository.save(round);
 
         room.setStatus(RoomStatus.IN_GAME);
-        Room savedRoom = roomRepository.save(room);
+        RoomEntity savedRoom = roomRepository.save(room);
 
         roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
 
@@ -121,8 +130,16 @@ public class StartRankingGameService {
         return roomCode;
     }
 
+    private List<PlayerEntity> getPlayerList(RoomEntity room, PlayerEntity hostPlayer) {
+        List<PlayerEntity> connectedPlayers = new ArrayList<>(playerRepository.findByRoomId(room.getId()).stream()
+                .filter(player -> !Objects.equals(player.getId(), hostPlayer.getId())
+                        && player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED).toList());
+        connectedPlayers.add(hostPlayer);
+        return connectedPlayers;
+    }
+
     // TODO: extract to pure game logic (GameEngine) class
-    private boolean hasConnectedGuest(Room room, Player hostPlayer) {
+    private boolean hasConnectedGuest(RoomEntity room, PlayerEntity hostPlayer) {
         return playerRepository.findByRoomId(room.getId()).stream()
                 .anyMatch(player -> !Objects.equals(player.getId(), hostPlayer.getId())
                         && player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED);

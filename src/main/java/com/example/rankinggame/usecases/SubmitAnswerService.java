@@ -1,11 +1,14 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.RankingGameEngine;
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.entities.Answer;
-import com.example.rankinggame.entities.Player;
-import com.example.rankinggame.entities.Room;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.engine.PlayerId;
+import com.example.rankinggame.engine.RoundId;
+import com.example.rankinggame.entities.AnswerEntity;
+import com.example.rankinggame.entities.PlayerEntity;
+import com.example.rankinggame.entities.RoomEntity;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -30,9 +33,16 @@ public class SubmitAnswerService {
     private final RoundRepository roundRepository;
     private final AnswerRepository answerRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
+    private final RankingGameEngine rankingGameEngine;
 
+    // TODO: extract game logic to other service
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
+        rankingGameEngine.submitAnswer(
+                game,
+                new PlayerId(command.playerId()), command.answerText(), new RoundId(command.roundId())
+        );
+
         String normalizedRoomCode = normalizeRoomCode(command.roomCode());
         if (command.roundId() == null) {
             throw new IllegalArgumentException("Round id is required");
@@ -42,12 +52,12 @@ public class SubmitAnswerService {
         }
 
         // TODO: extract to other service
-        Room room = roomRepository.findByCode(normalizedRoomCode)
+        RoomEntity room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
-        Player player = playerRepository.findById(command.playerId())
+        PlayerEntity player = playerRepository.findById(command.playerId())
                 .filter(candidate -> candidate.getRoomId().equals(room.getId()))
                 .orElseThrow(() -> new IllegalArgumentException("Player is not part of this room"));
-        Round round = roundRepository.findById(command.roundId())
+        RoundEntity round = roundRepository.findById(command.roundId())
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
         var gameSession = gameSessionRepository.findByRoomId(room.getId())
                 .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
@@ -65,14 +75,14 @@ public class SubmitAnswerService {
             throw new IllegalArgumentException("Player already submitted an answer for this round");
         }
 
-        Answer answer = new Answer();
+        AnswerEntity answer = new AnswerEntity();
         answer.setRoundId(round.getId());
         answer.setPlayerId(player.getId());
         answer.setText(answerText);
         answer.setCardValue(cardValue);
 
         try {
-            Answer savedAnswer = answerRepository.save(answer);
+            AnswerEntity savedAnswer = answerRepository.save(answer);
             return new SubmitAnswerResult(savedAnswer.getId(), round.getId(), player.getId(), true);
         } catch (DataIntegrityViolationException exception) {
             throw new IllegalArgumentException("Player already submitted an answer for this round", exception);

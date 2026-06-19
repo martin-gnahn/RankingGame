@@ -1,18 +1,18 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public interface RoomRepository {
-    Room save(Room room);
+    RoomEntity save(RoomEntity room);
 
     void flush();
 
-    Optional<Room> findById(UUID id);
+    Optional<RoomEntity> findById(UUID id);
 
-    Optional<Room> findByCode(String code);
+    Optional<RoomEntity> findByCode(String code);
 
     boolean existsByCode(String code);
 }

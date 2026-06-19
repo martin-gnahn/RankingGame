@@ -1,17 +1,17 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface PlayerRepository {
-    Player save(Player player);
+    PlayerEntity save(PlayerEntity player);
 
     void flush();
 
-    Optional<Player> findById(UUID id);
+    Optional<PlayerEntity> findById(UUID id);
 
-    List<Player> findByRoomId(UUID roomId);
+    List<PlayerEntity> findByRoomId(UUID roomId);
 }

@@ -1,8 +1,8 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,18 +40,18 @@ class JpaPlayerRepositoryTest {
 
     @Test
     void savesAndLoadsPlayerByRoomId() {
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setCode("PLY1");
         room.setStatus(RoomStatus.LOBBY);
-        Room savedRoom = roomRepository.saveAndFlush(room);
+        RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
-        Player player = new Player();
+        PlayerEntity player = new PlayerEntity();
         player.setRoomId(savedRoom.getId());
         player.setNickname("Marta");
         player.setHost(true);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
-        Player savedPlayer = playerRepository.saveAndFlush(player);
+        PlayerEntity savedPlayer = playerRepository.saveAndFlush(player);
 
         assertThat(savedPlayer.getId()).isNotNull();
         assertThat(savedPlayer.getJoinedAt()).isNotNull();
@@ -65,25 +65,25 @@ class JpaPlayerRepositoryTest {
                     assertThat(foundPlayer.getConnectionStatus()).isEqualTo(PlayerConnectionStatus.CONNECTED);
                 });
         assertThat(playerRepository.findByRoomId(savedRoom.getId()))
-                .extracting(Player::getId)
+                .extracting(PlayerEntity::getId)
                 .containsExactly(savedPlayer.getId());
     }
 
     @Test
     void rejectsDuplicateNicknameInSameRoomIgnoringCase() {
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setCode("DUP1");
         room.setStatus(RoomStatus.LOBBY);
-        Room savedRoom = roomRepository.saveAndFlush(room);
+        RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
-        Player firstPlayer = new Player();
+        PlayerEntity firstPlayer = new PlayerEntity();
         firstPlayer.setRoomId(savedRoom.getId());
         firstPlayer.setNickname("Alex");
         firstPlayer.setHost(false);
         firstPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         playerRepository.saveAndFlush(firstPlayer);
 
-        Player duplicatePlayer = new Player();
+        PlayerEntity duplicatePlayer = new PlayerEntity();
         duplicatePlayer.setRoomId(savedRoom.getId());
         duplicatePlayer.setNickname("alex");
         duplicatePlayer.setHost(false);

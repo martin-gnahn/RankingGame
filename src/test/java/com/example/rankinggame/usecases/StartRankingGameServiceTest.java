@@ -5,12 +5,12 @@ import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.Question;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.Round;
+import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.repositories.GameSessionRepository;
@@ -58,18 +58,18 @@ class StartRankingGameServiceTest {
         UUID questionId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        Player hostPlayer = player(hostPlayerId, roomId, true);
-        Player guestPlayer = player(guestPlayerId, roomId, false);
+        RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
+        PlayerEntity guestPlayer = player(guestPlayerId, roomId, false);
         Question question = question(questionId);
         GameSession savedGameSession = gameSession(gameSessionId, roomId);
-        Round savedRound = round(roundId, gameSessionId, questionId);
+        RoundEntity savedRound = round(roundId, gameSessionId, questionId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
         when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer, guestPlayer));
         when(questionRepository.findRandomActive()).thenReturn(Optional.of(question));
         when(gameSessionRepository.save(any(GameSession.class))).thenReturn(savedGameSession);
-        when(roundRepository.save(any(Round.class))).thenReturn(savedRound);
+        when(roundRepository.save(any(RoundEntity.class))).thenReturn(savedRound);
         when(roomRepository.save(room)).thenReturn(room);
 
         StartRankingGameResult result = service.startGame(new StartRankingGameCommand(" abcd12 ", hostPlayerId));
@@ -90,7 +90,7 @@ class StartRankingGameServiceTest {
         assertThat(gameSessionCaptor.getValue().getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
         assertThat(gameSessionCaptor.getValue().getCurrentRoundNumber()).isEqualTo(1);
 
-        ArgumentCaptor<Round> roundCaptor = ArgumentCaptor.forClass(Round.class);
+        ArgumentCaptor<RoundEntity> roundCaptor = ArgumentCaptor.forClass(RoundEntity.class);
         verify(roundRepository).save(roundCaptor.capture());
         assertThat(roundCaptor.getValue().getGameSessionId()).isEqualTo(gameSessionId);
         assertThat(roundCaptor.getValue().getQuestionId()).isEqualTo(questionId);
@@ -184,8 +184,8 @@ class StartRankingGameServiceTest {
         );
         UUID roomId = UUID.randomUUID();
         UUID hostPlayerId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        Player hostPlayer = player(hostPlayerId, roomId, true);
+        RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
         when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer));
@@ -221,9 +221,9 @@ class StartRankingGameServiceTest {
         UUID roomId = UUID.randomUUID();
         UUID hostPlayerId = UUID.randomUUID();
         UUID guestPlayerId = UUID.randomUUID();
-        Room room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        Player hostPlayer = player(hostPlayerId, roomId, true);
-        Player guestPlayer = player(guestPlayerId, roomId, false);
+        RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
+        PlayerEntity guestPlayer = player(guestPlayerId, roomId, false);
         guestPlayer.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
@@ -239,8 +239,8 @@ class StartRankingGameServiceTest {
         verify(eventPublisher, never()).publishEvent(any());
     }
 
-    private Room room(UUID roomId, String roomCode, UUID hostPlayerId, RoomStatus status) {
-        Room room = new Room();
+    private RoomEntity room(UUID roomId, String roomCode, UUID hostPlayerId, RoomStatus status) {
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode(roomCode);
         room.setHostPlayerId(hostPlayerId);
@@ -248,8 +248,8 @@ class StartRankingGameServiceTest {
         return room;
     }
 
-    private Player player(UUID playerId, UUID roomId, boolean host) {
-        Player player = new Player();
+    private PlayerEntity player(UUID playerId, UUID roomId, boolean host) {
+        PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
         player.setNickname(host ? "Host" : "Guest");
@@ -277,8 +277,8 @@ class StartRankingGameServiceTest {
         return gameSession;
     }
 
-    private Round round(UUID roundId, UUID gameSessionId, UUID questionId) {
-        Round round = new Round();
+    private RoundEntity round(UUID roundId, UUID gameSessionId, UUID questionId) {
+        RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);

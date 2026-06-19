@@ -2,9 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomDetailsResult;
-import com.example.rankinggame.entities.Player;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -28,13 +28,13 @@ class GetRoomServiceTest {
         UUID roomId = UUID.randomUUID();
         UUID hostId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setId(roomId);
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
         room.setHostPlayerId(hostId);
-        Player host = player(hostId, roomId, "Marta", false);
-        Player guest = player(playerId, roomId, "Alex", true);
+        PlayerEntity host = player(hostId, roomId, "Marta", false);
+        PlayerEntity guest = player(playerId, roomId, "Alex", true);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(guest, host));
@@ -65,8 +65,8 @@ class GetRoomServiceTest {
                 .hasMessage("Room not found: MISS1");
     }
 
-    private Player player(UUID playerId, UUID roomId, String nickname, boolean host) {
-        Player player = new Player();
+    private PlayerEntity player(UUID playerId, UUID roomId, String nickname, boolean host) {
+        PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
         player.setNickname(nickname);

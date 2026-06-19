@@ -3,7 +3,7 @@ package com.example.rankinggame.repositories;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.Room;
+import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,10 +39,10 @@ class JpaGameSessionRepositoryTest {
 
     @Test
     void savesAndLoadsGameSessionByRoomId() {
-        Room room = new Room();
+        RoomEntity room = new RoomEntity();
         room.setCode("GMS1");
         room.setStatus(RoomStatus.LOBBY);
-        Room savedRoom = roomRepository.saveAndFlush(room);
+        RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
         GameSession gameSession = new GameSession();
         gameSession.setRoomId(savedRoom.getId());
