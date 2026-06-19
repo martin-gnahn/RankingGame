@@ -1,14 +1,14 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public interface QuestionRepository {
-    Question save(Question question);
+    QuestionEntity save(QuestionEntity question);
 
-    Optional<Question> findById(UUID id);
+    Optional<QuestionEntity> findById(UUID id);
 
-    Optional<Question> findRandomActive();
+    Optional<QuestionEntity> findRandomActive();
 }

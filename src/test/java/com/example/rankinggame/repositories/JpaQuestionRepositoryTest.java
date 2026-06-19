@@ -1,6 +1,6 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -38,17 +38,17 @@ class JpaQuestionRepositoryTest {
     void loadsRandomActiveQuestion() {
         jdbcTemplate.update("UPDATE questions SET active = FALSE");
 
-        Question inactiveQuestion = new Question();
+        QuestionEntity inactiveQuestion = new QuestionEntity();
         inactiveQuestion.setText("Inactive question");
         inactiveQuestion.setCategory("test");
         inactiveQuestion.setActive(false);
         questionRepository.saveAndFlush(inactiveQuestion);
 
-        Question activeQuestion = new Question();
+        QuestionEntity activeQuestion = new QuestionEntity();
         activeQuestion.setText("Active question");
         activeQuestion.setCategory("test");
         activeQuestion.setActive(true);
-        Question savedActiveQuestion = questionRepository.saveAndFlush(activeQuestion);
+        QuestionEntity savedActiveQuestion = questionRepository.saveAndFlush(activeQuestion);
 
         assertThat(questionRepository.findRandomActive())
                 .isPresent()

@@ -5,7 +5,7 @@ import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
@@ -79,10 +79,10 @@ class JpaGameSessionRepositoryTest {
         gameSession.setPlayers(List.of(savedPlayer));
         GameSession savedGameSession = gameSessionRepository.saveAndFlush(gameSession);
 
-        Question question = new Question();
+        QuestionEntity question = new QuestionEntity();
         question.setText("Wer wuerde am ehesten den WLAN-Namen aendern?");
         question.setActive(true);
-        Question savedQuestion = questionRepository.saveAndFlush(question);
+        QuestionEntity savedQuestion = questionRepository.saveAndFlush(question);
 
         RoundEntity round = new RoundEntity();
         round.setGameSessionId(savedGameSession.getId());

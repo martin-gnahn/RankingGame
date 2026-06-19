@@ -4,7 +4,7 @@ import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
@@ -49,7 +49,7 @@ class GetActiveRoundServiceTest {
         RoomEntity room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
         GameSession gameSession = gameSession(gameSessionId, roomId, 1);
         RoundEntity round = round(roundId, gameSessionId, questionId, 1);
-        Question question = question(questionId, "Welche Ausrede funktioniert immer?");
+        QuestionEntity question = question(questionId, "Welche Ausrede funktioniert immer?");
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundRepository.findByGameSessionId(gameSessionId)).thenReturn(List.of(round));
@@ -122,8 +122,8 @@ class GetActiveRoundServiceTest {
         return round;
     }
 
-    private Question question(UUID questionId, String text) {
-        Question question = new Question();
+    private QuestionEntity question(UUID questionId, String text) {
+        QuestionEntity question = new QuestionEntity();
         question.setId(questionId);
         question.setText(text);
         question.setCategory("test");

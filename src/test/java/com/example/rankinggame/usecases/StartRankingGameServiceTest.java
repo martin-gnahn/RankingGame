@@ -7,7 +7,7 @@ import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
@@ -61,7 +61,7 @@ class StartRankingGameServiceTest {
         RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
         PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
         PlayerEntity guestPlayer = player(guestPlayerId, roomId, false);
-        Question question = question(questionId);
+        QuestionEntity question = question(questionId);
         GameSession savedGameSession = gameSession(gameSessionId, roomId);
         RoundEntity savedRound = round(roundId, gameSessionId, questionId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
@@ -260,8 +260,8 @@ class StartRankingGameServiceTest {
         return player;
     }
 
-    private Question question(UUID questionId) {
-        Question question = new Question();
+    private QuestionEntity question(UUID questionId) {
+        QuestionEntity question = new QuestionEntity();
         question.setId(questionId);
         question.setText("Question");
         question.setCategory("test");

@@ -1,23 +1,31 @@
 package com.example.rankinggame.mapper;
 
-import com.example.rankinggame.engine.Player;
+import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.entities.PlayerEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class PlayerMapper {
-    public Player toDomain(PlayerEntity playerEntity) {
-        return Player.builder()
-                .playerId(new PlayerId(playerEntity.getId()))
-                .playerName(playerEntity.getNickname())
-                .build();
+    public GameParticipant toDomain(PlayerEntity playerEntity) {
+        return new GameParticipant(
+                new PlayerId(playerEntity.getId()),
+                playerEntity.getNickname(),
+                playerEntity.isHost()
+        );
     }
 
-    public PlayerEntity toEntity(Player player) {
+    public List<GameParticipant> toDomain(List<PlayerEntity> playerEntities) {
+        return playerEntities.stream().map(this::toDomain).toList();
+    }
+
+    public PlayerEntity toEntity(GameParticipant participant) {
         PlayerEntity playerEntity = new PlayerEntity();
-        playerEntity.setId(player.playerId() == null ? null : player.playerId().value());
-        playerEntity.setNickname(player.playerName());
+        playerEntity.setId(participant.playerId() == null ? null : participant.playerId().value());
+        playerEntity.setNickname(participant.name());
+        playerEntity.setHost(participant.host());
         return playerEntity;
     }
 }

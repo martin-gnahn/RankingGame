@@ -15,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Game {
     final GameId gameId;
-    private List<Player> players;
     private List<GameParticipant> participants;
     boolean isActive;
     private List<Round> allRounds = new ArrayList<>();
@@ -27,32 +26,33 @@ public class Game {
         return allRounds.get(currentRoundNumber);
     }
 
-    private Game(List<GameParticipant> participants) {
+    public Game(List<GameParticipant> participants) {
         this.gameId = new GameId(UUID.randomUUID());
         this.participants = participants;
+        this.status = GameSessionStatus.WAITING;
     }
 
-    public boolean canStart() {
-       return players.size() >= 3 && status == GameSessionStatus.WAITING;
+    public boolean hasEnoughParticipants() {
+       return participants.size() >= 2 && status == GameSessionStatus.WAITING;
     }
 
     public boolean isActive() {
         return status == GameSessionStatus.IN_PROGRESS;
     }
 
-    public void start() {
-        if(!canStart()) {
+    public void start(Question firstQuestion) {
+        if(!hasEnoughParticipants()) {
             throw new GameCannotBeStartedException();
         }
         status = GameSessionStatus.IN_PROGRESS;
-        Player firstCaptain = players.getFirst();
-        Round firstRound = Round.start(firstCaptain.playerId());
+        GameParticipant firstCaptain = getNextCaptain();
+        Round firstRound = Round.start(firstCaptain.playerId(), firstQuestion);
         allRounds.add(firstRound);
     }
 
-    public Round startNextRound(QuestionId questionId) {
+    public Round startNextRound(Question nextQuestion) {
         final GameParticipant newCaptain = getNextCaptain();
-        Round newRound = Round.start(newCaptain.playerId());
+        Round newRound = Round.start(newCaptain.playerId(), nextQuestion);
         allRounds.add(newRound);
         return newRound;
     }

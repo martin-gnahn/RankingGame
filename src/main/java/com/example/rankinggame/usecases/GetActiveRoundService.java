@@ -2,7 +2,7 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.Question;
+import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
@@ -49,7 +49,7 @@ public class GetActiveRoundService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No active round is available"));
         log.info("Retrieved Round entity with id '{}'", round.getId());
-        Question question = questionRepository.findById(round.getQuestionId())
+        QuestionEntity question = questionRepository.findById(round.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
         log.info("Retrieved Question entity with id '{}'", question.getId());
         int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
