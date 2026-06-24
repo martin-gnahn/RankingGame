@@ -1,4 +1,7 @@
 package com.example.rankinggame.engine;
 
-public class InvalidPlayerException extends RuntimeException {
+public class InvalidPlayerException extends IllegalArgumentException {
+    public InvalidPlayerException() {
+        super("Player is not part of this game");
+    }
 }

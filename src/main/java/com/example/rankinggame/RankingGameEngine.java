@@ -19,7 +19,7 @@ public class RankingGameEngine {
     public void submitAnswer(Game game, PlayerId playerId, String answerText, RoundId roundId) {
         String answerTextTrimmed = normalizeAnswerText(answerText);
         // int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
-        game.getCurrentRound().setPlayerAnswer(playerId, answerTextTrimmed);
+        game.getCurrentRound().submitAnswer(playerId, answerTextTrimmed, 1);
     }
 
     private String normalizeAnswerText(String answerText) {

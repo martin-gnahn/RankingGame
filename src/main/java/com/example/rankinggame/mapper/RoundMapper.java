@@ -3,8 +3,10 @@ package com.example.rankinggame.mapper;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.Round;
+import com.example.rankinggame.engine.RoundStatus;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.RoundState;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -21,15 +23,22 @@ public class RoundMapper {
     public Round toDomain(RoundEntity roundEntity, GameParticipant captain) {
         return Round.builder()
                 .submittedAnswers(new HashMap<>())
-                .roundState(roundEntity.getState())
+                .roundStatus(toDomainStatus(roundEntity.getState()))
                 .captain(captain)
                 .question(questionMapper.toDomain(roundEntity.getQuestionEntity()))
                 .build();
     }
 
+    public Round toDomain(RoundEntity roundEntity) {
+        return Round.builder()
+                .submittedAnswers(new HashMap<>())
+                .roundStatus(toDomainStatus(roundEntity.getState()))
+                .build();
+    }
+
     public RoundEntity toEntity(Round round) {
         RoundEntity roundEntity = new RoundEntity();
-        roundEntity.setState(round.getRoundState());
+        roundEntity.setState(toEntityState(round.getRoundStatus()));
         roundEntity.setCaptainPlayerId(
                 Optional.ofNullable(round.getCaptain())
                         .map(GameParticipant::playerId)
@@ -38,5 +47,13 @@ public class RoundMapper {
         );
         roundEntity.setQuestionEntity(questionMapper.toEntity(round.getQuestion()));
         return roundEntity;
+    }
+
+    private RoundStatus toDomainStatus(RoundState state) {
+        return state == null ? null : RoundStatus.valueOf(state.name());
+    }
+
+    private RoundState toEntityState(RoundStatus status) {
+        return status == null ? null : RoundState.valueOf(status.name());
     }
 }

@@ -1,36 +1,36 @@
 package com.example.rankinggame.engine;
 
-import com.example.rankinggame.entities.GameSessionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 // TODO: this is a POJO for Game
 @Data
 @Builder
 @AllArgsConstructor
 public class Game {
-    public static final int REQUIRED_NUMBER_OF_PARTICIPANTS = 1;
+    public static final int REQUIRED_NUMBER_OF_PARTICIPANTS = 2;
     // final GameId gameId;
     private List<GameParticipant> participants;
     boolean isActive;
     private List<Round> allRounds = new ArrayList<>();
-    private GameSessionStatus status;
+    private GameStatus status;
 
-    // has 0-based index, so first round has index 0
+    // Uses the persisted one-based round number; convert to a list index at the boundary.
     private int currentRoundNumber;
 
     public Round getCurrentRound() {
-        return allRounds.get(currentRoundNumber);
+        return allRounds.get(currentRoundNumber - 1);
     }
 
     public Game(List<GameParticipant> participants) {
         // this.gameId = new GameId(UUID.randomUUID());
         this.participants = participants;
-        this.status = GameSessionStatus.WAITING;
+        this.status = GameStatus.WAITING;
     }
 
     public boolean hasEnoughPlayers() {
@@ -39,20 +39,27 @@ public class Game {
     }
 
     public boolean isActive() {
-        return status == GameSessionStatus.IN_PROGRESS;
+        return status == GameStatus.IN_PROGRESS;
     }
 
-    public void start(Question firstQuestion) {
+    public void start(Question firstQuestion, GameParticipant firstCaptain) {
+        requireCanStart(firstCaptain);
+        status = GameStatus.IN_PROGRESS;
+        Round firstRound = Round.start(firstCaptain, firstQuestion);
+        allRounds.add(firstRound);
+        currentRoundNumber = 1;
+    }
+
+    public void requireCanStart(GameParticipant firstCaptain) {
         if(!hasEnoughPlayers()) {
             throw new NotEnoughPlayersException(participants.size(), REQUIRED_NUMBER_OF_PARTICIPANTS);
         }
-        if(status != GameSessionStatus.WAITING) {
+        if(status != GameStatus.WAITING) {
             throw new GameCannotBeStartedException();
         }
-        status = GameSessionStatus.IN_PROGRESS;
-        GameParticipant firstCaptain = getNextCaptain();
-        Round firstRound = Round.start(firstCaptain, firstQuestion);
-        allRounds.add(firstRound);
+        if (!participants.contains(firstCaptain)) {
+            throw new InvalidPlayerException();
+        }
     }
 
     public Round startNextRound(Question nextQuestion) {
@@ -62,12 +69,13 @@ public class Game {
         final GameParticipant newCaptain = getNextCaptain();
         Round newRound = Round.start(newCaptain, nextQuestion);
         allRounds.add(newRound);
+        currentRoundNumber = allRounds.size();
         return newRound;
     }
 
     private boolean questionHasBeenUsedBefore(Question nextQuestion) {
         return allRounds.stream().map(Round::getQuestion).map(Question::questionId)
-                .anyMatch(questionId -> questionId.equals(nextQuestion.questionId()));
+                .anyMatch(questionId -> Objects.equals(questionId, nextQuestion.questionId()));
     }
 
     private GameParticipant getNextCaptain() {

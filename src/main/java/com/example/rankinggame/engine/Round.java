@@ -1,6 +1,5 @@
 package com.example.rankinggame.engine;
 
-import com.example.rankinggame.entities.RoundState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +11,7 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 public class Round {
-    private RoundState roundState;
+    private RoundStatus roundStatus;
     // TODO: move outside
     private GameParticipant captain;
     // private List<Player> players;
@@ -23,14 +22,27 @@ public class Round {
         return new Round(captain, question);
     }
 
-    public void setPlayerAnswer(PlayerId playerId, String answerText) {
-        submittedAnswers.putIfAbsent(playerId, new Answer(answerText));
+    public void requireAcceptingAnswers() {
+        if (roundStatus != RoundStatus.QUESTION_REVEALED) {
+            throw new AnswersNotAcceptedException();
+        }
+    }
+
+    public Answer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
+        requireAcceptingAnswers();
+        if (submittedAnswers.containsKey(playerId)) {
+            throw new AnswerAlreadySubmittedException();
+        }
+
+        Answer answer = new Answer(answerText, cardValue);
+        submittedAnswers.put(playerId, answer);
+        return answer;
     }
 
     private Round(GameParticipant captain, Question question) {
 //        this.captain = players.stream().filter(p -> p.playerId() == captainId).findFirst()
 //                .orElseThrow(InvalidPlayerException::new);
-        this.roundState = RoundState.ANSWER_SUBMISSION;
+        this.roundStatus = RoundStatus.QUESTION_REVEALED;
         this.captain = captain;
         this.question = question;
         // TODO: How to get question id

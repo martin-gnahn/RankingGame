@@ -12,7 +12,6 @@ import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
@@ -35,9 +34,6 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class StartRankingGameService {
-    private static final int FIRST_ROUND_NUMBER = 1;
-    private static final int MIN_ONLINE_PLAYERS_TO_START = 2;
-
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final QuestionRepository questionRepository;
@@ -61,12 +57,15 @@ public class StartRankingGameService {
 
         List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
         List<GameParticipant> participants = playerMapper.toDomain(playerEntities);
+        GameParticipant hostParticipant = playerMapper.toDomain(hostPlayer);
+        Game game = new Game(participants);
+        game.requireCanStart(hostParticipant);
 
         QuestionEntity questionEntity = requireRandomActiveQuestion();
-        Game game = startDomainGame(participants, questionEntity);
+        startDomainGame(game, hostParticipant, questionEntity);
 
         GameSession savedGameSession = saveGameSession(game, room);
-        RoundEntity savedRound = saveFirstRound(game, savedGameSession, questionEntity, hostPlayer);
+        RoundEntity savedRound = saveFirstRound(game, savedGameSession, questionEntity);
         RoomEntity savedRoom = moveRoomIntoGame(room);
 
         assignFirstRoundCard(savedRoom, savedRound, hostPlayer);
@@ -104,31 +103,25 @@ public class StartRankingGameService {
                 .orElseThrow(QuestionUnavailableException::new);
     }
 
-    private Game startDomainGame(List<GameParticipant> participants, QuestionEntity questionEntity) {
+    private void startDomainGame(Game game, GameParticipant firstCaptain, QuestionEntity questionEntity) {
         Question firstQuestion = questionMapper.toDomain(questionEntity);
-        Game game = new Game(participants);
-        game.start(firstQuestion);
-        return game;
+        game.start(firstQuestion, firstCaptain);
     }
 
     private GameSession saveGameSession(Game game, RoomEntity room) {
         GameSession gameSession = gameMapper.toEntity(game);
         gameSession.setRoomId(room.getId());
-        gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
         return gameSessionRepository.save(gameSession);
     }
 
     private RoundEntity saveFirstRound(
             Game game,
             GameSession savedGameSession,
-            QuestionEntity questionEntity,
-            PlayerEntity hostPlayer
+            QuestionEntity questionEntity
     ) {
         RoundEntity round = roundMapper.toEntity(game.getCurrentRound());
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionEntity(questionEntity);
-        round.setCaptainPlayerId(hostPlayer.getId());
-        round.setState(RoundState.QUESTION_REVEALED);
         return roundRepository.save(round);
     }
 

@@ -2,9 +2,11 @@ package com.example.rankinggame.mapper;
 
 import com.example.rankinggame.engine.Game;
 import com.example.rankinggame.engine.GameId;
+import com.example.rankinggame.engine.GameStatus;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.entities.GameSession;
+import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoundEntity;
@@ -49,10 +51,14 @@ public class GameMapper {
         var gameId = new GameId(UUID.randomUUID());
         gameSession.setId(gameId.value());
         // gameSession.setRounds(rounds);
-        gameSession.setStatus(game.getStatus());
+        gameSession.setStatus(toEntityStatus(game.getStatus()));
         gameSession.setCurrentRoundNumber(game.getCurrentRoundNumber());
         gameSession.setGameType(GameType.RANKING_GAME);
         return gameSession;
+    }
+
+    private GameSessionStatus toEntityStatus(GameStatus status) {
+        return status == null ? null : GameSessionStatus.valueOf(status.name());
     }
 
     private <T> List<T> nullToEmpty(List<T> values) {

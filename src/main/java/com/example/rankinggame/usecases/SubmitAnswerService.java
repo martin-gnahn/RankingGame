@@ -2,12 +2,15 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
+import com.example.rankinggame.engine.Answer;
+import com.example.rankinggame.engine.PlayerId;
+import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -23,15 +26,14 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class SubmitAnswerService {
-    private static final int MAX_ANSWER_LENGTH = 500;
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final GameSessionRepository gameSessionRepository;
     private final RoundRepository roundRepository;
     private final AnswerRepository answerRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
+    private final RoundMapper roundMapper;
 
-    // TODO: extract game logic to other service
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
         String normalizedRoomCode = normalizeRoomCode(command.roomCode());
@@ -54,22 +56,23 @@ public class SubmitAnswerService {
                 .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
 
-        if (round.getState() != RoundState.QUESTION_REVEALED) {
-            throw new IllegalArgumentException("Answers are not accepted for this round");
-        }
+        Round domainRound = roundMapper.toDomain(round);
+        domainRound.requireAcceptingAnswers();
+        String answerText = Answer.normalizeText(command.answerText());
 
-        String answerText = normalizeAnswerText(command.answerText());
         int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
 
         if (answerRepository.existsByRoundIdAndPlayerId(round.getId(), player.getId())) {
             throw new IllegalArgumentException("Player already submitted an answer for this round");
         }
 
+        Answer submittedAnswer = domainRound.submitAnswer(new PlayerId(player.getId()), answerText, cardValue);
+
         AnswerEntity answer = new AnswerEntity();
         answer.setRoundId(round.getId());
         answer.setPlayerId(player.getId());
-        answer.setText(answerText);
-        answer.setCardValue(cardValue);
+        answer.setText(submittedAnswer.answerText());
+        answer.setCardValue(submittedAnswer.cardValue());
 
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
@@ -85,18 +88,5 @@ public class SubmitAnswerService {
         }
 
         return roomCode.trim().toUpperCase(Locale.ROOT);
-    }
-
-    private String normalizeAnswerText(String answerText) {
-        if (answerText == null || answerText.isBlank()) {
-            throw new IllegalArgumentException("Answer text is required");
-        }
-
-        String trimmedAnswerText = answerText.trim();
-        if (trimmedAnswerText.length() > MAX_ANSWER_LENGTH) {
-            throw new IllegalArgumentException("Answer text must be 500 characters or fewer");
-        }
-
-        return trimmedAnswerText;
     }
 }

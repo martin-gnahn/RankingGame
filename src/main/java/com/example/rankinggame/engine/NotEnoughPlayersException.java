@@ -1,7 +1,7 @@
 package com.example.rankinggame.engine;
 
-public class NotEnoughPlayersException extends RuntimeException {
+public class NotEnoughPlayersException extends IllegalArgumentException {
     public NotEnoughPlayersException(int actualParticipants, int requiredParticipants) {
-        super("Game has not enough participants to be started. Actual: " + actualParticipants + ". Required: " + requiredParticipants);
+        super("At least " + requiredParticipants + " players are required to start the game");
     }
 }
