@@ -46,15 +46,23 @@ public class Game {
         }
         status = GameSessionStatus.IN_PROGRESS;
         GameParticipant firstCaptain = getNextCaptain();
-        Round firstRound = Round.start(firstCaptain.playerId(), firstQuestion);
+        Round firstRound = Round.start(firstCaptain, firstQuestion);
         allRounds.add(firstRound);
     }
 
     public Round startNextRound(Question nextQuestion) {
+        if(questionHasBeenUsedBefore(nextQuestion)) {
+            throw new CannotUseSameQuestionAgainException();
+        }
         final GameParticipant newCaptain = getNextCaptain();
-        Round newRound = Round.start(newCaptain.playerId(), nextQuestion);
+        Round newRound = Round.start(newCaptain, nextQuestion);
         allRounds.add(newRound);
         return newRound;
+    }
+
+    private boolean questionHasBeenUsedBefore(Question nextQuestion) {
+        return allRounds.stream().map(Round::getQuestion).map(Question::questionId)
+                .anyMatch(questionId -> questionId.equals(nextQuestion.questionId()));
     }
 
     private GameParticipant getNextCaptain() {
@@ -66,7 +74,7 @@ public class Game {
         }
         Round lastRound = allRounds.getLast();
         List<PlayerId> participantIds = participants.stream().map(GameParticipant::playerId).toList();
-        PlayerId lastCaptainId = lastRound.getCaptainPlayerId();
+        PlayerId lastCaptainId = lastRound.getCaptain().playerId();
         int lastCaptainIndex = participantIds.indexOf(lastCaptainId);
         if (lastCaptainIndex == -1) {
             throw new CaptainNotFoundException();
@@ -75,7 +83,7 @@ public class Game {
         return participants.get(indexOfNewCaptain);
     }
 
-    public PlayerId currentCaptainId() {
-        return getCurrentRound().getCaptainPlayerId();
+    public GameParticipant currentCaptain() {
+        return getCurrentRound().getCaptain();
     }
 }

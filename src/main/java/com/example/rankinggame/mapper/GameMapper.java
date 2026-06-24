@@ -19,21 +19,21 @@ public class GameMapper {
     private final PlayerMapper playerMapper;
     private final RoundMapper roundMapper;
 
-    public Game toDomain(GameSession gameSession, List<PlayerEntity> playerEntities) {
-        List<GameParticipant> participants = nullToEmpty(playerEntities).stream()
-                .map(playerMapper::toDomain)
-                .toList();
-        List<Round> rounds = nullToEmpty(gameSession.getRounds()).stream()
-                .map(roundMapper::toDomain)
-                .toList();
-        return Game.builder()
-                .gameId(new GameId(gameSession.getId()))
-                .participants(participants)
-                .status(gameSession.getStatus())
-                .allRounds(rounds)
-                .currentRoundNumber(gameSession.getCurrentRoundNumber())
-                .build();
-    }
+//    public Game toDomain(GameSession gameSession, List<PlayerEntity> playerEntities) {
+//        List<GameParticipant> participants = nullToEmpty(playerEntities).stream()
+//                .map(playerMapper::toDomain)
+//                .toList();
+//        List<Round> rounds = nullToEmpty(gameSession.getRounds()).stream()
+//                .map(roundMapper::toDomain)
+//                .toList();
+//        return Game.builder()
+//                .gameId(new GameId(gameSession.getId()))
+//                .participants(participants)
+//                .status(gameSession.getStatus())
+//                .allRounds(rounds)
+//                .currentRoundNumber(gameSession.getCurrentRoundNumber())
+//                .build();
+//    }
 
     public GameSession toEntity(Game game) {
         List<PlayerEntity> players = nullToEmpty(game.getParticipants()).stream()

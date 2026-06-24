@@ -6,7 +6,6 @@ import com.example.rankinggame.engine.Game;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Question;
 import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -81,7 +80,7 @@ public class StartRankingGameService {
                 .orElseThrow(QuestionUnavailableException::new);
         Question firstQuestion = questionMapper.toDomain(questionEntity);
 
-        List<PlayerEntity> playerEntities = getPlayerList(room, hostPlayer);
+        List<PlayerEntity> playerEntities = getSortedPlayerList(room, hostPlayer);
         List<GameParticipant> participants = playerMapper.toDomain(playerEntities);
         Game game = new Game(participants);
         game.start(firstQuestion);
@@ -142,10 +141,9 @@ public class StartRankingGameService {
         return roomCode;
     }
 
-    private List<PlayerEntity> getPlayerList(RoomEntity room, PlayerEntity hostPlayer) {
+    private List<PlayerEntity> getSortedPlayerList(RoomEntity room, PlayerEntity hostPlayer) {
         List<PlayerEntity> connectedPlayers = new ArrayList<>(playerRepository.findByRoomId(room.getId()).stream()
-                .filter(player -> !Objects.equals(player.getId(), hostPlayer.getId())
-                        && player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED).toList());
+                .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED).toList());
         connectedPlayers.add(hostPlayer);
         return connectedPlayers;
     }
