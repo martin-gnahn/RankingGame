@@ -5,6 +5,7 @@ import com.example.rankinggame.engine.GameId;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.entities.GameSession;
+import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class GameMapper {
         // gameSession.setRounds(rounds);
         gameSession.setStatus(game.getStatus());
         gameSession.setCurrentRoundNumber(game.getCurrentRoundNumber());
+        gameSession.setGameType(GameType.RANKING_GAME);
         return gameSession;
     }
 

@@ -21,6 +21,7 @@ public class Game {
     private List<Round> allRounds = new ArrayList<>();
     private GameSessionStatus status;
 
+    // has 0-based index, so first round has index 0
     private int currentRoundNumber;
 
     public Round getCurrentRound() {
