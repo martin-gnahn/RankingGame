@@ -14,7 +14,8 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class Game {
-    final GameId gameId;
+    public static final int REQUIRED_NUMBER_OF_PARTICIPANTS = 1;
+    // final GameId gameId;
     private List<GameParticipant> participants;
     boolean isActive;
     private List<Round> allRounds = new ArrayList<>();
@@ -27,13 +28,13 @@ public class Game {
     }
 
     public Game(List<GameParticipant> participants) {
-        this.gameId = new GameId(UUID.randomUUID());
+        // this.gameId = new GameId(UUID.randomUUID());
         this.participants = participants;
         this.status = GameSessionStatus.WAITING;
     }
 
     public boolean hasEnoughParticipants() {
-       return participants.size() >= 2 && status == GameSessionStatus.WAITING;
+       return participants.size() >= REQUIRED_NUMBER_OF_PARTICIPANTS && status == GameSessionStatus.WAITING;
     }
 
     public boolean isActive() {
@@ -73,6 +74,10 @@ public class Game {
             return participants.getFirst();
         }
         Round lastRound = allRounds.getLast();
+        return deriveNextCaptainFromPreviousRound(lastRound);
+    }
+
+    private GameParticipant deriveNextCaptainFromPreviousRound(Round lastRound) {
         List<PlayerId> participantIds = participants.stream().map(GameParticipant::playerId).toList();
         PlayerId lastCaptainId = lastRound.getCaptain().playerId();
         int lastCaptainIndex = participantIds.indexOf(lastCaptainId);

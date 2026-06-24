@@ -82,6 +82,7 @@ public class StartRankingGameService {
 
         List<PlayerEntity> playerEntities = getSortedPlayerList(room, hostPlayer);
         List<GameParticipant> participants = playerMapper.toDomain(playerEntities);
+
         Game game = new Game(participants);
         game.start(firstQuestion);
 
@@ -92,12 +93,12 @@ public class StartRankingGameService {
         // gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
 //        gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
 //        gameSession.setPlayers(playerEntities);
-        GameSession savedGameSession = gameSessionRepository.save(gameSession);
+
 
         RoundEntity round = roundMapper.toEntity(game.getCurrentRound());
         // TODO: THis will be part of Game later
 //        RoundEntity round = new RoundEntity();
-        round.setGameSessionId(savedGameSession.getId());
+        round.setGameSessionId(gameSession.getId());
         round.setQuestionEntity(questionEntity);
         round.setCaptainPlayerId(hostPlayer.getId());
         // round.setRoundNumber(FIRST_ROUND_NUMBER);
@@ -107,7 +108,12 @@ public class StartRankingGameService {
         room.setStatus(RoomStatus.IN_GAME);
         RoomEntity savedRoom = roomRepository.save(room);
 
-        roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
+        var allSessions = gameSessionRepository.findById(gameSession.getId());
+
+        //
+        GameSession savedGameSession = gameSessionRepository.save(gameSession);
+
+        // roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
 
         eventPublisher.publishEvent(new GameStartedRoomEvent(
                 savedRoom.getCode(),
@@ -142,10 +148,8 @@ public class StartRankingGameService {
     }
 
     private List<PlayerEntity> getSortedPlayerList(RoomEntity room, PlayerEntity hostPlayer) {
-        List<PlayerEntity> connectedPlayers = new ArrayList<>(playerRepository.findByRoomId(room.getId()).stream()
+        return new ArrayList<>(playerRepository.findByRoomId(room.getId()).stream()
                 .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED).toList());
-        connectedPlayers.add(hostPlayer);
-        return connectedPlayers;
     }
 
     // TODO: extract to pure game logic (GameEngine) class

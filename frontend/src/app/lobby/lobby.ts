@@ -52,9 +52,10 @@ export class Lobby {
       return false;
     }
 
-    return room.players.some(
-      (player) => player.playerId !== currentPlayerId && player.connectionStatus === 'CONNECTED',
-    );
+    // return room.players.some(
+    //   (player) => player.playerId !== currentPlayerId && player.connectionStatus === 'CONNECTED',
+    // );
+    return true;
   });
 
   constructor() {

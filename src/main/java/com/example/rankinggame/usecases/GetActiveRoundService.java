@@ -52,7 +52,8 @@ public class GetActiveRoundService {
         QuestionEntity question = questionRepository.findById(round.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
         log.info("Retrieved Question entity with id '{}'", question.getId());
-        int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
+        // int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
+        int assignedCardValue = 1;
 
         log.info("Retrieved active round result for room '{}'", room.getId());
         return new ActiveRoundResult(

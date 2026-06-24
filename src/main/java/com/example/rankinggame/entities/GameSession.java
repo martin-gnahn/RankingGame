@@ -15,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class GameSession {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     // TODO: extract to room. Game should not know room id.

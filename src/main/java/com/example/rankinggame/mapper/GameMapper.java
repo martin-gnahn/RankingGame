@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -44,8 +45,8 @@ public class GameMapper {
                 .toList();
 
         GameSession gameSession = new GameSession();
-        gameSession.setId(game.getGameId() == null ? null : game.getGameId().value());
-        // gameSession.setPlayers(players);
+        var gameId = new GameId(UUID.randomUUID());
+        gameSession.setId(gameId.value());
         gameSession.setRounds(rounds);
         gameSession.setStatus(game.getStatus());
         gameSession.setCurrentRoundNumber(game.getCurrentRoundNumber());

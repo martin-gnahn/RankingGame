@@ -60,7 +60,8 @@ public class SubmitAnswerService {
         }
 
         String answerText = normalizeAnswerText(command.answerText());
-        int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
+        // int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
+        int cardValue = 1;
 
         if (answerRepository.existsByRoundIdAndPlayerId(round.getId(), player.getId())) {
             throw new IllegalArgumentException("Player already submitted an answer for this round");
