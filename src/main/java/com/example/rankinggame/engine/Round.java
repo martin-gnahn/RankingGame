@@ -1,5 +1,7 @@
 package com.example.rankinggame.engine;
 
+import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
+import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +18,7 @@ public class Round {
     private GameParticipant captain;
     // private List<Player> players;
     private Question question;
+    @Builder.Default
     private Map<PlayerId, Answer> submittedAnswers = new HashMap<>();
 
     public static Round start(GameParticipant captain, Question question) {
@@ -45,6 +48,7 @@ public class Round {
         this.roundStatus = RoundStatus.QUESTION_REVEALED;
         this.captain = captain;
         this.question = question;
+        this.submittedAnswers = new HashMap<>();
         // TODO: How to get question id
     }
 }

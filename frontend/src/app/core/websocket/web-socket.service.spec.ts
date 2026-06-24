@@ -141,6 +141,21 @@ describe('WebSocketService', () => {
     });
   });
 
+  it('should publish chat messages after the STOMP connection opens', () => {
+    service.sendChatMessage('ABCD12', 'player-1', 'Hallo');
+
+    expect(fakeClient.activate).toHaveBeenCalled();
+    expect(fakeClient.publish).not.toHaveBeenCalled();
+
+    fakeClient.connected = true;
+    stompConfig.onConnect?.({} as never);
+
+    expect(fakeClient.publish).toHaveBeenCalledWith({
+      destination: '/app/rooms/ABCD12/chat',
+      body: JSON.stringify({ playerId: 'player-1', body: 'Hallo' }),
+    });
+  });
+
   it('should remove pending room subscriptions when unsubscribed before connection', () => {
     const subscription = service.subscribeToRoom('ABCD12').subscribe();
 

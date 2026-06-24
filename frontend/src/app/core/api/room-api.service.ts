@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ActiveRoundResponse,
+  ChatMessageResponse,
   CreateRoomRequest,
   JoinRoomRequest,
   RoomActionResponse,
@@ -37,6 +38,12 @@ export class RoomApiService {
 
   getRoom(roomCode: RoomCode): Observable<RoomResponse> {
     return this.http.get<RoomResponse>(`${this.roomsUrl}/${encodeURIComponent(roomCode)}`);
+  }
+
+  getRecentChatMessages(roomCode: RoomCode): Observable<ChatMessageResponse[]> {
+    return this.http.get<ChatMessageResponse[]>(
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/chat/messages`,
+    );
   }
 
   startRankingGame(roomCode: RoomCode, request: StartGameRequest): Observable<StartGameResponse> {

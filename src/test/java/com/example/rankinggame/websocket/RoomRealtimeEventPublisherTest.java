@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.events.ChatMessageSentEvent;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,5 +57,34 @@ class RoomRealtimeEventPublisherTest {
         verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
         assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.GAME_STARTED);
         assertThat(eventCaptor.getValue().payload()).isEqualTo(new GameStartedPayload(gameSessionId, GameType.RANKING_GAME));
+    }
+
+    @Test
+    void publishesChatMessageSentToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID messageId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Instant createdAt = Instant.parse("2026-06-24T10:15:30Z");
+
+        publisher.publishChatMessageSent(new ChatMessageSentEvent(
+                "ABCD12",
+                messageId,
+                playerId,
+                "Alex",
+                "Hallo",
+                createdAt
+        ));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.CHAT_MESSAGE_SENT);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new ChatMessagePayload(
+                messageId,
+                playerId,
+                "Alex",
+                "Hallo",
+                createdAt
+        ));
     }
 }

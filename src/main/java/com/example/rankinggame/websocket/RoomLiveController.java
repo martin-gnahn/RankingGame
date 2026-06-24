@@ -1,5 +1,7 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.dto.SendChatMessageCommand;
+import com.example.rankinggame.usecases.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class RoomLiveController {
     private final LivePlayerSessionRegistry sessionRegistry;
+    private final ChatMessageService chatMessageService;
 
     @MessageMapping("/rooms/{roomCode}/join-live")
     public void joinLive(
@@ -23,5 +26,21 @@ public class RoomLiveController {
         }
 
         sessionRegistry.register(sessionId, roomCode, request.playerId());
+    }
+
+    @MessageMapping("/rooms/{roomCode}/chat")
+    public void sendChatMessage(
+            @DestinationVariable String roomCode,
+            @Payload SendChatMessagePayload request
+    ) {
+        if (request == null) {
+            return;
+        }
+
+        chatMessageService.sendMessage(new SendChatMessageCommand(
+                roomCode,
+                request.playerId(),
+                request.body()
+        ));
     }
 }

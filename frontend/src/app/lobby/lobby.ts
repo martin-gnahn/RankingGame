@@ -4,14 +4,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, map } from 'rxjs';
 
+import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
 import { RoomApiService } from '../core/api/room-api.service';
-import { RoomResponse } from '../core/api/room.models';
+import { ChatMessageResponse, RoomResponse } from '../core/api/room.models';
 import { RealtimeEvent } from '../core/websocket/web-socket.models';
 import { WebSocketService } from '../core/websocket/web-socket.service';
 
 @Component({
   selector: 'app-lobby',
-  imports: [RouterLink],
+  imports: [RouterLink, ChatSidebar],
   templateUrl: './lobby.html',
   styleUrl: './lobby.scss',
 })
@@ -32,6 +33,7 @@ export class Lobby {
   protected readonly errorMessage = signal('');
   protected readonly refreshErrorMessage = signal('');
   protected readonly startErrorMessage = signal('');
+  protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
   protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
   protected readonly isCurrentPlayerHost = computed(() => {
     const room = this.room();
@@ -70,6 +72,7 @@ export class Lobby {
       }
 
       this.loadRoom(roomCode, onCleanup);
+      this.loadChatMessages(roomCode, onCleanup);
     });
 
     effect((onCleanup) => {
@@ -128,6 +131,17 @@ export class Lobby {
     });
   }
 
+  protected sendChatMessage(body: string): void {
+    const roomCode = this.roomCode();
+    const playerId = this.currentPlayerId();
+
+    if (!roomCode || !playerId) {
+      return;
+    }
+
+    this.webSocket.sendChatMessage(roomCode, playerId, body);
+  }
+
   protected statusLabel(status: string): string {
     const labels: Record<string, string> = {
       LOBBY: 'Wartet auf Spieler',
@@ -177,6 +191,15 @@ export class Lobby {
     this.loadRoom(roomCode, undefined, { showLoading: false });
   }
 
+  private loadChatMessages(roomCode: string, onCleanup?: (cleanupFn: () => void) => void): void {
+    const subscription = this.roomApi.getRecentChatMessages(roomCode).subscribe({
+      next: (messages) => this.chatMessages.set(messages),
+      error: () => this.refreshErrorMessage.set('Chat konnte nicht geladen werden.'),
+    });
+
+    onCleanup?.(() => subscription.unsubscribe());
+  }
+
   private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
     if (
       event.type === 'PLAYER_JOINED' ||
@@ -188,6 +211,12 @@ export class Lobby {
 
     if (event.type === 'GAME_STARTED') {
       this.navigateToGame(roomCode);
+      return;
+    }
+
+    const payload = event.payload;
+    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
+      this.chatMessages.update((messages) => [...messages, payload]);
     }
   }
 
@@ -221,5 +250,18 @@ export class Lobby {
     }
 
     return 'Die Lobby konnte nicht geladen werden.';
+  }
+
+  private isChatMessage(payload: unknown): payload is ChatMessageResponse {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const message = payload as Partial<ChatMessageResponse>;
+    return typeof message.messageId === 'string'
+      && typeof message.playerId === 'string'
+      && typeof message.senderNickname === 'string'
+      && typeof message.body === 'string'
+      && typeof message.createdAt === 'string';
   }
 }

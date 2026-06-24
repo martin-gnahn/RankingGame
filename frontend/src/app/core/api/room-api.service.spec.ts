@@ -75,6 +75,27 @@ describe('RoomApiService', () => {
     request.flush(response);
   });
 
+  it('should load recent chat messages with an encoded room code', () => {
+    const response = [
+      {
+        messageId: 'message-1',
+        playerId: 'player-1',
+        senderNickname: 'Marta',
+        body: 'Hallo',
+        createdAt: '2026-06-24T10:15:30Z',
+      },
+    ];
+
+    service.getRecentChatMessages('A/B1').subscribe((result) => {
+      expect(result).toEqual(response);
+    });
+
+    const request = httpTesting.expectOne(`${environment.apiBaseUrl}/rooms/A%2FB1/chat/messages`);
+    expect(request.request.method).toBe('GET');
+
+    request.flush(response);
+  });
+
   it('should start a ranking game with an encoded room code and host player id', () => {
     const response = {
       roomId: 'room-1',

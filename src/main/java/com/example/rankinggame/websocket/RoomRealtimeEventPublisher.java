@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.events.ChatMessageSentEvent;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
 import com.example.rankinggame.events.PlayerLeftRoomEvent;
@@ -15,6 +16,7 @@ public class RoomRealtimeEventPublisher {
     public static final String PLAYER_JOINED = "PLAYER_JOINED";
     public static final String PLAYER_LEFT = "PLAYER_LEFT";
     public static final String GAME_STARTED = "GAME_STARTED";
+    public static final String CHAT_MESSAGE_SENT = "CHAT_MESSAGE_SENT";
 
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -39,6 +41,20 @@ public class RoomRealtimeEventPublisher {
         publish(event.roomCode(), new RoomRealtimeEvent(
                 GAME_STARTED,
                 new GameStartedPayload(event.gameSessionId(), event.gameType())
+        ));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishChatMessageSent(ChatMessageSentEvent event) {
+        publish(event.roomCode(), new RoomRealtimeEvent(
+                CHAT_MESSAGE_SENT,
+                new ChatMessagePayload(
+                        event.messageId(),
+                        event.playerId(),
+                        event.senderNickname(),
+                        event.body(),
+                        event.createdAt()
+                )
         ));
     }
 

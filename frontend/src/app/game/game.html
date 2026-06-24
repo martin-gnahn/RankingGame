@@ -1,80 +1,91 @@
 <main class="game-shell" aria-labelledby="game-title">
   <a routerLink="/" class="back-link">Zur Startseite</a>
 
-  @if (loading()) {
-    <section class="state-message" role="status">
-      <span class="loader" aria-hidden="true"></span>
-      Runde wird geladen
-    </section>
-  } @else if (errorMessage()) {
-    <section class="state-message error" role="alert">
-      <p>{{ errorMessage() }}</p>
-    </section>
-  } @else if (activeRound(); as round) {
-    <section class="question-section">
-      <p class="eyebrow">Runde {{ round.roundNumber }}</p>
-      <p id="game-title">{{ round.questionText }}</p>
-    </section>
+  <div class="game-layout">
+    <div class="game-main">
+      @if (loading()) {
+        <section class="state-message" role="status">
+          <span class="loader" aria-hidden="true"></span>
+          Runde wird geladen
+        </section>
+      } @else if (errorMessage()) {
+        <section class="state-message error" role="alert">
+          <p>{{ errorMessage() }}</p>
+        </section>
+      } @else if (activeRound(); as round) {
+        <section class="question-section">
+          <p class="eyebrow">Runde {{ round.roundNumber }}</p>
+          <p id="game-title">{{ round.questionText }}</p>
+        </section>
 
-    <form class="answer-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>
-      <label for="answerText">Antwort</label>
-      <textarea
-        id="answerText"
-        formControlName="answerText"
-        rows="5"
-        maxlength="500"
-        placeholder="Deine Antwort"
-      ></textarea>
-      @if (form.controls.answerText.touched && form.controls.answerText.invalid) {
-        <p class="field-error">Bitte gib eine Reaktion ein.</p>
-      }
-
-      <section class="score-section" aria-labelledby="score-title">
-        <h2 id="score-title">Deine Karte:</h2>
-        <div class="assigned-card-summary" aria-label="Deine zugewiesene Karte">
-          <span>Deine Karte {{round.assignedCardValue}}</span>
-          <strong>{{ round.assignedCardValue }}</strong>
-        </div>
-        <div class="score-grid">
-          @for (card of scoreCards; track card.value) {
-            <span
-              class="score-card"
-              [class.low]="card.tone === 'low'"
-              [class.middle]="card.tone === 'middle'"
-              [class.high]="card.tone === 'high'"
-              [class.active]="isAssignedCard(round.assignedCardValue, card.value)"
-              [attr.aria-label]="
-                isAssignedCard(round.assignedCardValue, card.value) ? 'Deine Karte ' + card.value : null
-              "
-            >
-              <span class="score-card-number">{{ card.value }}</span>
-              @if (isAssignedCard(round.assignedCardValue, card.value)) {
-                <span class="assigned-card-label">Deine Karte</span>
-              }
-            </span>
+        <form class="answer-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>
+          <label for="answerText">Antwort</label>
+          <textarea
+            id="answerText"
+            formControlName="answerText"
+            rows="5"
+            maxlength="500"
+            placeholder="Deine Antwort"
+          ></textarea>
+          @if (form.controls.answerText.touched && form.controls.answerText.invalid) {
+            <p class="field-error">Bitte gib eine Reaktion ein.</p>
           }
-        </div>
-      </section>
 
-      @if (submitErrorMessage()) {
-        <p class="submit-error" role="alert">{{ submitErrorMessage() }}</p>
-      }
+          <section class="score-section" aria-labelledby="score-title">
+            <h2 id="score-title">Deine Karte:</h2>
+            <div class="assigned-card-summary" aria-label="Deine zugewiesene Karte">
+              <span>Deine Karte {{round.assignedCardValue}}</span>
+              <strong>{{ round.assignedCardValue }}</strong>
+            </div>
+            <div class="score-grid">
+              @for (card of scoreCards; track card.value) {
+                <span
+                  class="score-card"
+                  [class.low]="card.tone === 'low'"
+                  [class.middle]="card.tone === 'middle'"
+                  [class.high]="card.tone === 'high'"
+                  [class.active]="isAssignedCard(round.assignedCardValue, card.value)"
+                  [attr.aria-label]="
+                    isAssignedCard(round.assignedCardValue, card.value) ? 'Deine Karte ' + card.value : null
+                  "
+                >
+                  <span class="score-card-number">{{ card.value }}</span>
+                  @if (isAssignedCard(round.assignedCardValue, card.value)) {
+                    <span class="assigned-card-label">Deine Karte</span>
+                  }
+                </span>
+              }
+            </div>
+          </section>
 
-      <button class="primary-button" type="submit" [disabled]="submitting() || submitted()">
+          @if (submitErrorMessage()) {
+            <p class="submit-error" role="alert">{{ submitErrorMessage() }}</p>
+          }
+
+          <button class="primary-button" type="submit" [disabled]="submitting() || submitted()">
+            @if (submitted()) {
+              Antwort gesendet
+            } @else if (submitting()) {
+              Wird gesendet
+            } @else {
+              Antwort abgeben
+            }
+          </button>
+        </form>
+
         @if (submitted()) {
-          Antwort gesendet
-        } @else if (submitting()) {
-          Wird gesendet
-        } @else {
-          Antwort abgeben
+          <section class="waiting-state" role="status">
+            <p>Antwort gespeichert. Warte auf die anderen Spieler.</p>
+          </section>
         }
-      </button>
-    </form>
+      }
+    </div>
 
-    @if (submitted()) {
-      <section class="waiting-state" role="status">
-        <p>Antwort gespeichert. Warte auf die anderen Spieler.</p>
-      </section>
-    }
-  }
+    <app-chat-sidebar
+      [messages]="chatMessages()"
+      [currentPlayerId]="currentPlayerId()"
+      [disabled]="!currentPlayerId()"
+      (sendMessage)="sendChatMessage($event)"
+    />
+  </div>
 </main>

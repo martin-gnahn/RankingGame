@@ -197,7 +197,7 @@ class StartRankingGameServiceTest {
 
         assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", hostPlayerId)))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("At least two online players are required to start the game");
+                .hasMessage("At least 2 players are required to start the game");
 
         verify(questionRepository, never()).findRandomActive();
         verify(gameSessionRepository, never()).save(any());
@@ -236,7 +236,7 @@ class StartRankingGameServiceTest {
 
         assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", hostPlayerId)))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("At least two online players are required to start the game");
+                .hasMessage("At least 2 players are required to start the game");
 
         verify(questionRepository, never()).findRandomActive();
         verify(gameSessionRepository, never()).save(any());
@@ -304,7 +304,7 @@ class StartRankingGameServiceTest {
         QuestionMapper questionMapper = new QuestionMapper();
         RoundMapper roundMapper = new RoundMapper(questionMapper);
         PlayerMapper playerMapper = new PlayerMapper();
-        GameMapper gameMapper = new GameMapper(playerMapper, roundMapper);
+        GameMapper gameMapper = new GameMapper();
 
         return new StartRankingGameService(
                 roomRepository,

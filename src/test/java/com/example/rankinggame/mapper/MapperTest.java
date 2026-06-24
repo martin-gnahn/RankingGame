@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MapperTest {
     private final PlayerMapper playerMapper = new PlayerMapper();
     private final RoundMapper roundMapper = new RoundMapper(new QuestionMapper());
-    private final GameMapper gameMapper = new GameMapper(playerMapper, roundMapper);
+    private final GameMapper gameMapper = new GameMapper();
 
     @Test
     void playerMapperMapsBothDirections() {

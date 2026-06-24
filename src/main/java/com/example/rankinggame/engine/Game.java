@@ -1,5 +1,11 @@
 package com.example.rankinggame.engine;
 
+import com.example.rankinggame.engine.exceptions.CannotUseSameQuestionAgainException;
+import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
+import com.example.rankinggame.engine.exceptions.GameCannotBeStartedException;
+import com.example.rankinggame.engine.exceptions.InvalidPlayerException;
+import com.example.rankinggame.engine.exceptions.NoPlayerInGameException;
+import com.example.rankinggame.engine.exceptions.NotEnoughPlayersException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +23,7 @@ public class Game {
     // final GameId gameId;
     private List<GameParticipant> participants;
     boolean isActive;
+    @Builder.Default
     private List<Round> allRounds = new ArrayList<>();
     private GameStatus status;
 
@@ -30,6 +37,7 @@ public class Game {
     public Game(List<GameParticipant> participants) {
         // this.gameId = new GameId(UUID.randomUUID());
         this.participants = participants;
+        this.allRounds = new ArrayList<>();
         this.status = GameStatus.WAITING;
     }
 

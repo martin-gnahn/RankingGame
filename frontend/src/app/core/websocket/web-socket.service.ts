@@ -82,6 +82,23 @@ export class WebSocketService {
     this.connect();
   }
 
+  sendChatMessage(roomCode: RoomCode, playerId: string, body: string): void {
+    const publishChatMessage = () => {
+      this.client.publish({
+        destination: `/app/rooms/${roomCode}/chat`,
+        body: JSON.stringify({ playerId, body }),
+      });
+    };
+
+    if (this.client.connected) {
+      publishChatMessage();
+      return;
+    }
+
+    this.pendingSubscriptions.add(publishChatMessage);
+    this.connect();
+  }
+
   subscribeToRoom(roomCode: RoomCode): Observable<RealtimeEvent> {
     const destination = `/topic/rooms/${roomCode}`;
 

@@ -1,18 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { RoomApiService } from '../core/api/room-api.service';
 import { ActiveRoundResponse } from '../core/api/room.models';
+import { RealtimeEvent } from '../core/websocket/web-socket.models';
+import { WebSocketService } from '../core/websocket/web-socket.service';
 import { Game } from './game';
 
 describe('Game', () => {
   let fixture: ComponentFixture<Game>;
   let roomApi: jasmine.SpyObj<RoomApiService>;
+  let webSocket: jasmine.SpyObj<WebSocketService>;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let realtimeEvents: Subject<RealtimeEvent>;
 
   const activeRound: ActiveRoundResponse = {
     roomId: 'room-1',
@@ -28,8 +32,18 @@ describe('Game', () => {
   beforeEach(async () => {
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
       'getActiveRound',
+      'getRecentChatMessages',
       'submitAnswer',
     ]);
+    webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
+      'disconnect',
+      'joinLive',
+      'sendChatMessage',
+      'subscribeToRoom',
+    ]);
+    realtimeEvents = new Subject<RealtimeEvent>();
+    webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
+    roomApi.getRecentChatMessages.and.returnValue(of([]));
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'player-1' }));
 
@@ -38,6 +52,7 @@ describe('Game', () => {
       providers: [
         provideRouter([]),
         { provide: RoomApiService, useValue: roomApi },
+        { provide: WebSocketService, useValue: webSocket },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -66,6 +81,9 @@ describe('Game', () => {
     createComponent();
 
     expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
+    expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
+    expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
     expect(textContent()).toContain('Runde 1');
     expect(textContent()).toContain('Welche Ausrede funktioniert immer?');
     expect(textContent()).toContain('Antwort');
@@ -120,11 +138,56 @@ describe('Game', () => {
     roomApi.getActiveRound.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'No active game is running' } })),
     );
+    roomApi.getRecentChatMessages.and.returnValue(of([]));
 
     fixture = TestBed.createComponent(Game);
     fixture.detectChanges();
 
     expect(textContent()).toContain('No active game is running');
+  });
+
+  it('should render and send chat messages', () => {
+    roomApi.getRecentChatMessages.and.returnValue(of([
+      {
+        messageId: 'message-1',
+        playerId: 'player-2',
+        senderNickname: 'Alex',
+        body: 'Ich bin drin',
+        createdAt: '2026-06-24T10:15:30Z',
+      },
+    ]));
+    createComponent();
+
+    expect(textContent()).toContain('Ich bin drin');
+
+    const textarea = (fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>(
+      '#chat-body',
+    );
+    textarea!.value = 'Antwort ist unterwegs';
+    textarea!.dispatchEvent(new Event('input'));
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLFormElement>('.chat-form')!
+      .dispatchEvent(new Event('submit'));
+
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith(
+      'ABCD12',
+      'player-1',
+      'Antwort ist unterwegs',
+    );
+
+    realtimeEvents.next({
+      type: 'CHAT_MESSAGE_SENT',
+      payload: {
+        messageId: 'message-2',
+        playerId: 'player-1',
+        senderNickname: 'Marta',
+        body: 'Gesendet',
+        createdAt: '2026-06-24T10:16:30Z',
+      },
+    });
+    fixture.detectChanges();
+
+    expect(textContent()).toContain('Gesendet');
   });
 
   function compiledAssignedCardText(fixture: ComponentFixture<Game>): string {

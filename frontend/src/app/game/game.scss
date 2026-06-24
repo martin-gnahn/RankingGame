@@ -11,10 +11,23 @@
   display: grid;
   align-content: start;
   gap: 24px;
-  width: min(920px, calc(100% - 40px));
+  width: min(1280px, calc(100% - 40px));
   min-height: 100vh;
   margin: 0 auto;
   padding: 40px 0 72px;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 920px) minmax(300px, 340px);
+  align-items: start;
+  gap: 24px;
+}
+
+.game-main {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
 }
 
 .back-link {
@@ -288,6 +301,10 @@ textarea:disabled {
   .game-shell {
     width: min(100% - 28px, 520px);
     padding: 32px 0 48px;
+  }
+
+  .game-layout {
+    grid-template-columns: 1fr;
   }
 
   .question-section,

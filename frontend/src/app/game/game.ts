@@ -1,12 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
+import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
 import { RoomApiService } from '../core/api/room-api.service';
-import { ActiveRoundResponse } from '../core/api/room.models';
+import { ActiveRoundResponse, ChatMessageResponse } from '../core/api/room.models';
+import { RealtimeEvent } from '../core/websocket/web-socket.models';
+import { WebSocketService } from '../core/websocket/web-socket.service';
 import { notBlankValidator } from '../shared/validators/not-blank.validator';
 
 interface ScoreCard {
@@ -16,12 +19,13 @@ interface ScoreCard {
 
 @Component({
   selector: 'app-game',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ChatSidebar],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
 export class Game {
   private readonly roomApi = inject(RoomApiService);
+  private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly roomCodeParam = toSignal(
@@ -37,6 +41,7 @@ export class Game {
   protected readonly submitted = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly submitErrorMessage = signal('');
+  protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
   protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
     return {
@@ -50,6 +55,30 @@ export class Game {
 
   constructor() {
     this.loadActiveRound();
+
+    effect((onCleanup) => {
+      const roomCode = this.roomCode();
+      const playerId = this.currentPlayerId();
+
+      if (!roomCode) {
+        return;
+      }
+
+      this.loadChatMessages(roomCode, onCleanup);
+
+      const subscription = this.webSocket.subscribeToRoom(roomCode).subscribe({
+        next: (event) => this.handleRealtimeEvent(event),
+      });
+
+      if (playerId) {
+        this.webSocket.joinLive(roomCode, playerId);
+      }
+
+      onCleanup(() => {
+        subscription.unsubscribe();
+        this.webSocket.disconnect();
+      });
+    });
   }
 
   protected isAssignedCard(assignedCardValue: number, cardValue: number): boolean {
@@ -96,6 +125,17 @@ export class Game {
       });
   }
 
+  protected sendChatMessage(body: string): void {
+    const roomCode = this.roomCode();
+    const playerId = this.currentPlayerId();
+
+    if (!roomCode || !playerId) {
+      return;
+    }
+
+    this.webSocket.sendChatMessage(roomCode, playerId, body);
+  }
+
   private loadActiveRound(): void {
     const roomCode = this.roomCode();
 
@@ -125,6 +165,24 @@ export class Game {
     });
   }
 
+  private loadChatMessages(
+    roomCode: string,
+    onCleanup?: (cleanupFn: () => void) => void,
+  ): void {
+    const subscription = this.roomApi.getRecentChatMessages(roomCode).subscribe({
+      next: (messages) => this.chatMessages.set(messages),
+    });
+
+    onCleanup?.(() => subscription.unsubscribe());
+  }
+
+  private handleRealtimeEvent(event: RealtimeEvent): void {
+    const payload = event.payload;
+    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
+      this.chatMessages.update((messages) => [...messages, payload]);
+    }
+  }
+
   private toErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
       return error.error.message;
@@ -135,5 +193,18 @@ export class Game {
     }
 
     return 'Die Runde konnte nicht geladen werden.';
+  }
+
+  private isChatMessage(payload: unknown): payload is ChatMessageResponse {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const message = payload as Partial<ChatMessageResponse>;
+    return typeof message.messageId === 'string'
+      && typeof message.playerId === 'string'
+      && typeof message.senderNickname === 'string'
+      && typeof message.body === 'string'
+      && typeof message.createdAt === 'string';
   }
 }

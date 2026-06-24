@@ -41,16 +41,19 @@ describe('Lobby', () => {
 
   beforeEach(async () => {
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
+      'getRecentChatMessages',
       'getRoom',
       'startRankingGame',
     ]);
     webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
       'disconnect',
       'joinLive',
+      'sendChatMessage',
       'subscribeToRoom',
     ]);
     realtimeEvents = new Subject<RealtimeEvent>();
     webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
+    roomApi.getRecentChatMessages.and.returnValue(of([]));
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'host-1', role: 'host' }));
 
@@ -97,6 +100,7 @@ describe('Lobby', () => {
     createComponent();
 
     expect(roomApi.getRoom).toHaveBeenCalledOnceWith('ABCD12');
+    expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'host-1');
     expect(textContent()).toContain('ABCD12');
@@ -279,6 +283,47 @@ describe('Lobby', () => {
     expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
       queryParams: { playerId: 'host-1', role: 'host' },
     });
+  });
+
+  it('should render and send chat messages', () => {
+    roomApi.getRoom.and.returnValue(of(roomResponse));
+    roomApi.getRecentChatMessages.and.returnValue(of([
+      {
+        messageId: 'message-1',
+        playerId: 'player-2',
+        senderNickname: 'Alex',
+        body: 'Hallo Lobby',
+        createdAt: '2026-06-24T10:15:30Z',
+      },
+    ]));
+
+    createComponent();
+    expect(textContent()).toContain('Hallo Lobby');
+
+    const textarea = (fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>(
+      '#chat-body',
+    );
+    textarea!.value = 'Bereit?';
+    textarea!.dispatchEvent(new Event('input'));
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLFormElement>('.chat-form')!
+      .dispatchEvent(new Event('submit'));
+
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'host-1', 'Bereit?');
+
+    realtimeEvents.next({
+      type: 'CHAT_MESSAGE_SENT',
+      payload: {
+        messageId: 'message-2',
+        playerId: 'host-1',
+        senderNickname: 'Marta',
+        body: 'Los gehts',
+        createdAt: '2026-06-24T10:16:30Z',
+      },
+    });
+    fixture.detectChanges();
+
+    expect(textContent()).toContain('Los gehts');
   });
 
   it('should disconnect the websocket when the lobby is destroyed', () => {

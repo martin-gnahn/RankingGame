@@ -75,3 +75,11 @@ export interface SubmitAnswerResponse {
   playerId: string;
   submitted: boolean;
 }
+
+export interface ChatMessageResponse {
+  messageId: string;
+  playerId: string;
+  senderNickname: string;
+  body: string;
+  createdAt: string;
+}

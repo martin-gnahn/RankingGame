@@ -12,6 +12,8 @@ import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.mapper.QuestionMapper;
+import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -46,7 +48,8 @@ class SubmitAnswerServiceTest {
                 gameSessionRepository,
                 roundRepository,
                 answerRepository,
-                roundCardAssignmentService
+                roundCardAssignmentService,
+                roundMapper()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -101,7 +104,8 @@ class SubmitAnswerServiceTest {
                 gameSessionRepository,
                 roundRepository,
                 answerRepository,
-                roundCardAssignmentService
+                roundCardAssignmentService,
+                roundMapper()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -161,8 +165,13 @@ class SubmitAnswerServiceTest {
                 mock(GameSessionRepository.class),
                 mock(RoundRepository.class),
                 mock(AnswerRepository.class),
-                mock(RoundCardAssignmentService.class)
+                mock(RoundCardAssignmentService.class),
+                roundMapper()
         );
+    }
+
+    private RoundMapper roundMapper() {
+        return new RoundMapper(new QuestionMapper());
     }
 
     private RoomEntity room(UUID roomId) {

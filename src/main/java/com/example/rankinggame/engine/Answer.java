@@ -1,5 +1,9 @@
 package com.example.rankinggame.engine;
 
+import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
+import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
+import com.example.rankinggame.engine.exceptions.InvalidCardValueException;
+
 public record Answer(String answerText, int cardValue) {
     private static final int MAX_ANSWER_LENGTH = 500;
     private static final int MIN_CARD_VALUE = 1;
@@ -8,18 +12,18 @@ public record Answer(String answerText, int cardValue) {
     public Answer {
         answerText = normalize(answerText);
         if (cardValue < MIN_CARD_VALUE || cardValue > MAX_CARD_VALUE) {
-            throw new IllegalArgumentException("Card value must be between 1 and 10");
+            throw new InvalidCardValueException(MIN_CARD_VALUE, MAX_CARD_VALUE);
         }
     }
 
     public static String normalizeText(String answerText) {
         if (answerText == null || answerText.isBlank()) {
-            throw new IllegalArgumentException("Answer text is required");
+            throw new AnswerTextRequiredException();
         }
 
         String trimmedAnswerText = answerText.trim();
         if (trimmedAnswerText.length() > MAX_ANSWER_LENGTH) {
-            throw new IllegalArgumentException("Answer text must be 500 characters or fewer");
+            throw new AnswerTextTooLongException(MAX_ANSWER_LENGTH);
         }
 
         return trimmedAnswerText;

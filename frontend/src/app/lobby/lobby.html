@@ -1,83 +1,92 @@
 <main class="lobby-shell" aria-labelledby="lobby-title">
   <a routerLink="/" class="back-link">Zur Startseite</a>
 
-  <section class="lobby-panel">
-    <div class="lobby-header">
-      <div>
-        <p class="eyebrow">Lobby</p>
-        <h1 id="lobby-title">{{ room()?.roomCode ?? roomCode() }}</h1>
-      </div>
+  <div class="lobby-layout">
+    <section class="lobby-panel">
+      <div class="lobby-header">
+        <div>
+          <p class="eyebrow">Lobby</p>
+          <h1 id="lobby-title">{{ room()?.roomCode ?? roomCode() }}</h1>
+        </div>
 
-      @if (room(); as room) {
-        <p class="room-status">{{ statusLabel(room.status) }}</p>
-      }
-    </div>
-
-    @if (loading()) {
-      <div class="state-message" role="status">
-        <span class="loader" aria-hidden="true"></span>
-        Lobby wird geladen
-      </div>
-    } @else if (errorMessage()) {
-      <div class="state-message error" role="alert">
-        <p>{{ errorMessage() }}</p>
-        <button class="secondary-button" type="button" (click)="retryLoad()">
-          Erneut versuchen
-        </button>
-      </div>
-    } @else if (room(); as room) {
-      <div class="lobby-summary" aria-label="Lobby Status">
-        <span>{{ playerCount() }} Spieler</span>
-        <span>{{ statusLabel(room.status) }}</span>
-      </div>
-
-      @if (refreshErrorMessage()) {
-        <p class="refresh-error" role="status">{{ refreshErrorMessage() }}</p>
-      }
-
-      <section class="players-section" aria-labelledby="players-title">
-        <h2 id="players-title">Spieler</h2>
-
-        @if (room.players.length) {
-          <ul class="player-list">
-            @for (player of room.players; track player.playerId) {
-              <li class="player-row" [class.current-player]="player.playerId === currentPlayerId()">
-                <div class="player-main">
-                  <span class="player-name">{{ player.nickname }}</span>
-                  @if (player.host) {
-                    <span class="host-badge">Host</span>
-                  }
-                </div>
-                <span
-                  class="connection-badge"
-                  [class.disconnected]="player.connectionStatus !== 'CONNECTED'"
-                >
-                  {{ connectionLabel(player.connectionStatus) }}
-                </span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="empty-state">Noch keine Spieler im Raum.</p>
+        @if (room(); as room) {
+          <p class="room-status">{{ statusLabel(room.status) }}</p>
         }
-      </section>
+      </div>
 
-      @if (startErrorMessage()) {
-        <p class="refresh-error" role="alert">{{ startErrorMessage() }}</p>
-      }
+      @if (loading()) {
+        <div class="state-message" role="status">
+          <span class="loader" aria-hidden="true"></span>
+          Lobby wird geladen
+        </div>
+      } @else if (errorMessage()) {
+        <div class="state-message error" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <button class="secondary-button" type="button" (click)="retryLoad()">
+            Erneut versuchen
+          </button>
+        </div>
+      } @else if (room(); as room) {
+        <div class="lobby-summary" aria-label="Lobby Status">
+          <span>{{ playerCount() }} Spieler</span>
+          <span>{{ statusLabel(room.status) }}</span>
+        </div>
 
-      @if (isCurrentPlayerHost()) {
-        <button
-          class="primary-button"
-          type="button"
-          [disabled]="startingGame() || !canStartGame()"
-          (click)="startGame()"
-        >
-          Spiel starten
-        </button>
-      } @else {
-        <p class="waiting-note">Der Host startet das Spiel.</p>
+        @if (refreshErrorMessage()) {
+          <p class="refresh-error" role="status">{{ refreshErrorMessage() }}</p>
+        }
+
+        <section class="players-section" aria-labelledby="players-title">
+          <h2 id="players-title">Spieler</h2>
+
+          @if (room.players.length) {
+            <ul class="player-list">
+              @for (player of room.players; track player.playerId) {
+                <li class="player-row" [class.current-player]="player.playerId === currentPlayerId()">
+                  <div class="player-main">
+                    <span class="player-name">{{ player.nickname }}</span>
+                    @if (player.host) {
+                      <span class="host-badge">Host</span>
+                    }
+                  </div>
+                  <span
+                    class="connection-badge"
+                    [class.disconnected]="player.connectionStatus !== 'CONNECTED'"
+                  >
+                    {{ connectionLabel(player.connectionStatus) }}
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-state">Noch keine Spieler im Raum.</p>
+          }
+        </section>
+
+        @if (startErrorMessage()) {
+          <p class="refresh-error" role="alert">{{ startErrorMessage() }}</p>
+        }
+
+        @if (isCurrentPlayerHost()) {
+          <button
+            class="primary-button"
+            type="button"
+            [disabled]="startingGame() || !canStartGame()"
+            (click)="startGame()"
+          >
+            Spiel starten
+          </button>
+        } @else {
+          <p class="waiting-note">Der Host startet das Spiel.</p>
+        }
       }
-    }
-  </section>
+    </section>
+
+    <app-chat-sidebar
+      [messages]="chatMessages()"
+      [currentPlayerId]="currentPlayerId()"
+      [disabled]="!currentPlayerId()"
+      (sendMessage)="sendChatMessage($event)"
+    />
+  </div>
 </main>
