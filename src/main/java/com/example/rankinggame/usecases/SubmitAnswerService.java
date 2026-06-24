@@ -36,10 +36,10 @@ public class SubmitAnswerService {
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
         String normalizedRoomCode = normalizeRoomCode(command.roomCode());
         if (command.roundId() == null) {
-            throw new IllegalArgumentException("Round id is required");
+            throw new RoundIdRequiredException();
         }
         if (command.playerId() == null) {
-            throw new IllegalArgumentException("Player id is required");
+            throw new PlayerIdRequiredException();
         }
 
         // TODO: extract to other service

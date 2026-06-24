@@ -126,6 +126,45 @@ class SubmitAnswerServiceTest {
         verify(answerRepository, never()).save(any());
     }
 
+    @Test
+    void rejectsMissingRoundId() {
+        SubmitAnswerService service = serviceWithMocks();
+
+        assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
+                "ABCD12",
+                null,
+                UUID.randomUUID(),
+                "Mit WLAN-Problemen."
+        )))
+                .isInstanceOf(RoundIdRequiredException.class)
+                .hasMessage("Round id is required");
+    }
+
+    @Test
+    void rejectsMissingPlayerId() {
+        SubmitAnswerService service = serviceWithMocks();
+
+        assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
+                "ABCD12",
+                UUID.randomUUID(),
+                null,
+                "Mit WLAN-Problemen."
+        )))
+                .isInstanceOf(PlayerIdRequiredException.class)
+                .hasMessage("Player id is required");
+    }
+
+    private SubmitAnswerService serviceWithMocks() {
+        return new SubmitAnswerService(
+                mock(RoomRepository.class),
+                mock(PlayerRepository.class),
+                mock(GameSessionRepository.class),
+                mock(RoundRepository.class),
+                mock(AnswerRepository.class),
+                mock(RoundCardAssignmentService.class)
+        );
+    }
+
     private RoomEntity room(UUID roomId) {
         RoomEntity room = new RoomEntity();
         room.setId(roomId);

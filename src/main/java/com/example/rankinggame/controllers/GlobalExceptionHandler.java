@@ -4,7 +4,9 @@ import com.example.rankinggame.dto.ApiError;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.usecases.PlayerIdRequiredException;
 import com.example.rankinggame.usecases.RoomCodeRequiredException;
+import com.example.rankinggame.usecases.RoundIdRequiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -25,8 +27,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error(ErrorConstants.INVALID_REQUEST, exception.getMessage()));
     }
 
-    @ExceptionHandler(RoomCodeRequiredException.class)
-    public ResponseEntity<ApiError> handleRoomCodeRequired(RoomCodeRequiredException exception) {
+    @ExceptionHandler({
+            RoomCodeRequiredException.class,
+            RoundIdRequiredException.class,
+            PlayerIdRequiredException.class
+    })
+    public ResponseEntity<ApiError> handleRequiredRequestValue(RuntimeException exception) {
         return ResponseEntity.badRequest().body(error(ErrorConstants.INVALID_REQUEST, exception.getMessage()));
     }
 

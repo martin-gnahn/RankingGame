@@ -58,7 +58,10 @@ public class StartRankingGameService {
 
         RoomEntity room = requireLobbyRoom(roomCode);
         PlayerEntity hostPlayer = requireRoomHost(room, hostPlayerId);
-        List<GameParticipant> participants = requireOnlineParticipants(room);
+
+        List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
+        List<GameParticipant> participants = playerMapper.toDomain(playerEntities);
+
         QuestionEntity questionEntity = requireRandomActiveQuestion();
         Game game = startDomainGame(participants, questionEntity);
 
@@ -94,12 +97,6 @@ public class StartRankingGameService {
         }
 
         return hostPlayer;
-    }
-
-    private List<GameParticipant> requireOnlineParticipants(RoomEntity room) {
-        List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
-        requireEnoughOnlinePlayers(playerEntities);
-        return playerMapper.toDomain(playerEntities);
     }
 
     private QuestionEntity requireRandomActiveQuestion() {
@@ -173,12 +170,6 @@ public class StartRankingGameService {
                 .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED)
                 .sorted(Comparator.comparing(PlayerEntity::getJoinedAt))
                 .toList());
-    }
-
-    private void requireEnoughOnlinePlayers(List<PlayerEntity> playerEntities) {
-        if (playerEntities.size() < MIN_ONLINE_PLAYERS_TO_START) {
-            throw new IllegalArgumentException("At least two online players are required to start the game");
-        }
     }
 
     private UUID requireHostPlayerId(StartRankingGameCommand command) {
