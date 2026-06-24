@@ -47,7 +47,7 @@ public class GameMapper {
         GameSession gameSession = new GameSession();
         var gameId = new GameId(UUID.randomUUID());
         gameSession.setId(gameId.value());
-        gameSession.setRounds(rounds);
+        // gameSession.setRounds(rounds);
         gameSession.setStatus(game.getStatus());
         gameSession.setCurrentRoundNumber(game.getCurrentRoundNumber());
         return gameSession;

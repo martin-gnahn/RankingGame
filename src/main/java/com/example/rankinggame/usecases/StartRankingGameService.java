@@ -93,7 +93,8 @@ public class StartRankingGameService {
         // gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
 //        gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
 //        gameSession.setPlayers(playerEntities);
-
+//
+        GameSession savedGameSession = gameSessionRepository.save(gameSession);
 
         RoundEntity round = roundMapper.toEntity(game.getCurrentRound());
         // TODO: THis will be part of Game later
@@ -108,10 +109,7 @@ public class StartRankingGameService {
         room.setStatus(RoomStatus.IN_GAME);
         RoomEntity savedRoom = roomRepository.save(room);
 
-        var allSessions = gameSessionRepository.findById(gameSession.getId());
 
-        //
-        GameSession savedGameSession = gameSessionRepository.save(gameSession);
 
         // roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
 
