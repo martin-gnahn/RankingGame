@@ -79,13 +79,13 @@ class StartRankingGameServiceTest {
 
         StartRankingGameResult result = service.startGame(new StartRankingGameCommand(" abcd12 ", hostPlayerId));
 
-        assertThat(result.roomId()).isEqualTo(roomId);
-        assertThat(result.roomCode()).isEqualTo("ABCD12");
-        assertThat(result.gameSessionId()).isEqualTo(gameSessionId);
-        assertThat(result.gameType()).isEqualTo(GameType.RANKING_GAME);
-        assertThat(result.roundId()).isEqualTo(roundId);
-        assertThat(result.roundNumber()).isEqualTo(1);
-        assertThat(result.questionId()).isEqualTo(questionId);
+        assertThat(result.room().id()).isEqualTo(roomId);
+        assertThat(result.room().code()).isEqualTo("ABCD12");
+        assertThat(result.game().id()).isEqualTo(gameSessionId);
+        assertThat(result.game().gameType()).isEqualTo(GameType.RANKING_GAME);
+        assertThat(result.round().id()).isEqualTo(roundId);
+        assertThat(result.round().number()).isEqualTo(1);
+        assertThat(result.round().questionId()).isEqualTo(questionId);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_GAME);
 
         ArgumentCaptor<GameSession> gameSessionCaptor = ArgumentCaptor.forClass(GameSession.class);
@@ -317,7 +317,8 @@ class StartRankingGameServiceTest {
                 playerMapper,
                 gameMapper,
                 roundMapper,
-                questionMapper
+                questionMapper,
+                new RoomCodeService()
         );
     }
 }

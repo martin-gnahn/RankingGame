@@ -13,6 +13,7 @@ import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomDetailsResult;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.usecases.RoomCodeRequiredException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -205,6 +206,23 @@ class RoomControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("Player name is already taken"));
+    }
+
+    @Test
+    void returnsBadRequestWhenRoomCodeIsMissing() throws Exception {
+        CreateRoomService createRoomService = mock(CreateRoomService.class);
+        JoinRoomService joinRoomService = mock(JoinRoomService.class);
+        GetRoomService getRoomService = mock(GetRoomService.class);
+        when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
+                .thenThrow(new RoomCodeRequiredException());
+        MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
+
+        mockMvc.perform(post("/api/rooms/ABCD12/players")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"playerName\":\"Alex\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Room code is required"));
     }
 
     @Test

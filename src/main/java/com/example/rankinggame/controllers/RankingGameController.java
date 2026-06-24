@@ -44,13 +44,13 @@ public class RankingGameController {
                 request == null ? null : request.hostPlayerId()
         ));
         return new StartGameResponse(
-                result.roomId(),
-                result.roomCode(),
-                result.gameSessionId(),
-                result.gameType().name(),
-                result.roundId(),
-                result.roundNumber(),
-                result.questionId()
+                result.room().id(),
+                result.room().code(),
+                result.game().id(),
+                result.game().gameType().name(),
+                result.round().id(),
+                result.round().number(),
+                result.round().questionId()
         );
     }
 

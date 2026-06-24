@@ -49,7 +49,7 @@ class JoinRoomServiceTest {
             return player;
         });
 
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         JoinRoomResult result = service.joinRoom(new JoinRoomCommand(" abcd12 ", "  Alex  "));
 
@@ -85,7 +85,7 @@ class JoinRoomServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         when(roomRepository.findByCode("MISS1")).thenReturn(Optional.empty());
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("MISS1", "Alex")))
                 .isInstanceOf(RoomNotFoundException.class)
@@ -109,7 +109,7 @@ class JoinRoomServiceTest {
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(existingPlayer));
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "alex")))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -133,7 +133,7 @@ class JoinRoomServiceTest {
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
         when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doThrow(new DataIntegrityViolationException("duplicate nickname")).when(playerRepository).flush();
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher);
+        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "Alex")))
                 .isInstanceOf(IllegalArgumentException.class)

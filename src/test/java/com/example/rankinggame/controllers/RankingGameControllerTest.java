@@ -36,13 +36,9 @@ class RankingGameControllerTest {
         UUID questionId = UUID.randomUUID();
         when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
                 .thenReturn(new StartRankingGameResult(
-                        roomId,
-                        "ABCD12",
-                        gameSessionId,
-                        GameType.RANKING_GAME,
-                        roundId,
-                        1,
-                        questionId
+                        new StartRankingGameResult.StartedRoom(roomId, "ABCD12"),
+                        new StartRankingGameResult.StartedGame(gameSessionId, GameType.RANKING_GAME),
+                        new StartRankingGameResult.StartedRound(roundId, 1, questionId)
                 ));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
 

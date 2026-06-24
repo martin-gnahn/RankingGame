@@ -16,8 +16,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
-
 @RequiredArgsConstructor
 @Service
 public class JoinRoomService {
@@ -26,10 +24,11 @@ public class JoinRoomService {
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final RoomCodeService roomCodeService;
 
     @Transactional
     public JoinRoomResult joinRoom(JoinRoomCommand command) {
-        String roomCode = normalizeRoomCode(command);
+        String roomCode = roomCodeService.normalizeRoomCode(command);
         String playerName = normalizePlayerName(command);
 
         RoomEntity room = roomRepository.findByCode(roomCode)
@@ -70,20 +69,6 @@ public class JoinRoomService {
         ));
 
         return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname());
-    }
-
-    private String normalizeRoomCode(JoinRoomCommand command) {
-        if (command == null || command.roomCode() == null) {
-            throw new IllegalArgumentException("Room code is required");
-        }
-
-        String roomCode = command.roomCode().trim().toUpperCase(Locale.ROOT);
-
-        if (roomCode.isBlank()) {
-            throw new IllegalArgumentException("Room code is required");
-        }
-
-        return roomCode;
     }
 
     // TODO: duplicate #1 B
