@@ -13,6 +13,10 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
+import com.example.rankinggame.mapper.GameMapper;
+import com.example.rankinggame.mapper.PlayerMapper;
+import com.example.rankinggame.mapper.QuestionMapper;
+import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -22,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,7 +48,7 @@ class StartRankingGameServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
+        StartRankingGameService service = service(
                 roomRepository,
                 playerRepository,
                 questionRepository,
@@ -89,14 +94,12 @@ class StartRankingGameServiceTest {
         assertThat(gameSessionCaptor.getValue().getGameType()).isEqualTo(GameType.RANKING_GAME);
         assertThat(gameSessionCaptor.getValue().getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
         assertThat(gameSessionCaptor.getValue().getCurrentRoundNumber()).isEqualTo(1);
-        assertThat(gameSessionCaptor.getValue().getPlayers()).containsExactly(guestPlayer, hostPlayer);
 
         ArgumentCaptor<RoundEntity> roundCaptor = ArgumentCaptor.forClass(RoundEntity.class);
         verify(roundRepository).save(roundCaptor.capture());
         assertThat(roundCaptor.getValue().getGameSessionId()).isEqualTo(gameSessionId);
         assertThat(roundCaptor.getValue().getQuestionId()).isEqualTo(questionId);
         assertThat(roundCaptor.getValue().getCaptainPlayerId()).isEqualTo(hostPlayerId);
-        assertThat(roundCaptor.getValue().getRoundNumber()).isEqualTo(1);
         assertThat(roundCaptor.getValue().getState()).isEqualTo(RoundState.QUESTION_REVEALED);
 
         verify(eventPublisher).publishEvent(new GameStartedRoomEvent("ABCD12", gameSessionId, GameType.RANKING_GAME));
@@ -112,7 +115,7 @@ class StartRankingGameServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
+        StartRankingGameService service = service(
                 roomRepository,
                 playerRepository,
                 questionRepository,
@@ -128,7 +131,7 @@ class StartRankingGameServiceTest {
         when(playerRepository.findById(guestPlayerId)).thenReturn(Optional.of(player(guestPlayerId, roomId, false)));
 
         assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", guestPlayerId)))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(OnlyHostCanStartGame.class)
                 .hasMessage("Only the host can start the game");
 
         verify(gameSessionRepository, never()).save(any());
@@ -145,7 +148,7 @@ class StartRankingGameServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
+        StartRankingGameService service = service(
                 roomRepository,
                 playerRepository,
                 questionRepository,
@@ -175,7 +178,7 @@ class StartRankingGameServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
+        StartRankingGameService service = service(
                 roomRepository,
                 playerRepository,
                 questionRepository,
@@ -211,7 +214,7 @@ class StartRankingGameServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        StartRankingGameService service = new StartRankingGameService(
+        StartRankingGameService service = service(
                 roomRepository,
                 playerRepository,
                 questionRepository,
@@ -257,6 +260,7 @@ class StartRankingGameServiceTest {
         player.setNickname(host ? "Host" : "Guest");
         player.setHost(host);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        player.setJoinedAt(Instant.now());
         return player;
     }
 
@@ -284,8 +288,36 @@ class StartRankingGameServiceTest {
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);
-        round.setRoundNumber(1);
         round.setState(RoundState.QUESTION_REVEALED);
         return round;
+    }
+
+    private StartRankingGameService service(
+            RoomRepository roomRepository,
+            PlayerRepository playerRepository,
+            QuestionRepository questionRepository,
+            GameSessionRepository gameSessionRepository,
+            RoundRepository roundRepository,
+            RoundCardAssignmentService roundCardAssignmentService,
+            ApplicationEventPublisher eventPublisher
+    ) {
+        QuestionMapper questionMapper = new QuestionMapper();
+        RoundMapper roundMapper = new RoundMapper(questionMapper);
+        PlayerMapper playerMapper = new PlayerMapper();
+        GameMapper gameMapper = new GameMapper(playerMapper, roundMapper);
+
+        return new StartRankingGameService(
+                roomRepository,
+                playerRepository,
+                questionRepository,
+                gameSessionRepository,
+                roundRepository,
+                roundCardAssignmentService,
+                eventPublisher,
+                playerMapper,
+                gameMapper,
+                roundMapper,
+                questionMapper
+        );
     }
 }

@@ -157,7 +157,6 @@ class SubmitAnswerServiceTest {
         RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
-        round.setRoundNumber(1);
         round.setState(RoundState.QUESTION_REVEALED);
         return round;
     }

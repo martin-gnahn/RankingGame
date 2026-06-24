@@ -6,6 +6,7 @@ import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -45,15 +46,14 @@ public class GetActiveRoundService {
         log.info("Retrieved GameSession entity with id '{}'", gameSession.getId());
 
         RoundEntity round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
-                .filter(candidate -> candidate.getRoundNumber() == gameSession.getCurrentRoundNumber())
+                .filter(candidate -> candidate.getState() == RoundState.QUESTION_REVEALED)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No active round is available"));
         log.info("Retrieved Round entity with id '{}'", round.getId());
         QuestionEntity question = questionRepository.findById(round.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
         log.info("Retrieved Question entity with id '{}'", question.getId());
-        // int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
-        int assignedCardValue = 1;
+        int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
 
         log.info("Retrieved active round result for room '{}'", room.getId());
         return new ActiveRoundResult(
@@ -61,7 +61,7 @@ public class GetActiveRoundService {
                 room.getCode(),
                 gameSession.getId(),
                 round.getId(),
-                round.getRoundNumber(),
+                gameSession.getCurrentRoundNumber(),
                 question.getId(),
                 question.getText(),
                 assignedCardValue

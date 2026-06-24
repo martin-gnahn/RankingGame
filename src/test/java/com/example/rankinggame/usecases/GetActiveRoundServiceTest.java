@@ -48,7 +48,7 @@ class GetActiveRoundServiceTest {
         UUID playerId = UUID.randomUUID();
         RoomEntity room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
         GameSession gameSession = gameSession(gameSessionId, roomId, 1);
-        RoundEntity round = round(roundId, gameSessionId, questionId, 1);
+        RoundEntity round = round(roundId, gameSessionId, questionId);
         QuestionEntity question = question(questionId, "Welche Ausrede funktioniert immer?");
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
@@ -112,12 +112,11 @@ class GetActiveRoundServiceTest {
         return gameSession;
     }
 
-    private RoundEntity round(UUID roundId, UUID gameSessionId, UUID questionId, int roundNumber) {
+    private RoundEntity round(UUID roundId, UUID gameSessionId, UUID questionId) {
         RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);
-        round.setRoundNumber(roundNumber);
         round.setState(RoundState.QUESTION_REVEALED);
         return round;
     }

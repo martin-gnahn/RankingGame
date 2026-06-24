@@ -82,13 +82,14 @@ public class StartRankingGameService {
         game.start(firstQuestion);
 
         GameSession gameSession = gameMapper.toEntity(game);
+        gameSession.setRoomId(room.getId());
+        gameSession.setCurrentRoundNumber(FIRST_ROUND_NUMBER);
         GameSession savedGameSession = gameSessionRepository.save(gameSession);
 
         RoundEntity round = roundMapper.toEntity(game.getCurrentRound());
-        round.setGameSessionId(gameSession.getId());
+        round.setGameSessionId(savedGameSession.getId());
         round.setQuestionEntity(questionEntity);
         round.setCaptainPlayerId(hostPlayer.getId());
-        round.setRoundNumber(gameSession.getCurrentRoundNumber());
 
         round.setState(RoundState.QUESTION_REVEALED);
         RoundEntity savedRound = roundRepository.save(round);
@@ -96,9 +97,7 @@ public class StartRankingGameService {
         room.setStatus(RoomStatus.IN_GAME);
         RoomEntity savedRoom = roomRepository.save(room);
 
-
-
-        // roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
+        roundCardAssignmentService.assignedCardValue(savedRoom.getId(), savedRound.getId(), hostPlayer.getId());
 
         eventPublisher.publishEvent(new GameStartedRoomEvent(
                 savedRoom.getCode(),
@@ -113,7 +112,7 @@ public class StartRankingGameService {
                 savedGameSession.getId(),
                 savedGameSession.getGameType(),
                 savedRound.getId(),
-                savedRound.getRoundNumber(),
+                savedGameSession.getCurrentRoundNumber(),
                 savedRound.getQuestionEntity().getId()
         );
     }
@@ -139,17 +138,9 @@ public class StartRankingGameService {
                 .toList());
     }
 
-    // TODO: extract to pure game logic (GameEngine) class
-    private boolean hasConnectedGuest(RoomEntity room, PlayerEntity hostPlayer) {
-        return playerRepository.findByRoomId(room.getId()).stream()
-                .anyMatch(player -> !Objects.equals(player.getId(), hostPlayer.getId())
-                        && player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED);
-    }
-
-    // TODO: custom exception (domain specific, understandable)
     private UUID requireHostPlayerId(StartRankingGameCommand command) {
         if (command == null || command.hostPlayerId() == null) {
-            throw new IllegalArgumentException("Host player id is required");
+            throw new HostPlayerIdRequiredException();
         }
 
         return command.hostPlayerId();

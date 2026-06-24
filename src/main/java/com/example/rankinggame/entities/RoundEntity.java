@@ -37,10 +37,6 @@ public class RoundEntity {
     @Column(name = "captain_player_id", nullable = false)
     private UUID captainPlayerId;
 
-    // TODO: Deprecated: remove
-    @Column(name = "round_number", nullable = false)
-    private int roundNumber;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private RoundState state;

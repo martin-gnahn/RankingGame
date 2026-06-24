@@ -7,7 +7,6 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 // TODO: this is a POJO for Game
 @Data
@@ -34,8 +33,9 @@ public class Game {
         this.status = GameSessionStatus.WAITING;
     }
 
-    public boolean hasEnoughParticipants() {
-       return participants.size() >= REQUIRED_NUMBER_OF_PARTICIPANTS && status == GameSessionStatus.WAITING;
+    public boolean hasEnoughPlayers() {
+        //noinspection SizeReplaceableByIsEmpty
+        return participants.size() >= REQUIRED_NUMBER_OF_PARTICIPANTS;
     }
 
     public boolean isActive() {
@@ -43,7 +43,10 @@ public class Game {
     }
 
     public void start(Question firstQuestion) {
-        if(!hasEnoughParticipants()) {
+        if(!hasEnoughPlayers()) {
+            throw new NotEnoughPlayersException(participants.size(), REQUIRED_NUMBER_OF_PARTICIPANTS);
+        }
+        if(status != GameSessionStatus.WAITING) {
             throw new GameCannotBeStartedException();
         }
         status = GameSessionStatus.IN_PROGRESS;

@@ -50,9 +50,8 @@ public class SubmitAnswerService {
                 .orElseThrow(() -> new IllegalArgumentException("Player is not part of this room"));
         RoundEntity round = roundRepository.findById(command.roundId())
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
-        var gameSession = gameSessionRepository.findByRoomId(room.getId())
+        gameSessionRepository.findByRoomId(room.getId())
                 .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
-                .filter(candidate -> candidate.getCurrentRoundNumber() == round.getRoundNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
 
         if (round.getState() != RoundState.QUESTION_REVEALED) {
@@ -60,8 +59,7 @@ public class SubmitAnswerService {
         }
 
         String answerText = normalizeAnswerText(command.answerText());
-        // int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
-        int cardValue = 1;
+        int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
 
         if (answerRepository.existsByRoundIdAndPlayerId(round.getId(), player.getId())) {
             throw new IllegalArgumentException("Player already submitted an answer for this round");

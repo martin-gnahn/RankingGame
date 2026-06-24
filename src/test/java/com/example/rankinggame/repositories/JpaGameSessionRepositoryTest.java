@@ -21,8 +21,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -72,11 +70,11 @@ class JpaGameSessionRepositoryTest {
         PlayerEntity savedPlayer = playerRepository.saveAndFlush(player);
 
         GameSession gameSession = new GameSession();
+        gameSession.setId(java.util.UUID.randomUUID());
         gameSession.setRoomId(savedRoom.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
         gameSession.setCurrentRoundNumber(1);
-        gameSession.setPlayers(List.of(savedPlayer));
         GameSession savedGameSession = gameSessionRepository.saveAndFlush(gameSession);
 
         QuestionEntity question = new QuestionEntity();
@@ -88,7 +86,6 @@ class JpaGameSessionRepositoryTest {
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionId(savedQuestion.getId());
         round.setCaptainPlayerId(savedPlayer.getId());
-        round.setRoundNumber(1);
         round.setState(RoundState.QUESTION_REVEALED);
         RoundEntity savedRound = roundRepository.saveAndFlush(round);
 
@@ -103,14 +100,10 @@ class JpaGameSessionRepositoryTest {
                     assertThat(foundSession.getGameType()).isEqualTo(GameType.RANKING_GAME);
                     assertThat(foundSession.getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
                     assertThat(foundSession.getCurrentRoundNumber()).isEqualTo(1);
-                    assertThat(foundSession.getPlayers())
-                            .singleElement()
-                            .extracting(PlayerEntity::getId)
-                            .isEqualTo(savedPlayer.getId());
-                    assertThat(foundSession.getRounds())
-                            .singleElement()
-                            .extracting(RoundEntity::getId)
-                            .isEqualTo(savedRound.getId());
                 });
+        assertThat(roundRepository.findByGameSessionId(savedGameSession.getId()))
+                .singleElement()
+                .extracting(RoundEntity::getId)
+                .isEqualTo(savedRound.getId());
     }
 }
