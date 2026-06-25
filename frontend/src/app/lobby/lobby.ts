@@ -125,6 +125,7 @@ export class Lobby {
         this.navigateToGame(roomCode);
       },
       error: (error: unknown) => {
+        debugger;
         this.startingGame.set(false);
         this.startErrorMessage.set(this.toErrorMessage(error));
       },

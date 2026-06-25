@@ -5,6 +5,7 @@ import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.engine.Answer;
 import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.Round;
+import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
@@ -62,7 +63,7 @@ public class SubmitAnswerService {
         int cardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), player.getId());
 
         if (answerRepository.existsByRoundIdAndPlayerId(round.getId(), player.getId())) {
-            throw new IllegalArgumentException("Player already submitted an answer for this round");
+            throw new AnswerAlreadySubmittedException();
         }
 
         Answer submittedAnswer = domainRound.submitAnswer(new PlayerId(player.getId()), answerText, cardValue);
@@ -77,7 +78,7 @@ public class SubmitAnswerService {
             AnswerEntity savedAnswer = answerRepository.save(answer);
             return new SubmitAnswerResult(savedAnswer.getId(), round.getId(), player.getId(), true);
         } catch (DataIntegrityViolationException exception) {
-            throw new IllegalArgumentException("Player already submitted an answer for this round", exception);
+            throw new AnswerAlreadySubmittedException(exception);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
+import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
@@ -127,7 +128,7 @@ class SubmitAnswerServiceTest {
                 playerId,
                 "Mit WLAN-Problemen."
         )))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AnswerAlreadySubmittedException.class)
                 .hasMessage("Player already submitted an answer for this round");
         verify(answerRepository, never()).save(any());
     }

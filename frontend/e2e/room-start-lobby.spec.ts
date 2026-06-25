@@ -61,6 +61,54 @@ test('shows an error when every non-host player is disconnected', async ({
   }
 });
 
+test('allows the host to start when one joined player remains online', async ({
+  browser,
+  page: hostPage,
+}) => {
+  const guestOneContext = await browser.newContext();
+  const guestTwoContext = await browser.newContext();
+  const guestOnePage = await guestOneContext.newPage();
+  const guestTwoPage = await guestTwoContext.newPage();
+  const hostName = uniquePlayerName('Player1');
+  const guestOneName = uniquePlayerName('Player2');
+  const guestTwoName = uniquePlayerName('Player3');
+  let guestOneContextClosed = false;
+  let guestTwoContextClosed = false;
+
+  await hostPage.goto('/');
+  const roomCode = await createRoom(hostPage, hostName);
+
+  try {
+    await guestOnePage.goto('/');
+    await joinRoom(guestOnePage, roomCode, guestOneName);
+    await guestTwoPage.goto('/');
+    await joinRoom(guestTwoPage, roomCode, guestTwoName);
+
+    await expectPlayerConnectionStatus(hostPage, guestOneName, 'Online');
+    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'Online');
+
+    await guestOneContext.close();
+    guestOneContextClosed = true;
+
+    await expectPlayerConnectionStatus(hostPage, guestOneName, 'Getrennt');
+    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'Online');
+
+    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
+    await startGame(hostPage);
+
+    await expectGameScreen(hostPage);
+    await expectGameScreen(guestTwoPage);
+  } finally {
+    if (!guestOneContextClosed) {
+      await guestOneContext.close();
+    }
+
+    if (!guestTwoContextClosed) {
+      await guestTwoContext.close();
+    }
+  }
+});
+
 test('allows the host to start when another player is online while non-host players cannot', async ({
   browser,
   page: hostPage,

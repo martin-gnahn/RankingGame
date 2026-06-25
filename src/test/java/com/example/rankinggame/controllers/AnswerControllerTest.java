@@ -2,6 +2,7 @@ package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
+import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.SubmitAnswerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -50,6 +51,28 @@ class AnswerControllerTest {
         assertThat(commandCaptor.getValue().roundId()).isEqualTo(roundId);
         assertThat(commandCaptor.getValue().playerId()).isEqualTo(playerId);
         assertThat(commandCaptor.getValue().answerText()).isEqualTo("Mit WLAN-Problemen.");
+    }
+
+    @Test
+    void returnsConflictWhenAnswerWasAlreadySubmitted() throws Exception {
+        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
+        UUID roundId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
+                .thenThrow(new AnswerAlreadySubmittedException());
+        MockMvc mockMvc = mockMvc(submitAnswerService);
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "playerId": "%s",
+                                  "answerText": "Mit WLAN-Problemen."
+                                }
+                                """.formatted(playerId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ANSWER_ALREADY_SUBMITTED"))
+                .andExpect(jsonPath("$.message").value("Player already submitted an answer for this round"));
     }
 
     private MockMvc mockMvc(SubmitAnswerService submitAnswerService) {

@@ -13,6 +13,7 @@ import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomDetailsResult;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.usecases.PlayerNameAlreadyTakenException;
 import com.example.rankinggame.usecases.RoomCodeRequiredException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -192,19 +193,19 @@ class RoomControllerTest {
     }
 
     @Test
-    void returnsBadRequestWhenJoiningWithDuplicateName() throws Exception {
+    void returnsConflictWhenJoiningWithDuplicateName() throws Exception {
         CreateRoomService createRoomService = mock(CreateRoomService.class);
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
         GetRoomService getRoomService = mock(GetRoomService.class);
         when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
-                .thenThrow(new IllegalArgumentException("Player name is already taken"));
+                .thenThrow(new PlayerNameAlreadyTakenException());
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/ABCD12/players")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"Alex\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PLAYER_NAME_ALREADY_TAKEN"))
                 .andExpect(jsonPath("$.message").value("Player name is already taken"));
     }
 
