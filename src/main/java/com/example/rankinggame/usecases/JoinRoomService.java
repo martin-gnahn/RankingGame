@@ -19,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class JoinRoomService {
-    private static final int MAX_PLAYER_NAME_LENGTH = 80;
-
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -42,7 +40,7 @@ public class JoinRoomService {
                 .anyMatch(player -> player.getNickname().equalsIgnoreCase(playerName));
 
         if (nicknameTaken) {
-            throw new IllegalArgumentException("Player name is already taken");
+            throw new PlayerNameAlreadyTakenException();
         }
 
         PlayerEntity player = new PlayerEntity();
@@ -51,15 +49,7 @@ public class JoinRoomService {
         player.setHost(false);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
-        PlayerEntity savedPlayer;
-        try {
-            savedPlayer = playerRepository.save(player);
-            // TODO: what does this flush? It looks dirty.
-            playerRepository.flush();
-        } catch (DataIntegrityViolationException exception) {
-            // TODO: using this exception looks dirty. Prefer custom exception with no hardcoded error message. Same as for errors above.
-            throw new IllegalArgumentException("Player name is already taken", exception);
-        }
+        PlayerEntity savedPlayer = savePlayerAndVerifyUniqueName(player);
 
         eventPublisher.publishEvent(new PlayerJoinedRoomEvent(
                 room.getCode(),
@@ -71,22 +61,17 @@ public class JoinRoomService {
         return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname());
     }
 
-    // TODO: duplicate #1 B
+    private PlayerEntity savePlayerAndVerifyUniqueName(PlayerEntity player) {
+        try {
+            PlayerEntity savedPlayer = playerRepository.save(player);
+            playerRepository.flush();
+            return savedPlayer;
+        } catch (DataIntegrityViolationException exception) {
+            throw new PlayerNameAlreadyTakenException(exception);
+        }
+    }
+
     private String normalizePlayerName(JoinRoomCommand command) {
-        if (command == null || command.playerName() == null) {
-            throw new IllegalArgumentException("Player name is required");
-        }
-
-        String playerName = command.playerName().trim();
-
-        if (playerName.isBlank()) {
-            throw new IllegalArgumentException("Player name is required");
-        }
-
-        if (playerName.length() > MAX_PLAYER_NAME_LENGTH) {
-            throw new IllegalArgumentException("Player name must be 80 characters or fewer");
-        }
-
-        return playerName;
+        return PlayerNameNormalizer.normalize(command == null ? null : command.playerName());
     }
 }

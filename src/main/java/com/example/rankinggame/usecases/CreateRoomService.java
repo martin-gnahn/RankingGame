@@ -18,7 +18,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class CreateRoomService {
-    private static final int MAX_PLAYER_NAME_LENGTH = 80;
     private static final int MAX_ROOM_CREATION_ATTEMPTS = 5;
 
     private final RoomRepository roomRepository;
@@ -94,20 +93,6 @@ public class CreateRoomService {
     }
 
     private String normalizePlayerName(CreateRoomCommand command) {
-        if (command == null || command.playerName() == null) {
-            throw new IllegalArgumentException("Player name is required");
-        }
-
-        String playerName = command.playerName().trim();
-
-        if (playerName.isBlank()) {
-            throw new IllegalArgumentException("Player name is required");
-        }
-
-        if (playerName.length() > MAX_PLAYER_NAME_LENGTH) {
-            throw new IllegalArgumentException("Player name must be 80 characters or fewer");
-        }
-
-        return playerName;
+        return PlayerNameNormalizer.normalize(command == null ? null : command.playerName());
     }
 }

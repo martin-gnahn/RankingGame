@@ -112,7 +112,7 @@ class JoinRoomServiceTest {
         JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "alex")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(PlayerNameAlreadyTakenException.class)
                 .hasMessage("Player name is already taken");
 
         verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
@@ -136,7 +136,7 @@ class JoinRoomServiceTest {
         JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "Alex")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(PlayerNameAlreadyTakenException.class)
                 .hasMessage("Player name is already taken");
     }
 }
