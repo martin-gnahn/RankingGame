@@ -7,7 +7,7 @@ import com.example.rankinggame.dto.SubmittedAnswerResult;
 import com.example.rankinggame.dto.SubmittedAnswersResult;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.GetSubmittedAnswersService;
-import com.example.rankinggame.usecases.OnlyHostCanQueryAnswers;
+import com.example.rankinggame.usecases.OnlyRoomPlayersCanQueryAnswers;
 import com.example.rankinggame.usecases.SubmitAnswerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -117,20 +117,20 @@ class AnswerControllerTest {
     }
 
     @Test
-    void returnsForbiddenWhenNonHostQueriesSubmittedAnswers() throws Exception {
+    void returnsForbiddenWhenNonRoomPlayerQueriesSubmittedAnswers() throws Exception {
         SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
         GetSubmittedAnswersService getSubmittedAnswersService = mock(GetSubmittedAnswersService.class);
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(getSubmittedAnswersService.getSubmittedAnswers(any(GetSubmittedAnswersCommand.class)))
-                .thenThrow(new OnlyHostCanQueryAnswers());
+                .thenThrow(new OnlyRoomPlayersCanQueryAnswers());
         MockMvc mockMvc = mockMvc(submitAnswerService, getSubmittedAnswersService);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
                         .param("playerId", playerId.toString()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
-                .andExpect(jsonPath("$.message").value("Only the host can query submitted answers"));
+                .andExpect(jsonPath("$.message").value("Only players in this room can query submitted answers"));
     }
 
     private MockMvc mockMvc(

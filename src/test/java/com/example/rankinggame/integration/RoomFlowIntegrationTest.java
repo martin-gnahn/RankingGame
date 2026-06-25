@@ -2,10 +2,15 @@ package com.example.rankinggame.integration;
 
 import com.example.rankinggame.dto.StartGameResponse;
 import com.example.rankinggame.dto.SubmitAnswerResponse;
+import com.example.rankinggame.dto.SubmittedAnswerResponse;
+import com.example.rankinggame.dto.SubmittedAnswersResponse;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,9 +129,10 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
         mockMvc.perform(get("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
                         .param("playerId", guestPlayerId))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
-                .andExpect(jsonPath("$.message").value("Only the host can query submitted answers"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.answers", hasSize(2)))
+                .andExpect(jsonPath("$.answers[*].answerText", containsInAnyOrder("Answer1", "Answer2")))
+                .andExpect(jsonPath("$.answers[*].playerId", containsInAnyOrder(hostPlayerId, guestPlayerId)));
     }
 
     @Test
@@ -163,13 +169,89 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         assertThat(currentGameSessionState.answerCount()).isEqualTo(3);
         assertThat(currentGameSessionState.distinctAnswerPlayerCount()).isEqualTo(3);
 
-
+        QueriedSubmittedAnswers queriedSubmittedAnswers = querySubmittedAnswersForAllPlayers(
+                createdRoom,
+                startedGame,
+                firstGuestPlayerId,
+                secondGuestPlayerId
+        );
+        queriedSubmittedAnswers.assertAllPlayersSeeSameAnswers();
+        sortSubmittedAnswersAsHost(createdRoom, startedGame);
+        rejectSortSubmittedAnswersAsGuest(createdRoom, startedGame, firstGuestPlayerId);
 
         int a = 0;
 
-        // Future backbone:
-        // And: host can query all submitted answers.
-        // And: guests cannot query all submitted answers.
+        // Future backbone: submit a real ranking payload and persist ranking entries.
+    }
+
+    private QueriedSubmittedAnswers querySubmittedAnswersForAllPlayers(
+            CreatedRoom createdRoom,
+            StartGameResponse startedGame,
+            String firstGuestPlayerId,
+            String secondGuestPlayerId
+    ) throws Exception {
+        return new QueriedSubmittedAnswers(
+                querySubmittedAnswers(createdRoom, startedGame, createdRoom.hostPlayerId(), firstGuestPlayerId, secondGuestPlayerId),
+                querySubmittedAnswers(createdRoom, startedGame, firstGuestPlayerId, firstGuestPlayerId, secondGuestPlayerId),
+                querySubmittedAnswers(createdRoom, startedGame, secondGuestPlayerId, firstGuestPlayerId, secondGuestPlayerId)
+        );
+    }
+
+    private SubmittedAnswersResponse querySubmittedAnswers(
+            CreatedRoom createdRoom,
+            StartGameResponse startedGame,
+            String requestingPlayerId,
+            String firstGuestPlayerId,
+            String secondGuestPlayerId
+    ) throws Exception {
+        String responseBody = mockMvc.perform(get("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers",
+                            createdRoom.roomCode(),
+                            startedGame.roundId()
+                        )
+                        .param("playerId", requestingPlayerId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        SubmittedAnswersResponse response = readSubmittedAnswersResponse(responseBody);
+        assertThat(response.answers()).hasSize(3);
+        assertThat(response.answers())
+                .extracting(SubmittedAnswerResponse::answerText)
+                .containsExactlyInAnyOrder("Answer1", "Answer2", "Answer3");
+        assertThat(response.answers())
+                .extracting(answer -> answer.playerId().toString())
+                .containsExactlyInAnyOrder(createdRoom.hostPlayerId(), firstGuestPlayerId, secondGuestPlayerId);
+        return response;
+    }
+
+    private void sortSubmittedAnswersAsHost(
+            CreatedRoom createdRoom,
+            StartGameResponse startedGame
+    ) throws Exception {
+        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/sort",
+                            createdRoom.roomCode(),
+                            startedGame.roundId()
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hostPlayerId\":\"" + createdRoom.hostPlayerId() + "\"}"))
+                .andExpect(status().isNoContent());
+    }
+
+    private void rejectSortSubmittedAnswersAsGuest(
+            CreatedRoom createdRoom,
+            StartGameResponse startedGame,
+            String guestPlayerId
+    ) throws Exception {
+        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/sort",
+                            createdRoom.roomCode(),
+                            startedGame.roundId()
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hostPlayerId\":\"" + guestPlayerId + "\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
     }
 
     private SubmittedAnswers submitAnswersForAllPlayers(
@@ -329,6 +411,27 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         return UUID.fromString(JsonPath.read(json, path));
     }
 
+    private SubmittedAnswersResponse readSubmittedAnswersResponse(String json) {
+        List<String> answerIds = JsonPath.read(json, "$.answers[*].answerId");
+        List<String> playerIds = JsonPath.read(json, "$.answers[*].playerId");
+        List<String> nicknames = JsonPath.read(json, "$.answers[*].nickname");
+        List<String> answerTexts = JsonPath.read(json, "$.answers[*].answerText");
+        List<Integer> cardValues = JsonPath.read(json, "$.answers[*].cardValue");
+
+        List<SubmittedAnswerResponse> answers = new ArrayList<>();
+        for (int i = 0; i < answerIds.size(); i++) {
+            answers.add(new SubmittedAnswerResponse(
+                    UUID.fromString(answerIds.get(i)),
+                    UUID.fromString(playerIds.get(i)),
+                    nicknames.get(i),
+                    answerTexts.get(i),
+                    cardValues.get(i)
+            ));
+        }
+
+        return new SubmittedAnswersResponse(answers);
+    }
+
     private void ensurePlayersConnected(CreatedRoom createdRoom, String firstGuestPlayerId, String secondGuestPlayerId) throws Exception {
         mockMvc.perform(get("/api/rooms/{roomCode}", createdRoom.roomCode()))
                 .andExpect(status().isOk())
@@ -388,6 +491,44 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
             SubmitAnswerResponse firstGuestAnswer,
             SubmitAnswerResponse secondGuestAnswer
     ) {
+    }
+
+    private record QueriedSubmittedAnswers(
+            SubmittedAnswersResponse hostAnswers,
+            SubmittedAnswersResponse firstGuestAnswers,
+            SubmittedAnswersResponse secondGuestAnswers
+    ) {
+        private void assertAllPlayersSeeSameAnswers() {
+            List<ComparableSubmittedAnswer> hostView = comparableAnswers(hostAnswers);
+
+            assertThat(comparableAnswers(firstGuestAnswers)).isEqualTo(hostView);
+            assertThat(comparableAnswers(secondGuestAnswers)).isEqualTo(hostView);
+        }
+
+        private List<ComparableSubmittedAnswer> comparableAnswers(SubmittedAnswersResponse response) {
+            return response.answers().stream()
+                    .map(ComparableSubmittedAnswer::from)
+                    .sorted(Comparator.comparing(ComparableSubmittedAnswer::answerId))
+                    .toList();
+        }
+    }
+
+    private record ComparableSubmittedAnswer(
+            UUID answerId,
+            UUID playerId,
+            String nickname,
+            String answerText,
+            int cardValue
+    ) {
+        private static ComparableSubmittedAnswer from(SubmittedAnswerResponse answer) {
+            return new ComparableSubmittedAnswer(
+                    answer.answerId(),
+                    answer.playerId(),
+                    answer.nickname(),
+                    answer.answerText(),
+                    answer.cardValue()
+            );
+        }
     }
 
     private record CurrentGameSessionState(

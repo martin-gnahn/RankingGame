@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -241,7 +242,9 @@ class RoomControllerTest {
                 List.of(
                         new PlayerDetailsResult(hostId, "Marta", true, PlayerConnectionStatus.CONNECTED),
                         new PlayerDetailsResult(playerId, "Alex", false, PlayerConnectionStatus.CONNECTED)
-                )
+                ),
+                true,
+                null
         ));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
@@ -255,7 +258,9 @@ class RoomControllerTest {
                 .andExpect(jsonPath("$.players[0].nickname").value("Marta"))
                 .andExpect(jsonPath("$.players[0].host").value(true))
                 .andExpect(jsonPath("$.players[0].connectionStatus").value("CONNECTED"))
-                .andExpect(jsonPath("$.players[1].playerId").value(playerId.toString()));
+                .andExpect(jsonPath("$.players[1].playerId").value(playerId.toString()))
+                .andExpect(jsonPath("$.canStartGame").value(true))
+                .andExpect(jsonPath("$.startBlockedReason").value(nullValue()));
     }
 
     @Test

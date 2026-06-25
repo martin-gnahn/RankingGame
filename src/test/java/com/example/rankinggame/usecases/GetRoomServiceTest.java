@@ -51,6 +51,56 @@ class GetRoomServiceTest {
         assertThat(result.players())
                 .extracting(PlayerDetailsResult::host)
                 .containsExactly(true, false);
+        assertThat(result.canStartGame()).isTrue();
+        assertThat(result.startBlockedReason()).isNull();
+    }
+
+    @Test
+    void blocksStartWhenNoConnectedNonHostPlayerIsOnline() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        UUID roomId = UUID.randomUUID();
+        UUID hostId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        RoomEntity room = new RoomEntity();
+        room.setId(roomId);
+        room.setCode("ABCD12");
+        room.setStatus(RoomStatus.LOBBY);
+        room.setHostPlayerId(hostId);
+        PlayerEntity host = player(hostId, roomId, "Marta", true);
+        PlayerEntity guest = player(playerId, roomId, "Alex", false);
+        guest.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
+
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
+        when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(host, guest));
+        GetRoomService service = new GetRoomService(roomRepository, playerRepository);
+
+        RoomDetailsResult result = service.getRoom("ABCD12");
+
+        assertThat(result.canStartGame()).isFalse();
+        assertThat(result.startBlockedReason()).isEqualTo("At least 2 players are required to start the game");
+    }
+
+    @Test
+    void blocksStartOutsideLobby() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        UUID roomId = UUID.randomUUID();
+        UUID hostId = UUID.randomUUID();
+        RoomEntity room = new RoomEntity();
+        room.setId(roomId);
+        room.setCode("ABCD12");
+        room.setStatus(RoomStatus.IN_GAME);
+        room.setHostPlayerId(hostId);
+
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
+        when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(player(hostId, roomId, "Marta", true)));
+        GetRoomService service = new GetRoomService(roomRepository, playerRepository);
+
+        RoomDetailsResult result = service.getRoom("ABCD12");
+
+        assertThat(result.canStartGame()).isFalse();
+        assertThat(result.startBlockedReason()).isEqualTo("Room is not in lobby");
     }
 
     @Test

@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "e2e": "playwright test --project=chromium",
+    "e2e:public": "playwright test --config=playwright.public.config.ts --project=chromium",
     "e2e:smoke": "playwright test e2e/smoke.spec.ts --project=chromium",
     "e2e:headed": "playwright test --project=chromium --headed",
     "e2e:ui": "playwright test --project=chromium --ui --timeout=0",

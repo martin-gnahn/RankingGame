@@ -55,6 +55,8 @@ describe('RoomApiService', () => {
       roomId: 'room-1',
       roomCode: 'A/B1',
       status: 'LOBBY' as const,
+      canStartGame: false,
+      startBlockedReason: 'At least 2 players are required to start the game',
       players: [
         {
           playerId: 'player-1',

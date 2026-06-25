@@ -61,7 +61,9 @@ public class RoomController {
                 result.status().name(),
                 result.players().stream()
                         .map(this::toPlayerResponse)
-                        .toList()
+                        .toList(),
+                result.canStartGame(),
+                result.startBlockedReason()
         );
     }
 

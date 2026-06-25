@@ -76,6 +76,9 @@
           >
             Spiel starten
           </button>
+          @if (!canStartGame() && room.startBlockedReason) {
+            <p class="waiting-note">{{ room.startBlockedReason }}</p>
+          }
         } @else {
           <p class="waiting-note">Der Host startet das Spiel.</p>
         }

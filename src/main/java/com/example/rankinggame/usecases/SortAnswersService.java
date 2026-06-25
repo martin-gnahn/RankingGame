@@ -1,16 +1,12 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.dto.GetSubmittedAnswersCommand;
-import com.example.rankinggame.dto.SubmittedAnswerResult;
-import com.example.rankinggame.dto.SubmittedAnswersResult;
-import com.example.rankinggame.entities.AnswerEntity;
+import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.repositories.AnswerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
@@ -19,49 +15,50 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class GetSubmittedAnswersService {
+public class SortAnswersService {
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final GameSessionRepository gameSessionRepository;
     private final RoundRepository roundRepository;
-    private final AnswerRepository answerRepository;
     private final RoomCodeService roomCodeService;
 
     @Transactional(readOnly = true)
-    public SubmittedAnswersResult getSubmittedAnswers(GetSubmittedAnswersCommand command) {
+    public void sortAnswers(SortAnswersCommand command) {
         String roomCode = roomCodeService.normalizeRoomCode(command);
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
-        if (command.requesterPlayerId() == null) {
-            throw new PlayerIdRequiredException();
-        }
+        UUID hostPlayerId = requireHostPlayerId(command);
 
         RoomEntity room = roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
-        requireRoomPlayer(room, command.requesterPlayerId());
+        requireHost(room, hostPlayerId);
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         requireSortingRound(round);
-        Map<UUID, PlayerEntity> playersById = playerRepository.findByRoomId(room.getId()).stream()
-                .collect(Collectors.toMap(PlayerEntity::getId, Function.identity()));
-
-        return new SubmittedAnswersResult(answerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId()).stream()
-                .map(answer -> toResult(answer, playersById))
-                .toList());
     }
 
-    private void requireRoomPlayer(RoomEntity room, UUID requesterPlayerId) {
-        playerRepository.findById(requesterPlayerId)
+    private UUID requireHostPlayerId(SortAnswersCommand command) {
+        if (command == null || command.hostPlayerId() == null) {
+            throw new HostPlayerIdRequiredException();
+        }
+
+        return command.hostPlayerId();
+    }
+
+    private void requireHost(RoomEntity room, UUID hostPlayerId) {
+        PlayerEntity hostPlayer = playerRepository.findById(hostPlayerId)
                 .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
-                .orElseThrow(OnlyRoomPlayersCanQueryAnswers::new);
+                .filter(PlayerEntity::isHost)
+                .orElseThrow(OnlyHostCanSortAnswers::new);
+
+        if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
+            throw new OnlyHostCanSortAnswers();
+        }
     }
 
     private RoundEntity requireRoundInRoom(RoomEntity room, UUID roundId) {
@@ -80,19 +77,7 @@ public class GetSubmittedAnswersService {
 
     private void requireSortingRound(RoundEntity round) {
         if (round.getState() != RoundState.SORTING) {
-            throw new IllegalArgumentException("Submitted answers are only available in sorting mode");
+            throw new IllegalArgumentException("Answers can only be sorted in sorting mode");
         }
-    }
-
-    private SubmittedAnswerResult toResult(AnswerEntity answer, Map<UUID, PlayerEntity> playersById) {
-        PlayerEntity player = playersById.get(answer.getPlayerId());
-        String nickname = player == null ? null : player.getNickname();
-        return new SubmittedAnswerResult(
-                answer.getId(),
-                answer.getPlayerId(),
-                nickname,
-                answer.getText(),
-                answer.getCardValue()
-        );
     }
 }

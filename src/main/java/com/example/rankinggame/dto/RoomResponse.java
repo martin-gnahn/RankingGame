@@ -7,6 +7,8 @@ public record RoomResponse(
         UUID roomId,
         String roomCode,
         String status,
-        List<RoomPlayerResponse> players
+        List<RoomPlayerResponse> players,
+        boolean canStartGame,
+        String startBlockedReason
 ) {
 }

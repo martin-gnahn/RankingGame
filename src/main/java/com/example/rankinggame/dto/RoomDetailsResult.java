@@ -9,6 +9,8 @@ public record RoomDetailsResult(
         UUID roomId,
         String roomCode,
         RoomStatus status,
-        List<PlayerDetailsResult> players
+        List<PlayerDetailsResult> players,
+        boolean canStartGame,
+        String startBlockedReason
 ) {
 }

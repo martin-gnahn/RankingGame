@@ -300,7 +300,24 @@ Remove-Item Env:\PLAYWRIGHT_SKIP_WEB_SERVER
 Remove-Item Env:\PLAYWRIGHT_BASE_URL
 ```
 
-## 12. Open Failure Artifacts
+## 12. Run Against The Public Frontend
+
+The public config does not start the local Angular dev server. It reads the deployed frontend and backend health URLs from environment variables, so the same config can run locally or in Vercel without hardcoded domains.
+
+From `frontend/`:
+
+```powershell
+$env:PLAYWRIGHT_PUBLIC_BASE_URL="https://martin-gnahn.dev"
+$env:E2E_PUBLIC_BACKEND_HEALTH_URL="https://api.martin-gnahn.dev/health"
+npm run e2e:public
+```
+
+Required environment variables:
+
+* `PLAYWRIGHT_PUBLIC_BASE_URL`
+* `E2E_PUBLIC_BACKEND_HEALTH_URL`
+
+## 13. Open Failure Artifacts
 
 After a failed run:
 
@@ -316,11 +333,14 @@ npm.cmd run e2e:trace -- test-results\<failed-test-folder>\trace.zip
 
 The trace viewer is useful when a test fails too quickly to understand from the live browser view. It lets you replay every action, DOM snapshot, network request, screenshot and console message.
 
-## 13. Common Commands
+## 14. Common Commands
 
 ```powershell
 # Run the default Chromium E2E suite
 npm.cmd run e2e
+
+# Run the deployed public frontend E2E suite
+npm run e2e:public
 
 # Run only the smoke test
 npm.cmd run e2e:smoke
@@ -350,7 +370,7 @@ npm.cmd run e2e:debug -- e2e/room-start-lobby.spec.ts -g "host starts"
 npx.cmd playwright help test
 ```
 
-## 14. Personal Rule Of Thumb
+## 15. Personal Rule Of Thumb
 
 Use this most of the time:
 

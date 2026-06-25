@@ -37,6 +37,8 @@ export interface RoomResponse {
   roomCode: RoomCode;
   status: RoomStatus;
   players: RoomPlayerResponse[];
+  canStartGame: boolean;
+  startBlockedReason?: string | null;
 }
 
 export interface StartGameRequest {

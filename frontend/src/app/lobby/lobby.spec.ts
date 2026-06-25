@@ -23,6 +23,8 @@ describe('Lobby', () => {
     roomId: 'room-1',
     roomCode: 'ABCD12',
     status: 'LOBBY',
+    canStartGame: true,
+    startBlockedReason: null,
     players: [
       {
         playerId: 'host-1',
@@ -163,6 +165,8 @@ describe('Lobby', () => {
   it('should disable start when no other player is online', () => {
     const disconnectedGuestRoom: RoomResponse = {
       ...roomResponse,
+      canStartGame: false,
+      startBlockedReason: 'At least 2 players are required to start the game',
       players: roomResponse.players.map((player) =>
         player.playerId === 'player-2'
           ? { ...player, connectionStatus: 'DISCONNECTED' }
@@ -180,6 +184,7 @@ describe('Lobby', () => {
       '.primary-button',
     );
     expect(startButton?.disabled).toBeTrue();
+    expect(textContent()).toContain('At least 2 players are required to start the game');
   });
 
   it('should show a start error when starting the game fails', () => {

@@ -48,16 +48,12 @@ export class Lobby {
   protected readonly playerCount = computed(() => this.room()?.players.length ?? 0);
   protected readonly canStartGame = computed(() => {
     const room = this.room();
-    const currentPlayerId = this.currentPlayerId();
 
     if (!room || room.status !== 'LOBBY' || !this.isCurrentPlayerHost()) {
       return false;
     }
 
-    // return room.players.some(
-    //   (player) => player.playerId !== currentPlayerId && player.connectionStatus === 'CONNECTED',
-    // );
-    return true;
+    return room.canStartGame;
   });
 
   constructor() {
@@ -125,7 +121,6 @@ export class Lobby {
         this.navigateToGame(roomCode);
       },
       error: (error: unknown) => {
-        debugger;
         this.startingGame.set(false);
         this.startErrorMessage.set(this.toErrorMessage(error));
       },
