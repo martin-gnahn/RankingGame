@@ -1,5 +1,6 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.RoomRepository;
 import org.junit.jupiter.api.Test;
 
@@ -18,8 +19,7 @@ class RoomCodeGeneratorTest {
     void generatesUppercaseAlphanumericCode() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         when(roomRepository.existsByCode(anyString())).thenReturn(false);
-        RoomCodeGenerator generator = new RoomCodeGenerator(roomRepository);
-        generator.setRandomGenerator(new FixedRandomGenerator(0));
+        RoomCodeGenerator generator = new RoomCodeGenerator(roomRepository, new FixedRandomGenerator(0));
 
         String code = generator.generateUniqueCode();
 
@@ -32,8 +32,10 @@ class RoomCodeGeneratorTest {
         RoomRepository roomRepository = mock(RoomRepository.class);
         when(roomRepository.existsByCode("AAAAAA")).thenReturn(true);
         when(roomRepository.existsByCode("BBBBBB")).thenReturn(false);
-        RoomCodeGenerator generator = new RoomCodeGenerator(roomRepository);
-        generator.setRandomGenerator(new SequenceRandomGenerator(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1));
+        RoomCodeGenerator generator = new RoomCodeGenerator(
+                roomRepository,
+                new SequenceRandomGenerator(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1)
+        );
 
         String code = generator.generateUniqueCode();
 
@@ -46,12 +48,11 @@ class RoomCodeGeneratorTest {
     void failsAfterTooManyCollisions() {
         RoomRepository roomRepository = mock(RoomRepository.class);
         when(roomRepository.existsByCode(anyString())).thenReturn(true);
-        RoomCodeGenerator generator = new RoomCodeGenerator(roomRepository);
-        generator.setRandomGenerator(new FixedRandomGenerator(0));
+        RoomCodeGenerator generator = new RoomCodeGenerator(roomRepository, new FixedRandomGenerator(0));
 
         assertThatThrownBy(generator::generateUniqueCode)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Unable to generate a unique room code");
+                .isInstanceOf(RoomCodeUnavailableException.class)
+                .hasMessage("Unable to allocate a unique room code");
         verify(roomRepository, times(RoomCodeGenerator.MAX_ATTEMPTS)).existsByCode(anyString());
     }
 

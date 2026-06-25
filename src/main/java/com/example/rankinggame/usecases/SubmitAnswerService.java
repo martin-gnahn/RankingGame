@@ -21,8 +21,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
-
 @Service
 @RequiredArgsConstructor
 public class SubmitAnswerService {
@@ -33,10 +31,11 @@ public class SubmitAnswerService {
     private final AnswerRepository answerRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
     private final RoundMapper roundMapper;
+    private final RoomCodeService roomCodeService;
 
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
-        String normalizedRoomCode = normalizeRoomCode(command.roomCode());
+        String normalizedRoomCode = roomCodeService.normalizeRoomCode(command);
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
@@ -80,13 +79,5 @@ public class SubmitAnswerService {
         } catch (DataIntegrityViolationException exception) {
             throw new IllegalArgumentException("Player already submitted an answer for this round", exception);
         }
-    }
-
-    private String normalizeRoomCode(String roomCode) {
-        if (roomCode == null || roomCode.isBlank()) {
-            throw new RoomNotFoundException("");
-        }
-
-        return roomCode.trim().toUpperCase(Locale.ROOT);
     }
 }

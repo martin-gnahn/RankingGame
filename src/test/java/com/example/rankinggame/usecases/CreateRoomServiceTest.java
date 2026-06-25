@@ -166,10 +166,38 @@ class CreateRoomServiceTest {
 
         assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("Marta")))
                 .isInstanceOf(RoomCodeUnavailableException.class)
-                .hasMessage("Unable to allocate a unique room code");
+                .hasMessage("Unable to allocate a unique room code")
+                .hasCauseInstanceOf(RoomCodeCollisionException.class)
+                .hasRootCauseInstanceOf(DataIntegrityViolationException.class);
 
         verify(roomCodeGenerator, times(5)).generateUniqueCode();
         verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
+    }
+
+    @Test
+    void doesNotRetryUnrelatedPlayerIntegrityFailures() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
+        UUID roomId = UUID.randomUUID();
+
+        when(roomCodeGenerator.generateUniqueCode()).thenReturn("ABCD12");
+        when(roomRepository.save(ArgumentMatchers.any(RoomEntity.class))).thenAnswer(invocation -> {
+            RoomEntity room = invocation.getArgument(0);
+            room.setId(roomId);
+            return room;
+        });
+        doThrow(new DataIntegrityViolationException("player constraint"))
+                .when(playerRepository).save(ArgumentMatchers.any(PlayerEntity.class));
+
+        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+
+        assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("Marta")))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("player constraint");
+
+        verify(roomCodeGenerator).generateUniqueCode();
+        verify(playerRepository).save(ArgumentMatchers.any(PlayerEntity.class));
     }
 
     @Test
@@ -187,4 +215,5 @@ class CreateRoomServiceTest {
         verify(roomRepository, never()).save(ArgumentMatchers.any(RoomEntity.class));
         verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
     }
+
 }

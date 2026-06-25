@@ -49,7 +49,8 @@ class SubmitAnswerServiceTest {
                 roundRepository,
                 answerRepository,
                 roundCardAssignmentService,
-                roundMapper()
+                roundMapper(),
+                new RoomCodeService()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -105,7 +106,8 @@ class SubmitAnswerServiceTest {
                 roundRepository,
                 answerRepository,
                 roundCardAssignmentService,
-                roundMapper()
+                roundMapper(),
+                new RoomCodeService()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -166,7 +168,8 @@ class SubmitAnswerServiceTest {
                 mock(RoundRepository.class),
                 mock(AnswerRepository.class),
                 mock(RoundCardAssignmentService.class),
-                roundMapper()
+                roundMapper(),
+                new RoomCodeService()
         );
     }
 

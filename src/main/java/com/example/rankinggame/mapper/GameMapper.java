@@ -19,7 +19,7 @@ public class GameMapper {
         gameSession.setId(gameId.value());
         // gameSession.setRounds(rounds);
         gameSession.setStatus(toEntityStatus(game.getStatus()));
-        gameSession.setCurrentRoundNumber(game.getCurrentRoundNumber());
+        gameSession.setCurrentRoundNumber(game.getCurrentRoundIndex() + 1);
         gameSession.setGameType(GameType.RANKING_GAME);
         return gameSession;
     }

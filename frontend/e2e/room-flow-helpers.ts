@@ -1,10 +1,15 @@
 import { Page, expect } from '@playwright/test';
 
+const backendHealthUrl = process.env.E2E_BACKEND_HEALTH_URL ?? 'http://localhost:8080/health';
+let backendReady = false;
+
 export function uniquePlayerName(prefix: string): string {
   return `${prefix} ${Date.now().toString(36).slice(-6)}`;
 }
 
 export async function createRoom(page: Page, playerName: string): Promise<string> {
+  await ensureBackendReady(page);
+
   await page.locator('app-create-room').getByLabel('Dein Name').fill(playerName);
   await page.locator('app-create-room').getByRole('button', { name: 'Raum erstellen' }).click();
   await page.waitForURL(/\/lobby\/[A-Z0-9]{4,8}(?:\?.*)?$/);
@@ -72,4 +77,29 @@ export function roomCodeFromUrl(page: Page): string {
   }
 
   return roomCode;
+}
+
+async function ensureBackendReady(page: Page): Promise<void> {
+  if (backendReady) {
+    return;
+  }
+
+  let response;
+  try {
+    response = await page.request.get(backendHealthUrl, { timeout: 5_000 });
+  } catch (error) {
+    throw new Error(
+      `RankingGame backend is not reachable at ${backendHealthUrl}. ` +
+        'Start PostgreSQL with `docker compose up -d` and the backend with `./mvnw spring-boot:run` from the repository root. ' +
+        `Original error: ${String(error)}`,
+    );
+  }
+
+  if (!response.ok()) {
+    throw new Error(
+      `RankingGame backend health check failed at ${backendHealthUrl}: ${response.status()} ${response.statusText()}`,
+    );
+  }
+
+  backendReady = true;
 }

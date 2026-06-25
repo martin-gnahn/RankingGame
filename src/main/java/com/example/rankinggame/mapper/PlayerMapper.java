@@ -9,7 +9,7 @@ import java.util.List;
 
 @Service
 public class PlayerMapper {
-    public GameParticipant toDomain(PlayerEntity playerEntity) {
+    public GameParticipant toParticipant(PlayerEntity playerEntity) {
         return new GameParticipant(
                 new PlayerId(playerEntity.getId()),
                 playerEntity.getNickname(),
@@ -17,15 +17,7 @@ public class PlayerMapper {
         );
     }
 
-    public List<GameParticipant> toDomain(List<PlayerEntity> playerEntities) {
-        return playerEntities.stream().map(this::toDomain).toList();
-    }
-
-    public PlayerEntity toEntity(GameParticipant participant) {
-        PlayerEntity playerEntity = new PlayerEntity();
-        playerEntity.setId(participant.playerId() == null ? null : participant.playerId().value());
-        playerEntity.setNickname(participant.name());
-        playerEntity.setHost(participant.host());
-        return playerEntity;
+    public List<GameParticipant> toParticipants(List<PlayerEntity> playerEntities) {
+        return playerEntities.stream().map(this::toParticipant).toList();
     }
 }

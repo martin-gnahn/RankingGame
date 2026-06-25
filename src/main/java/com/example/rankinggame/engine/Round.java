@@ -14,9 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class Round {
     private RoundStatus roundStatus;
-    // TODO: move outside
     private GameParticipant captain;
-    // private List<Player> players;
     private Question question;
     @Builder.Default
     private Map<PlayerId, Answer> submittedAnswers = new HashMap<>();

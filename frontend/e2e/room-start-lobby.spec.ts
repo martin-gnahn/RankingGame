@@ -9,7 +9,7 @@ import {
   uniquePlayerName,
 } from './room-flow-helpers';
 
-test('does not allow the host to start when only the host is in the lobby', async ({
+test('shows an error when the host starts with no other players in the lobby', async ({
   page: hostPage,
 }) => {
   const hostName = uniquePlayerName('Host');
@@ -18,11 +18,15 @@ test('does not allow the host to start when only the host is in the lobby', asyn
   await createRoom(hostPage, hostName);
 
   await expect(hostPage.getByText('1 Spieler')).toBeVisible();
-  await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeDisabled();
+  await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
+  await hostPage.getByRole('button', { name: 'Spiel starten' }).click();
+  await expect(hostPage.getByRole('alert')).toContainText(
+    'At least 2 players are required to start the game',
+  );
   await expect(hostPage).toHaveURL(/\/lobby\/[A-Z0-9]{4,8}(?:\?.*)?$/);
 });
 
-test('does not allow start when every non-host player is disconnected', async ({
+test('shows an error when every non-host player is disconnected', async ({
   browser,
   page: hostPage,
 }) => {
@@ -44,7 +48,11 @@ test('does not allow start when every non-host player is disconnected', async ({
     guestContextClosed = true;
     await expectPlayerConnectionStatus(hostPage, guestName, 'Getrennt');
 
-    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeDisabled();
+    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
+    await hostPage.getByRole('button', { name: 'Spiel starten' }).click();
+    await expect(hostPage.getByRole('alert')).toContainText(
+      'At least 2 players are required to start the game',
+    );
     await expect(hostPage).toHaveURL(new RegExp(`/lobby/${roomCode}(?:\\?.*)?$`));
   } finally {
     if (!guestContextClosed) {

@@ -1,13 +1,13 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.RoomRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.random.RandomGenerator;
 
-@RequiredArgsConstructor
 @Component
 public class RoomCodeGenerator {
     static final int CODE_LENGTH = 6;
@@ -16,9 +16,15 @@ public class RoomCodeGenerator {
     private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
     private final RoomRepository roomRepository;
-    private RandomGenerator randomGenerator = new SecureRandom();
+    private final RandomGenerator randomGenerator;
 
-    void setRandomGenerator(RandomGenerator randomGenerator) {
+    @Autowired
+    public RoomCodeGenerator(RoomRepository roomRepository) {
+        this(roomRepository, new SecureRandom());
+    }
+
+    RoomCodeGenerator(RoomRepository roomRepository, RandomGenerator randomGenerator) {
+        this.roomRepository = roomRepository;
         this.randomGenerator = randomGenerator;
     }
 
@@ -31,8 +37,7 @@ public class RoomCodeGenerator {
             }
         }
 
-        // TODO: use a custom exception for that.
-        throw new IllegalStateException("Unable to generate a unique room code");
+        throw new RoomCodeUnavailableException();
     }
 
     private String generateCode() {

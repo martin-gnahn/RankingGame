@@ -56,8 +56,8 @@ public class StartRankingGameService {
         PlayerEntity hostPlayer = requireRoomHost(room, hostPlayerId);
 
         List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
-        List<GameParticipant> participants = playerMapper.toDomain(playerEntities);
-        GameParticipant hostParticipant = playerMapper.toDomain(hostPlayer);
+        List<GameParticipant> participants = playerMapper.toParticipants(playerEntities);
+        GameParticipant hostParticipant = playerMapper.toParticipant(hostPlayer);
         Game game = new Game(participants);
         game.requireCanStart(hostParticipant);
 

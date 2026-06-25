@@ -89,10 +89,16 @@ Install the Chromium browser once after installing dependencies:
 npm run e2e:install
 ```
 
-Run the E2E suite headlessly:
+Run the E2E suite headlessly in Chromium:
 
 ```bash
 npm run e2e
+```
+
+Run only the frontend smoke check:
+
+```bash
+npm run e2e:smoke
 ```
 
 Open Playwright UI mode for local debugging:
@@ -101,16 +107,26 @@ Open Playwright UI mode for local debugging:
 npm run e2e:ui
 ```
 
-`npm run e2e` starts the Angular dev server automatically on `http://127.0.0.1:4200`.
-The current smoke test only verifies that the home screen loads.
+Run a single spec in headed debug mode:
+
+```bash
+npm run e2e:debug -- e2e/room-create-join.spec.ts
+```
+
+`npm run e2e` starts the Angular dev server automatically on `http://localhost:4200`.
+Set `PLAYWRIGHT_SKIP_WEB_SERVER=1` if you already have Angular running, or set
+`PLAYWRIGHT_BASE_URL` to target a different frontend URL.
 
 Room-flow E2E tests also need the local backend stack:
 
 1. Start PostgreSQL from the repository root with `docker compose up -d`.
-2. Start the Spring Boot backend from the repository root with `.\mvnw.cmd spring-boot:run`.
+2. Start the Spring Boot backend from the repository root with `.\mvnw.cmd spring-boot:run`
+   on Windows PowerShell, or `./mvnw spring-boot:run` in Git Bash/macOS/Linux.
 3. Run Playwright from this `frontend` directory with `npm run e2e`.
 
 Playwright writes HTML reports to `playwright-report/` and failure artifacts to `test-results/`.
+Use `npm run e2e:report` to reopen the HTML report. Use `npm run e2e:trace -- <trace.zip>`
+to inspect a retained trace from a failed run.
 
 ## Additional Resources
 

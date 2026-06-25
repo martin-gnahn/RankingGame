@@ -51,12 +51,11 @@ public class CreateRoomService {
     public CreateRoomResult createRoom(CreateRoomCommand command) {
         String playerName = normalizePlayerName(command);
 
-        // TODO: initializing with null looks dirty
-        DataIntegrityViolationException lastFailure = null;
+        RoomCodeCollisionException lastFailure = null;
         for (int attempt = 0; attempt < MAX_ROOM_CREATION_ATTEMPTS; attempt++) {
             try {
                 return transactionOperations.execute(status -> createRoomInTransaction(playerName));
-            } catch (DataIntegrityViolationException exception) {
+            } catch (RoomCodeCollisionException exception) {
                 lastFailure = exception;
             }
         }
@@ -69,8 +68,7 @@ public class CreateRoomService {
         room.setCode(roomCodeGenerator.generateUniqueCode());
         room.setStatus(RoomStatus.LOBBY);
 
-        RoomEntity savedRoom = roomRepository.save(room);
-        roomRepository.flush();
+        RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
         PlayerEntity hostPlayer = new PlayerEntity();
         hostPlayer.setRoomId(savedRoom.getId());
@@ -85,7 +83,16 @@ public class CreateRoomService {
         return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname());
     }
 
-    // TODO: resolve: duplicate #1 A
+    private RoomEntity saveRoomWithFreshCode(RoomEntity room) {
+        try {
+            RoomEntity savedRoom = roomRepository.save(room);
+            roomRepository.flush();
+            return savedRoom;
+        } catch (DataIntegrityViolationException exception) {
+            throw new RoomCodeCollisionException(exception);
+        }
+    }
+
     private String normalizePlayerName(CreateRoomCommand command) {
         if (command == null || command.playerName() == null) {
             throw new IllegalArgumentException("Player name is required");

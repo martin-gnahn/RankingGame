@@ -27,11 +27,10 @@ public class Game {
     private List<Round> allRounds = new ArrayList<>();
     private GameStatus status;
 
-    // Uses the persisted one-based round number; convert to a list index at the boundary.
-    private int currentRoundNumber;
+    private int currentRoundIndex;
 
     public Round getCurrentRound() {
-        return allRounds.get(currentRoundNumber - 1);
+        return allRounds.get(currentRoundIndex);
     }
 
     public Game(List<GameParticipant> participants) {
@@ -42,12 +41,7 @@ public class Game {
     }
 
     public boolean hasEnoughPlayers() {
-        //noinspection SizeReplaceableByIsEmpty
         return participants.size() >= REQUIRED_NUMBER_OF_PARTICIPANTS;
-    }
-
-    public boolean isActive() {
-        return status == GameStatus.IN_PROGRESS;
     }
 
     public void start(Question firstQuestion, GameParticipant firstCaptain) {
@@ -55,7 +49,7 @@ public class Game {
         status = GameStatus.IN_PROGRESS;
         Round firstRound = Round.start(firstCaptain, firstQuestion);
         allRounds.add(firstRound);
-        currentRoundNumber = 1;
+        currentRoundIndex = 0;
     }
 
     public void requireCanStart(GameParticipant firstCaptain) {
@@ -77,7 +71,7 @@ public class Game {
         final GameParticipant newCaptain = getNextCaptain();
         Round newRound = Round.start(newCaptain, nextQuestion);
         allRounds.add(newRound);
-        currentRoundNumber = allRounds.size();
+        currentRoundIndex = allRounds.size();
         return newRound;
     }
 
