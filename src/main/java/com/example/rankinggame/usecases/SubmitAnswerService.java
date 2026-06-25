@@ -8,8 +8,10 @@ import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
+import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -76,9 +78,22 @@ public class SubmitAnswerService {
 
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
+            moveRoundToSortingWhenAllConnectedPlayersAnswered(room, round);
             return new SubmitAnswerResult(savedAnswer.getId(), round.getId(), player.getId(), true);
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
+        }
+    }
+
+    private void moveRoundToSortingWhenAllConnectedPlayersAnswered(RoomEntity room, RoundEntity round) {
+        long connectedPlayerCount = playerRepository.findByRoomId(room.getId()).stream()
+                .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED)
+                .count();
+        long submittedAnswerCount = answerRepository.countByRoundId(round.getId());
+
+        if (connectedPlayerCount > 0 && submittedAnswerCount >= connectedPlayerCount) {
+            round.setState(RoundState.SORTING);
+            roundRepository.save(round);
         }
     }
 }

@@ -68,6 +68,8 @@ class SubmitAnswerServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(false);
+        when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(player));
+        when(answerRepository.countByRoundId(roundId)).thenReturn(1L);
         when(answerRepository.save(any(AnswerEntity.class))).thenAnswer(invocation -> {
             AnswerEntity answer = invocation.getArgument(0);
             answer.setId(answerId);
@@ -90,6 +92,8 @@ class SubmitAnswerServiceTest {
         verify(answerRepository).save(answerCaptor.capture());
         assertThat(answerCaptor.getValue().getText()).isEqualTo("Mit WLAN-Problemen.");
         assertThat(answerCaptor.getValue().getCardValue()).isEqualTo(7);
+        assertThat(round.getState()).isEqualTo(RoundState.SORTING);
+        verify(roundRepository).save(round);
     }
 
     @Test

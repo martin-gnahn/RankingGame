@@ -16,6 +16,7 @@ import com.example.rankinggame.exceptions.QuestionUnavailableException;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.usecases.HostPlayerIdRequiredException;
+import com.example.rankinggame.usecases.OnlyHostCanQueryAnswers;
 import com.example.rankinggame.usecases.OnlyHostCanStartGame;
 import com.example.rankinggame.usecases.PlayerIdRequiredException;
 import com.example.rankinggame.usecases.PlayerNameAlreadyTakenException;
@@ -59,7 +60,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error(ErrorConstants.INVALID_REQUEST, exception.getMessage()));
     }
 
-    @ExceptionHandler(OnlyHostCanStartGame.class)
+    @ExceptionHandler({
+            OnlyHostCanStartGame.class,
+            OnlyHostCanQueryAnswers.class
+    })
     public ResponseEntity<ApiError> handleAccessDenied(RuntimeException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(ErrorConstants.ACCESS_DENIED, exception.getMessage()));
     }

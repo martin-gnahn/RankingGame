@@ -20,6 +20,9 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
+    launchOptions: {
+      args: ['--auto-open-devtools-for-tabs'],
+    },
   },
   projects: [
     {
