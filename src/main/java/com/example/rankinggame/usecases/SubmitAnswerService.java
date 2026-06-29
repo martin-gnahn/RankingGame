@@ -91,6 +91,7 @@ public class SubmitAnswerService {
 
     private AnswerSubmissionProgress updateRoundProgress(RoomEntity room, RoundEntity round) {
         long connectedPlayerCount = playerRepository.findByRoomId(room.getId()).stream()
+                // TODO: error. Players get disconnected.
                 .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED)
                 .count();
         long submittedAnswerCount = answerRepository.countByRoundId(round.getId());

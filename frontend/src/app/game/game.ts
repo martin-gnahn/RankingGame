@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import {map, Observable} from 'rxjs';
 
 import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
 import { RoomApiService } from '../core/api/room-api.service';
@@ -54,6 +54,11 @@ export class Game {
   });
 
   constructor() {
+    setInterval(() => {
+      let roomCodeCurrent = this.roomCode();
+      this.roomApi.getPlayersInGame(roomCodeCurrent).subscribe();
+    }, 1000);
+
     this.loadActiveRound();
 
     effect((onCleanup) => {
@@ -207,4 +212,9 @@ export class Game {
       && typeof message.body === 'string'
       && typeof message.createdAt === 'string';
   }
+
+  // protected playerData(): Observable<string> {
+  //   const roomCode = this.roomCode();
+  //   return this.roomApi.getPlayersInGame(roomCode);
+  // }
 }

@@ -1,22 +1,16 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.ActiveRoundResponse;
 import com.example.rankinggame.dto.ActiveRoundResult;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.QuestionRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 
 @Slf4j
@@ -28,6 +22,7 @@ public class GetActiveRoundService {
     private final RoundRepository roundRepository;
     private final QuestionRepository questionRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
+    private final JpaPlayerRepository playerRepository;
 
     @Transactional
     public ActiveRoundResult getActiveRound(String roomCode, java.util.UUID playerId) {
@@ -74,5 +69,12 @@ public class GetActiveRoundService {
         }
 
         return roomCode.trim().toUpperCase(Locale.ROOT);
+    }
+
+    public List<PlayerEntity> getActivePlayers(String roomCode) {
+        // TODO: Or players at current game
+        // List<PlayerEntity> playersAtCurrentRoom = playerRepository.findByRoomCode(roomCode).stream().toList();
+        List<PlayerEntity> playersAtCurrentRoom = playerRepository.findAll();
+        return playersAtCurrentRoom;
     }
 }

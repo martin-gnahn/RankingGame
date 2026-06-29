@@ -6,6 +6,7 @@ import com.example.rankinggame.dto.StartGameRequest;
 import com.example.rankinggame.dto.StartGameResponse;
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.StartRankingGameService;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -71,5 +73,13 @@ public class RankingGameController {
                 result.questionText(),
                 result.assignedCardValue()
         );
+    }
+
+    //  List<PlayerEntity>
+    @GetMapping("/current-round/players")
+    public List<PlayerEntity> getActivePlayers(
+            @PathVariable String roomCode
+    ) {
+        return getActiveRoundService.getActivePlayers(roomCode);
     }
 }
