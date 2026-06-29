@@ -12,6 +12,7 @@ import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -20,6 +21,7 @@ import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.repositories.RoundRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class SubmitAnswerService {
     private final RoundCardAssignmentService roundCardAssignmentService;
     private final RoundMapper roundMapper;
     private final RoomCodeService roomCodeService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
@@ -78,22 +81,47 @@ public class SubmitAnswerService {
 
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
-            moveRoundToSortingWhenAllConnectedPlayersAnswered(room, round);
+            AnswerSubmissionProgress progress = updateRoundProgress(room, round);
+            publishAnswerSubmitted(room, round, progress);
             return new SubmitAnswerResult(savedAnswer.getId(), round.getId(), player.getId(), true);
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
         }
     }
 
-    private void moveRoundToSortingWhenAllConnectedPlayersAnswered(RoomEntity room, RoundEntity round) {
+    private AnswerSubmissionProgress updateRoundProgress(RoomEntity room, RoundEntity round) {
         long connectedPlayerCount = playerRepository.findByRoomId(room.getId()).stream()
                 .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED)
                 .count();
         long submittedAnswerCount = answerRepository.countByRoundId(round.getId());
+        boolean allAnswersSubmitted = connectedPlayerCount > 0 && submittedAnswerCount >= connectedPlayerCount;
 
-        if (connectedPlayerCount > 0 && submittedAnswerCount >= connectedPlayerCount) {
+        if (allAnswersSubmitted) {
             round.setState(RoundState.SORTING);
             roundRepository.save(round);
         }
+
+        return new AnswerSubmissionProgress(submittedAnswerCount, connectedPlayerCount, allAnswersSubmitted);
+    }
+
+    private void publishAnswerSubmitted(
+            RoomEntity room,
+            RoundEntity round,
+            AnswerSubmissionProgress progress
+    ) {
+        eventPublisher.publishEvent(new AnswerSubmittedEvent(
+                room.getCode(),
+                round.getId(),
+                progress.submittedAnswerCount(),
+                progress.requiredAnswerCount(),
+                progress.allAnswersSubmitted()
+        ));
+    }
+
+    private record AnswerSubmissionProgress(
+            long submittedAnswerCount,
+            long requiredAnswerCount,
+            boolean allAnswersSubmitted
+    ) {
     }
 }

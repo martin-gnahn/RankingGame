@@ -13,6 +13,7 @@ import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -22,6 +23,7 @@ import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.repositories.RoundRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +45,7 @@ class SubmitAnswerServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 roomRepository,
                 playerRepository,
@@ -51,7 +54,8 @@ class SubmitAnswerServiceTest {
                 answerRepository,
                 roundCardAssignmentService,
                 roundMapper(),
-                new RoomCodeService()
+                new RoomCodeService(),
+                eventPublisher
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -94,6 +98,16 @@ class SubmitAnswerServiceTest {
         assertThat(answerCaptor.getValue().getCardValue()).isEqualTo(7);
         assertThat(round.getState()).isEqualTo(RoundState.SORTING);
         verify(roundRepository).save(round);
+
+        ArgumentCaptor<AnswerSubmittedEvent> eventCaptor = ArgumentCaptor.forClass(AnswerSubmittedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue()).isEqualTo(new AnswerSubmittedEvent(
+                "ABCD12",
+                roundId,
+                1,
+                1,
+                true
+        ));
     }
 
     @Test
@@ -104,6 +118,7 @@ class SubmitAnswerServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 roomRepository,
                 playerRepository,
@@ -112,7 +127,8 @@ class SubmitAnswerServiceTest {
                 answerRepository,
                 roundCardAssignmentService,
                 roundMapper(),
-                new RoomCodeService()
+                new RoomCodeService(),
+                eventPublisher
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -135,6 +151,7 @@ class SubmitAnswerServiceTest {
                 .isInstanceOf(AnswerAlreadySubmittedException.class)
                 .hasMessage("Player already submitted an answer for this round");
         verify(answerRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -174,7 +191,8 @@ class SubmitAnswerServiceTest {
                 mock(AnswerRepository.class),
                 mock(RoundCardAssignmentService.class),
                 roundMapper(),
-                new RoomCodeService()
+                new RoomCodeService(),
+                mock(ApplicationEventPublisher.class)
         );
     }
 

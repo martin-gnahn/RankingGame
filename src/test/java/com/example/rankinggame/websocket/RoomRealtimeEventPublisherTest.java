@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.events.ChatMessageSentEvent;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.events.GameStartedRoomEvent;
@@ -85,6 +86,31 @@ class RoomRealtimeEventPublisherTest {
                 "Alex",
                 "Hallo",
                 createdAt
+        ));
+    }
+
+    @Test
+    void publishesAnswerSubmittedToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID roundId = UUID.randomUUID();
+
+        publisher.publishAnswerSubmitted(new AnswerSubmittedEvent(
+                "ABCD12",
+                roundId,
+                2,
+                3,
+                false
+        ));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.ANSWER_SUBMITTED);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new AnswerSubmittedPayload(
+                roundId,
+                2,
+                3,
+                false
         ));
     }
 }
