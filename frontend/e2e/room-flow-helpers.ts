@@ -69,8 +69,38 @@ export async function submitAnswer(page: Page, answerText: string): Promise<void
   await expect(page.getByText('Antwort gespeichert. Warte auf die anderen Spieler.')).toBeVisible();
 }
 
+export async function expectChatReady(page: Page): Promise<void> {
+  const chat = page.locator('app-chat-sidebar');
+
+  await expect(chat.getByRole('heading', { name: 'Chat' })).toBeVisible();
+  await expect(chat.getByRole('textbox', { name: 'Nachricht' })).toBeVisible();
+  await expect(chat.getByRole('button', { name: 'Senden' })).toBeEnabled();
+}
+
+export async function sendChatMessage(page: Page, messageBody: string): Promise<void> {
+  const chat = page.locator('app-chat-sidebar');
+
+  await chat.getByRole('textbox', { name: 'Nachricht' }).fill(messageBody);
+  await chat.getByRole('button', { name: 'Senden' }).click();
+  await expect(chat.getByRole('textbox', { name: 'Nachricht' })).toHaveValue('');
+}
+
+export async function expectChatMessageVisible(
+  page: Page,
+  senderNickname: string,
+  messageBody: string,
+): Promise<void> {
+  const message = page
+    .getByRole('log')
+    .locator('.message')
+    .filter({ hasText: messageBody });
+
+  await expect(message).toContainText(senderNickname);
+  await expect(message).toContainText(messageBody);
+}
+
 export function roomCodeFromUrl(page: Page): string {
-  const roomCode = new URL(page.url()).pathname.match(/\/lobby\/([A-Z0-9]{4,8})$/)?.[1];
+  const roomCode = new URL(page.url()).pathname.match(/\/(?:lobby|game)\/([A-Z0-9]{4,8})$/)?.[1];
 
   if (!roomCode) {
     throw new Error(`Could not read room code from URL: ${page.url()}`);
