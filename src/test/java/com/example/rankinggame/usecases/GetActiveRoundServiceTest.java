@@ -10,6 +10,7 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.repositories.GameSessionRepository;
+import com.example.rankinggame.repositories.JpaPlayerRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
 import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.repositories.RoundRepository;
@@ -39,7 +40,8 @@ class GetActiveRoundServiceTest {
                 gameSessionRepository,
                 roundRepository,
                 questionRepository,
-                roundCardAssignmentService
+                roundCardAssignmentService,
+                mock(JpaPlayerRepository.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
@@ -76,7 +78,8 @@ class GetActiveRoundServiceTest {
                 mock(GameSessionRepository.class),
                 mock(RoundRepository.class),
                 mock(QuestionRepository.class),
-                mock(RoundCardAssignmentService.class)
+                mock(RoundCardAssignmentService.class),
+                mock(JpaPlayerRepository.class)
         );
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", RoomStatus.LOBBY)));
 

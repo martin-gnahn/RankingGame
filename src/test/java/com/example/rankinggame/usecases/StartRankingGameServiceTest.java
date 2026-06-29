@@ -3,6 +3,7 @@ package com.example.rankinggame.usecases;
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameSession;
+import com.example.rankinggame.entities.GameSessionPlayerEntity;
 import com.example.rankinggame.entities.GameSessionStatus;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.entities.PlayerEntity;
@@ -17,6 +18,7 @@ import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.mapper.PlayerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
+import com.example.rankinggame.repositories.GameSessionPlayerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -45,6 +47,7 @@ class StartRankingGameServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GameSessionPlayerRepository gameSessionPlayerRepository = mock(GameSessionPlayerRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -53,6 +56,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher
@@ -95,6 +99,15 @@ class StartRankingGameServiceTest {
         assertThat(gameSessionCaptor.getValue().getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
         assertThat(gameSessionCaptor.getValue().getCurrentRoundNumber()).isEqualTo(1);
 
+        ArgumentCaptor<Iterable<GameSessionPlayerEntity>> gameSessionPlayersCaptor = ArgumentCaptor.forClass(Iterable.class);
+        verify(gameSessionPlayerRepository).saveAll(gameSessionPlayersCaptor.capture());
+        assertThat(gameSessionPlayersCaptor.getValue())
+                .extracting(GameSessionPlayerEntity::getGameSessionId, GameSessionPlayerEntity::getPlayerId)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(gameSessionId, hostPlayerId),
+                        org.assertj.core.groups.Tuple.tuple(gameSessionId, guestPlayerId)
+                );
+
         ArgumentCaptor<RoundEntity> roundCaptor = ArgumentCaptor.forClass(RoundEntity.class);
         verify(roundRepository).save(roundCaptor.capture());
         assertThat(roundCaptor.getValue().getGameSessionId()).isEqualTo(gameSessionId);
@@ -112,6 +125,7 @@ class StartRankingGameServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GameSessionPlayerRepository gameSessionPlayerRepository = mock(GameSessionPlayerRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -120,6 +134,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher
@@ -135,6 +150,7 @@ class StartRankingGameServiceTest {
                 .hasMessage("Only the host can start the game");
 
         verify(gameSessionRepository, never()).save(any());
+        verify(gameSessionPlayerRepository, never()).saveAll(any());
         verify(roundRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
     }
@@ -145,6 +161,7 @@ class StartRankingGameServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GameSessionPlayerRepository gameSessionPlayerRepository = mock(GameSessionPlayerRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -153,6 +170,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher
@@ -167,6 +185,7 @@ class StartRankingGameServiceTest {
 
         verify(playerRepository, never()).findById(any());
         verify(gameSessionRepository, never()).save(any());
+        verify(gameSessionPlayerRepository, never()).saveAll(any());
     }
 
     @Test
@@ -175,6 +194,7 @@ class StartRankingGameServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GameSessionPlayerRepository gameSessionPlayerRepository = mock(GameSessionPlayerRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -183,6 +203,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher
@@ -201,6 +222,7 @@ class StartRankingGameServiceTest {
 
         verify(questionRepository, never()).findRandomActive();
         verify(gameSessionRepository, never()).save(any());
+        verify(gameSessionPlayerRepository, never()).saveAll(any());
         verify(roundRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
     }
@@ -211,6 +233,7 @@ class StartRankingGameServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         QuestionRepository questionRepository = mock(QuestionRepository.class);
         GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GameSessionPlayerRepository gameSessionPlayerRepository = mock(GameSessionPlayerRepository.class);
         RoundRepository roundRepository = mock(RoundRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -219,6 +242,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher
@@ -240,6 +264,7 @@ class StartRankingGameServiceTest {
 
         verify(questionRepository, never()).findRandomActive();
         verify(gameSessionRepository, never()).save(any());
+        verify(gameSessionPlayerRepository, never()).saveAll(any());
         verify(roundRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
     }
@@ -297,6 +322,7 @@ class StartRankingGameServiceTest {
             PlayerRepository playerRepository,
             QuestionRepository questionRepository,
             GameSessionRepository gameSessionRepository,
+            GameSessionPlayerRepository gameSessionPlayerRepository,
             RoundRepository roundRepository,
             RoundCardAssignmentService roundCardAssignmentService,
             ApplicationEventPublisher eventPublisher
@@ -311,6 +337,7 @@ class StartRankingGameServiceTest {
                 playerRepository,
                 questionRepository,
                 gameSessionRepository,
+                gameSessionPlayerRepository,
                 roundRepository,
                 roundCardAssignmentService,
                 eventPublisher,

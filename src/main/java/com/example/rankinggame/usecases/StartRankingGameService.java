@@ -6,6 +6,7 @@ import com.example.rankinggame.engine.Game;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Question;
 import com.example.rankinggame.entities.GameSession;
+import com.example.rankinggame.entities.GameSessionPlayerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.QuestionEntity;
@@ -19,6 +20,7 @@ import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.mapper.PlayerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
+import com.example.rankinggame.repositories.GameSessionPlayerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.QuestionRepository;
@@ -38,6 +40,7 @@ public class StartRankingGameService {
     private final PlayerRepository playerRepository;
     private final QuestionRepository questionRepository;
     private final GameSessionRepository gameSessionRepository;
+    private final GameSessionPlayerRepository gameSessionPlayerRepository;
     private final RoundRepository roundRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
     private final ApplicationEventPublisher eventPublisher;
@@ -65,6 +68,7 @@ public class StartRankingGameService {
         startDomainGame(game, hostParticipant, questionEntity);
 
         GameSession savedGameSession = saveGameSession(game, room);
+        saveGameParticipants(savedGameSession, playerEntities);
         RoundEntity savedRound = saveFirstRound(game, savedGameSession, questionEntity);
         RoomEntity savedRoom = moveRoomIntoGame(room);
 
@@ -112,6 +116,14 @@ public class StartRankingGameService {
         GameSession gameSession = gameMapper.toEntity(game);
         gameSession.setRoomId(room.getId());
         return gameSessionRepository.save(gameSession);
+    }
+
+    private void saveGameParticipants(GameSession savedGameSession, List<PlayerEntity> playerEntities) {
+        List<GameSessionPlayerEntity> gameSessionPlayers = playerEntities.stream()
+                .map(player -> new GameSessionPlayerEntity(savedGameSession.getId(), player.getId()))
+                .toList();
+
+        gameSessionPlayerRepository.saveAll(gameSessionPlayers);
     }
 
     private RoundEntity saveFirstRound(
