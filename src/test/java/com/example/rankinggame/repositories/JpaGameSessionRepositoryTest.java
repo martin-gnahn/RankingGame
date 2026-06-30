@@ -86,7 +86,7 @@ class JpaGameSessionRepositoryTest {
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionId(savedQuestion.getId());
         round.setCaptainPlayerId(savedPlayer.getId());
-        round.setState(RoundState.QUESTION_REVEALED);
+        round.setState(RoundState.ANSWER_SUBMISSION);
         RoundEntity savedRound = roundRepository.saveAndFlush(round);
 
         entityManager.clear();

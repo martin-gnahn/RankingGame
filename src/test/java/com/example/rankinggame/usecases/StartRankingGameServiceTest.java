@@ -14,10 +14,7 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.GameStartedRoomEvent;
-import com.example.rankinggame.mapper.GameMapper;
-import com.example.rankinggame.mapper.PlayerMapper;
-import com.example.rankinggame.mapper.QuestionMapper;
-import com.example.rankinggame.mapper.RoundMapper;
+import com.example.rankinggame.mapper.*;
 import com.example.rankinggame.repositories.GameSessionPlayerRepository;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -113,10 +110,10 @@ class StartRankingGameServiceTest {
         assertThat(roundCaptor.getValue().getGameSessionId()).isEqualTo(gameSessionId);
         assertThat(roundCaptor.getValue().getQuestionId()).isEqualTo(questionId);
         assertThat(roundCaptor.getValue().getCaptainPlayerId()).isEqualTo(hostPlayerId);
-        assertThat(roundCaptor.getValue().getState()).isEqualTo(RoundState.QUESTION_REVEALED);
+        assertThat(roundCaptor.getValue().getState()).isEqualTo(RoundState.ANSWER_SUBMISSION);
 
         verify(eventPublisher).publishEvent(new GameStartedRoomEvent("ABCD12", gameSessionId, GameType.RANKING_GAME));
-        verify(roundCardAssignmentService).assignedCardValue(roomId, roundId, hostPlayerId);
+        verify(roundCardAssignmentService).getCardValue(roomId, roundId, hostPlayerId);
     }
 
     @Test
@@ -313,7 +310,7 @@ class StartRankingGameServiceTest {
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);
-        round.setState(RoundState.QUESTION_REVEALED);
+        round.setState(RoundState.ANSWER_SUBMISSION);
         return round;
     }
 
@@ -328,7 +325,7 @@ class StartRankingGameServiceTest {
             ApplicationEventPublisher eventPublisher
     ) {
         QuestionMapper questionMapper = new QuestionMapper();
-        RoundMapper roundMapper = new RoundMapper(questionMapper);
+        RoundMapper roundMapper = new RoundMapper(questionMapper, new AnswerMapper());
         PlayerMapper playerMapper = new PlayerMapper();
         GameMapper gameMapper = new GameMapper();
 

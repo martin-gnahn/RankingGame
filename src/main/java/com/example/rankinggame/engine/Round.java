@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -23,14 +25,15 @@ public class Round {
         return new Round(captain, question);
     }
 
-    public void requireAcceptingAnswers() {
-        if (roundStatus != RoundStatus.QUESTION_REVEALED) {
+
+    public void checkIfSubmittingAnswerAllowed() {
+        if (roundStatus != RoundStatus.ANSWER_SUBMISSION) {
             throw new AnswersNotAcceptedException();
         }
     }
 
     public Answer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
-        requireAcceptingAnswers();
+        checkIfSubmittingAnswerAllowed();
         if (submittedAnswers.containsKey(playerId)) {
             throw new AnswerAlreadySubmittedException();
         }
@@ -43,7 +46,7 @@ public class Round {
     private Round(GameParticipant captain, Question question) {
 //        this.captain = players.stream().filter(p -> p.playerId() == captainId).findFirst()
 //                .orElseThrow(InvalidPlayerException::new);
-        this.roundStatus = RoundStatus.QUESTION_REVEALED;
+        this.roundStatus = RoundStatus.ANSWER_SUBMISSION;
         this.captain = captain;
         this.question = question;
         this.submittedAnswers = new HashMap<>();

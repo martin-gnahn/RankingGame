@@ -56,7 +56,7 @@ class GetActiveRoundServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundRepository.findByGameSessionId(gameSessionId)).thenReturn(List.of(round));
         when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
-        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
+        when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
 
         ActiveRoundResult result = service.getActiveRound(" abcd12 ", playerId);
 
@@ -120,7 +120,7 @@ class GetActiveRoundServiceTest {
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
         round.setQuestionId(questionId);
-        round.setState(RoundState.QUESTION_REVEALED);
+        round.setState(RoundState.ANSWER_SUBMISSION);
         return round;
     }
 

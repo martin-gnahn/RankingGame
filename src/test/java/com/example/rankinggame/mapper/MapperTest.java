@@ -17,13 +17,14 @@ import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MapperTest {
     private final PlayerMapper playerMapper = new PlayerMapper();
-    private final RoundMapper roundMapper = new RoundMapper(new QuestionMapper());
+    private final RoundMapper roundMapper = new RoundMapper(new QuestionMapper(), new AnswerMapper());
     private final GameMapper gameMapper = new GameMapper();
 
     @Test
@@ -48,11 +49,11 @@ class MapperTest {
         RoundEntity entity = new RoundEntity();
         entity.setQuestionEntity(question(questionId));
         entity.setCaptainPlayerId(captainPlayerId);
-        entity.setState(RoundState.QUESTION_REVEALED);
+        entity.setState(RoundState.ANSWER_SUBMISSION);
 
-        Round domain = roundMapper.toDomain(entity);
+        Round domain = roundMapper.toDomain(entity, List.of());
 
-        assertThat(domain.getRoundStatus()).isEqualTo(RoundStatus.QUESTION_REVEALED);
+        assertThat(domain.getRoundStatus()).isEqualTo(RoundStatus.ANSWER_SUBMISSION);
         assertThat(domain.getQuestion()).isEqualTo(new Question(new QuestionId(questionId), "Question", "test"));
         assertThat(domain.getCaptain()).isEqualTo(new GameParticipant(new PlayerId(captainPlayerId), null, false));
         assertThat(domain.getSubmittedAnswers()).isEmpty();

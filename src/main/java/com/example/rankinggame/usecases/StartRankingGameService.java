@@ -144,7 +144,7 @@ public class StartRankingGameService {
     }
 
     private void assignFirstRoundCard(RoomEntity room, RoundEntity round, PlayerEntity hostPlayer) {
-        roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), hostPlayer.getId());
+        roundCardAssignmentService.getCardValue(room.getId(), round.getId(), hostPlayer.getId());
     }
 
     private void publishGameStarted(RoomEntity room, GameSession gameSession) {

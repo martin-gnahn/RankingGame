@@ -1,6 +1,5 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.dto.ActiveRoundResponse;
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Locale;
 
 @Slf4j
@@ -41,14 +39,14 @@ public class GetActiveRoundService {
         log.info("Retrieved GameSession entity with id '{}'", gameSession.getId());
 
         RoundEntity round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
-                .filter(candidate -> candidate.getState() == RoundState.QUESTION_REVEALED)
+                .filter(candidate -> candidate.getState() == RoundState.ANSWER_SUBMISSION)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No active round is available"));
         log.info("Retrieved Round entity with id '{}'", round.getId());
         QuestionEntity question = questionRepository.findById(round.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
         log.info("Retrieved Question entity with id '{}'", question.getId());
-        int assignedCardValue = roundCardAssignmentService.assignedCardValue(room.getId(), round.getId(), playerId);
+        int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
         log.info("Retrieved active round result for room '{}'", room.getId());
         return new ActiveRoundResult(

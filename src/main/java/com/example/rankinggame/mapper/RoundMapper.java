@@ -5,30 +5,31 @@ import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.Question;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.engine.RoundStatus;
+import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@RequiredArgsConstructor
 @Service
 public class RoundMapper {
     private final QuestionMapper questionMapper;
+    private final AnswerMapper answerMapper;
 
-    public RoundMapper(QuestionMapper questionMapper) {
-        this.questionMapper = questionMapper;
+    // TODO: add answer entities so Round becomes rich domain object
+    public Round toDomain(RoundEntity roundEntity, List<AnswerEntity> otherSubmittedAnswers) {
+        return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()), otherSubmittedAnswers);
     }
 
-    public Round toDomain(RoundEntity roundEntity) {
-        return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()));
-    }
-
-    public Round toDomain(RoundEntity roundEntity, GameParticipant captain) {
+    public Round toDomain(RoundEntity roundEntity, GameParticipant captain, List<AnswerEntity> otherSubmittedAnswers) {
         return Round.builder()
-                .submittedAnswers(new HashMap<>())
+                .submittedAnswers(answerMapper.toDomainMap(otherSubmittedAnswers))
                 .roundStatus(toDomainStatus(roundEntity.getState()))
                 .captain(captain)
                 .question(toDomainQuestion(roundEntity.getQuestionEntity()))

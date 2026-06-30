@@ -14,6 +14,7 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
+import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -55,7 +56,8 @@ class SubmitAnswerServiceTest {
                 roundCardAssignmentService,
                 roundMapper(),
                 new RoomCodeService(),
-                eventPublisher
+                eventPublisher,
+                new AnswerMapper()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -70,7 +72,7 @@ class SubmitAnswerServiceTest {
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
-        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
+        when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(false);
         when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(player));
         when(answerRepository.countByRoundId(roundId)).thenReturn(1L);
@@ -128,7 +130,8 @@ class SubmitAnswerServiceTest {
                 roundCardAssignmentService,
                 roundMapper(),
                 new RoomCodeService(),
-                eventPublisher
+                eventPublisher,
+                new AnswerMapper()
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -139,7 +142,7 @@ class SubmitAnswerServiceTest {
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player(playerId, roomId)));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, gameSessionId)));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
-        when(roundCardAssignmentService.assignedCardValue(roomId, roundId, playerId)).thenReturn(7);
+        when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(true);
 
         assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
@@ -192,12 +195,13 @@ class SubmitAnswerServiceTest {
                 mock(RoundCardAssignmentService.class),
                 roundMapper(),
                 new RoomCodeService(),
-                mock(ApplicationEventPublisher.class)
+                mock(ApplicationEventPublisher.class),
+                mock(AnswerMapper.class)
         );
     }
 
     private RoundMapper roundMapper() {
-        return new RoundMapper(new QuestionMapper());
+        return new RoundMapper(new QuestionMapper(), new AnswerMapper());
     }
 
     private RoomEntity room(UUID roomId) {
@@ -231,7 +235,7 @@ class SubmitAnswerServiceTest {
         RoundEntity round = new RoundEntity();
         round.setId(roundId);
         round.setGameSessionId(gameSessionId);
-        round.setState(RoundState.QUESTION_REVEALED);
+        round.setState(RoundState.ANSWER_SUBMISSION);
         return round;
     }
 }

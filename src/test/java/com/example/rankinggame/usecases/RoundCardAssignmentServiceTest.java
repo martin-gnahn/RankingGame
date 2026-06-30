@@ -69,7 +69,7 @@ class RoundCardAssignmentServiceTest {
             return assignment;
         });
 
-        int assignedCard = service.assignedCardValue(roomId, roundId, firstPlayerId);
+        int assignedCard = service.getCardValue(roomId, roundId, firstPlayerId);
 
         assertThat(assignedCard).isBetween(1, 10);
         assertThat(assignments).hasSize(3);
@@ -78,10 +78,10 @@ class RoundCardAssignmentServiceTest {
                 .doesNotHaveDuplicates()
                 .allSatisfy(cardValue -> assertThat(cardValue).isBetween(1, 10));
 
-        service.assignedCardValue(roomId, roundId, secondPlayerId);
+        service.getCardValue(roomId, roundId, secondPlayerId);
         verify(assignmentRepository, times(3)).save(any(RoundCardAssignment.class));
 
-        service.assignedCardValue(roomId, UUID.randomUUID(), thirdPlayerId);
+        service.getCardValue(roomId, UUID.randomUUID(), thirdPlayerId);
         verify(assignmentRepository, times(6)).save(any(RoundCardAssignment.class));
     }
 
