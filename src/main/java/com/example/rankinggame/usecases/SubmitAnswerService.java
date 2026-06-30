@@ -76,7 +76,6 @@ public class SubmitAnswerService {
 
         AnswerEntity answer = answerMapper.toEntity(
                 roundId,
-                playerId,
                 submittedAnswer
         );
 

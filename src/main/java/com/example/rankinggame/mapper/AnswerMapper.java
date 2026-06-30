@@ -9,26 +9,27 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class AnswerMapper {
-    public AnswerEntity toEntity(RoundId roundId, PlayerId playerId, SubmittedAnswer submittedAnswer) {
+    public AnswerEntity toEntity(RoundId roundId, SubmittedAnswer submittedAnswer) {
         AnswerEntity answer = new AnswerEntity();
         answer.setRoundId(roundId.value());
-        answer.setPlayerId(playerId.value());
+        answer.setPlayerId(submittedAnswer.playerId().value());
         answer.setText(submittedAnswer.answerText().value());
         answer.setCardValue(submittedAnswer.cardValue());
         return answer;
     }
 
-    public Map<PlayerId, AnswerText> toDomainMap(List<AnswerEntity> answerEntities) {
+    public Map<PlayerId, SubmittedAnswer> toDomainMap(List<AnswerEntity> answerEntities) {
         return answerEntities.stream()
                 .map(this::toSubmittedAnswer)
                 .collect(
                     Collectors.toMap(
                             SubmittedAnswer::playerId,
-                            this::toAnswerText
+                            Function.identity()
                     )
                 );
     }
