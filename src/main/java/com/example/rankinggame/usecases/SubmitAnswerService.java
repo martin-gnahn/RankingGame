@@ -67,12 +67,12 @@ public class SubmitAnswerService {
         // TODO: fix that
         Round domainRound = roundMapper.toDomain(requiredEntities.round(), otherSubmittedAnswers);
         domainRound.checkIfSubmittingAnswerAllowed();
-        String answerText = Answer.normalizeText(command.answerText());
+        String answerTextValue = AnswerText.normalizeText(command.answerText());
 
         UUID roomId =requiredEntities.room().getId();
         int cardValue = roundCardAssignmentService.getCardValue(roomId, roundId.value(), playerId.value());
 
-        Answer submittedAnswer = domainRound.submitAnswer(playerId, answerText, cardValue);
+        SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, answerTextValue, cardValue);
 
         AnswerEntity answer = answerMapper.toEntity(
                 roundId,

@@ -112,7 +112,7 @@ describe('Game', () => {
     createComponent();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="answerText"]');
+    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="value"]');
     textarea!.value = 'Mit WLAN-Problemen.';
     textarea!.dispatchEvent(new Event('input'));
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));

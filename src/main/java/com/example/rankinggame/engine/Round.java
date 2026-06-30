@@ -4,14 +4,12 @@ import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException
 import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-@Data
+@Getter
 @Builder
 @AllArgsConstructor
 public class Round {
@@ -19,7 +17,7 @@ public class Round {
     private GameParticipant captain;
     private Question question;
     @Builder.Default
-    private Map<PlayerId, Answer> submittedAnswers = new HashMap<>();
+    private Map<PlayerId, SubmittedAnswer> submittedAnswers = new HashMap<>();
 
     public static Round start(GameParticipant captain, Question question) {
         return new Round(captain, question);
@@ -32,13 +30,13 @@ public class Round {
         }
     }
 
-    public Answer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
+    public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
         checkIfSubmittingAnswerAllowed();
         if (submittedAnswers.containsKey(playerId)) {
             throw new AnswerAlreadySubmittedException();
         }
 
-        Answer answer = new Answer(answerText, cardValue);
+        SubmittedAnswer answer = new SubmittedAnswer(playerId, new AnswerText(answerText), cardValue);
         submittedAnswers.put(playerId, answer);
         return answer;
     }

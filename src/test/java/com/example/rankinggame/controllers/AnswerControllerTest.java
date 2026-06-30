@@ -43,7 +43,7 @@ class AnswerControllerTest {
                         .content("""
                                 {
                                   "playerId": "%s",
-                                  "answerText": "Mit WLAN-Problemen."
+                                  "value": "Mit WLAN-Problemen."
                                 }
                                 """.formatted(playerId)))
                 .andExpect(status().isCreated())
@@ -74,7 +74,7 @@ class AnswerControllerTest {
                         .content("""
                                 {
                                   "playerId": "%s",
-                                  "answerText": "Mit WLAN-Problemen."
+                                  "value": "Mit WLAN-Problemen."
                                 }
                                 """.formatted(playerId)))
                 .andExpect(status().isConflict())

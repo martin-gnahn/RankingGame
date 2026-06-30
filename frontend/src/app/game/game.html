@@ -19,7 +19,7 @@
           <p id="game-title">{{ round.questionText }}</p>
         </section>
 
-        <form class="answer-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>
+        <form class="answerText-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>
           <label for="answerText">Antwort</label>
           <textarea
             id="answerText"

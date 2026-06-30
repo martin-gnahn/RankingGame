@@ -98,7 +98,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                         .content("""
                                 {
                                   "playerId": "%s",
-                                  "answerText": "Answer1"
+                                  "value": "Answer1"
                                 }
                                 """.formatted(hostPlayerId)))
                 .andExpect(status().isCreated());
@@ -108,7 +108,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                         .content("""
                                 {
                                   "playerId": "%s",
-                                  "answerText": "Answer2"
+                                  "value": "Answer2"
                                 }
                                 """.formatted(guestPlayerId)))
                 .andExpect(status().isCreated());
@@ -297,7 +297,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                         .content("""
                                 {
                                   "playerId": "%s",
-                                  "answerText": "%s"
+                                  "value": "%s"
                                 }
                                 """.formatted(playerId, answerText))
                 )

@@ -71,7 +71,7 @@ Useful examples:
 ```powershell
 npm.cmd run e2e:ui -- e2e/smoke.spec.ts
 npm.cmd run e2e:ui -- e2e/room-start-lobby.spec.ts
-npm.cmd run e2e:ui -- e2e/game-answer-submission.spec.ts
+npm.cmd run e2e:ui -- e2e/game-answerText-submission.spec.ts
 ```
 
 With a real browser window:
