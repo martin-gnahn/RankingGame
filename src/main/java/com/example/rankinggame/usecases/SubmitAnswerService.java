@@ -4,21 +4,12 @@ import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.engine.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
-import com.example.rankinggame.entities.AnswerEntity;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RoundMapper;
-import com.example.rankinggame.repositories.AnswerRepository;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.PlayerRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,7 +47,6 @@ public class SubmitAnswerService {
             throw new PlayerIdRequiredException();
         }
 
-        // TODO: extract to other service
         EntityHolder requiredEntities = getRequiredEntities(command, normalizedRoomCode);
         RoundId roundId = new RoundId(requiredEntities.round().getId());
         PlayerId playerId = new PlayerId(requiredEntities.player().getId());
@@ -64,7 +54,6 @@ public class SubmitAnswerService {
         var otherSubmittedAnswers =
                 answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId.value());
 
-        // TODO: fix that
         Round domainRound = roundMapper.toDomain(requiredEntities.round(), otherSubmittedAnswers);
         domainRound.checkIfSubmittingAnswerAllowed();
         String answerTextValue = AnswerText.normalizeText(command.answerText());

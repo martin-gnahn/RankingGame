@@ -3,7 +3,6 @@ package com.example.rankinggame.engine;
 import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
 import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
 
-// TODO: Split into SubmittedAnswer and AnswerText
 public record AnswerText(String value) {
     private static final int MAX_ANSWER_LENGTH = 500;
     private static final int MIN_CARD_VALUE = 1;

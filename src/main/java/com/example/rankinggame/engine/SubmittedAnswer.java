@@ -1,10 +1,7 @@
 package com.example.rankinggame.engine;
 
-import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
-import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
 import com.example.rankinggame.engine.exceptions.InvalidCardValueException;
 
-// TODO: Split into SubmittedAnswer and AnswerText
 public record SubmittedAnswer(PlayerId playerId, AnswerText answerText, int cardValue) {
     private static final int MAX_ANSWER_LENGTH = 500;
     private static final int MIN_CARD_VALUE = 1;

@@ -1,10 +1,6 @@
 package com.example.rankinggame.mapper;
 
-import com.example.rankinggame.engine.GameParticipant;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.Question;
-import com.example.rankinggame.engine.Round;
-import com.example.rankinggame.engine.RoundStatus;
+import com.example.rankinggame.engine.*;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.QuestionEntity;
 import com.example.rankinggame.entities.RoundEntity;
@@ -22,7 +18,6 @@ public class RoundMapper {
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
 
-    // TODO: add answer entities so Round becomes rich domain object
     public Round toDomain(RoundEntity roundEntity, List<AnswerEntity> otherSubmittedAnswers) {
         return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()), otherSubmittedAnswers);
     }
