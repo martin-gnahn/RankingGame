@@ -1,19 +1,11 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.ActiveRoundResult;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.JpaPlayerRepository;
-import com.example.rankinggame.repositories.QuestionRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.entities.*;
+import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
+import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
+import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
+import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,8 +76,81 @@ class GetActiveRoundServiceTest {
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", RoomStatus.LOBBY)));
 
         assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("No active game is running");
+                .isInstanceOf(RoomHasNoActiveGameException.class)
+                .hasMessage("Room 'ABCD12' has no active game.");
+    }
+
+    @Test
+    void rejectsInGameRoomsWithoutGameSession() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        GetActiveRoundService service = new GetActiveRoundService(
+                roomRepository,
+                gameSessionRepository,
+                mock(RoundRepository.class),
+                mock(QuestionRepository.class),
+                mock(RoundCardAssignmentService.class),
+                mock(JpaPlayerRepository.class)
+        );
+        UUID roomId = UUID.randomUUID();
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", RoomStatus.IN_GAME)));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+                .isInstanceOf(RoomHasNoActiveGameException.class)
+                .hasMessage("Room 'ABCD12' has no active game.");
+    }
+
+    @Test
+    void rejectsGameSessionsWithoutActiveRound() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        RoundRepository roundRepository = mock(RoundRepository.class);
+        GetActiveRoundService service = new GetActiveRoundService(
+                roomRepository,
+                gameSessionRepository,
+                roundRepository,
+                mock(QuestionRepository.class),
+                mock(RoundCardAssignmentService.class),
+                mock(JpaPlayerRepository.class)
+        );
+        UUID roomId = UUID.randomUUID();
+        UUID gameSessionId = UUID.randomUUID();
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", RoomStatus.IN_GAME)));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession(gameSessionId, roomId, 1)));
+        when(roundRepository.findByGameSessionId(gameSessionId)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+                .isInstanceOf(ActiveRoundNotFoundException.class)
+                .hasMessage("Room 'ABCD12' has no active round.");
+    }
+
+    @Test
+    void rejectsActiveRoundsWithMissingQuestion() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        RoundRepository roundRepository = mock(RoundRepository.class);
+        QuestionRepository questionRepository = mock(QuestionRepository.class);
+        GetActiveRoundService service = new GetActiveRoundService(
+                roomRepository,
+                gameSessionRepository,
+                roundRepository,
+                questionRepository,
+                mock(RoundCardAssignmentService.class),
+                mock(JpaPlayerRepository.class)
+        );
+        UUID roomId = UUID.randomUUID();
+        UUID gameSessionId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", RoomStatus.IN_GAME)));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession(gameSessionId, roomId, 1)));
+        when(roundRepository.findByGameSessionId(gameSessionId)).thenReturn(List.of(round(roundId, gameSessionId, questionId)));
+        when(questionRepository.findById(questionId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+                .isInstanceOf(ActiveRoundQuestionNotFoundException.class)
+                .hasMessage("Question '%s' for active round '%s' was not found.", questionId, roundId);
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameType;
+import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.OnlyHostCanStartGame;
 import com.example.rankinggame.usecases.StartRankingGameService;
@@ -122,6 +123,22 @@ class RankingGameControllerTest {
                 .andExpect(jsonPath("$.questionId").value(questionId.toString()))
                 .andExpect(jsonPath("$.questionText").value("Welche Ausrede funktioniert immer?"))
                 .andExpect(jsonPath("$.assignedCardValue").value(7));
+    }
+
+    @Test
+    void returnsConflictWhenCurrentRoundHasNoActiveGame() throws Exception {
+        StartRankingGameService startRankingGameService = mock(StartRankingGameService.class);
+        GetActiveRoundService getActiveRoundService = mock(GetActiveRoundService.class);
+        UUID playerId = UUID.randomUUID();
+        when(getActiveRoundService.getActiveRound("ABCD12", playerId))
+                .thenThrow(new RoomHasNoActiveGameException("ABCD12"));
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+
+        mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")
+                        .param("playerId", playerId.toString()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Room 'ABCD12' has no active game."));
     }
 
     private MockMvc mockMvc(

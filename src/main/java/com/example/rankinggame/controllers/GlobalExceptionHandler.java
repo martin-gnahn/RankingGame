@@ -1,31 +1,9 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.ApiError;
-import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
-import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
-import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
-import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
-import com.example.rankinggame.engine.exceptions.CannotUseSameQuestionAgainException;
-import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
-import com.example.rankinggame.engine.exceptions.GameCannotBeStartedException;
-import com.example.rankinggame.engine.exceptions.InvalidCardValueException;
-import com.example.rankinggame.engine.exceptions.InvalidPlayerException;
-import com.example.rankinggame.engine.exceptions.NoPlayerInGameException;
-import com.example.rankinggame.engine.exceptions.NotEnoughPlayersException;
-import com.example.rankinggame.exceptions.QuestionUnavailableException;
-import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
-import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.usecases.HostPlayerIdRequiredException;
-import com.example.rankinggame.usecases.OnlyHostCanQueryAnswers;
-import com.example.rankinggame.usecases.OnlyHostCanSortAnswers;
-import com.example.rankinggame.usecases.OnlyHostCanStartGame;
-import com.example.rankinggame.usecases.OnlyRoomPlayersCanQueryAnswers;
-import com.example.rankinggame.usecases.PlayerIdRequiredException;
-import com.example.rankinggame.usecases.PlayerNameAlreadyTakenException;
-import com.example.rankinggame.usecases.PlayerNameRequiredException;
-import com.example.rankinggame.usecases.PlayerNameTooLongException;
-import com.example.rankinggame.usecases.RoomCodeRequiredException;
-import com.example.rankinggame.usecases.RoundIdRequiredException;
+import com.example.rankinggame.engine.exceptions.*;
+import com.example.rankinggame.exceptions.*;
+import com.example.rankinggame.usecases.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -90,7 +68,10 @@ public class GlobalExceptionHandler {
             CaptainNotFoundException.class,
             GameCannotBeStartedException.class,
             NoPlayerInGameException.class,
-            NotEnoughPlayersException.class
+            NotEnoughPlayersException.class,
+            RoomHasNoActiveGameException.class,
+            ActiveRoundNotFoundException.class,
+            ActiveRoundQuestionNotFoundException.class
     })
     public ResponseEntity<ApiError> handleGameStateConflict(RuntimeException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

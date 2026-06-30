@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
 
-import { environment } from '../../../environments/environment';
+import {environment} from '../../../environments/environment';
 import {
   ActiveRoundResponse,
   ChatMessageResponse,
@@ -11,10 +11,10 @@ import {
   RoomActionResponse,
   RoomCode,
   RoomResponse,
-  SubmitAnswerRequest,
-  SubmitAnswerResponse,
   StartGameRequest,
   StartGameResponse,
+  SubmitAnswerRequest,
+  SubmitAnswerResponse,
 } from './room.models';
 
 @Injectable({
@@ -53,6 +53,7 @@ export class RoomApiService {
     );
   }
 
+  // TODO: follow this
   getActiveRound(roomCode: RoomCode, playerId: string): Observable<ActiveRoundResponse> {
     return this.http.get<ActiveRoundResponse>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round`,

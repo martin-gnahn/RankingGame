@@ -1,27 +1,14 @@
 package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.dto.ActiveRoundResponse;
-import com.example.rankinggame.dto.ActiveRoundResult;
-import com.example.rankinggame.dto.StartGameRequest;
-import com.example.rankinggame.dto.StartGameResponse;
-import com.example.rankinggame.dto.StartRankingGameCommand;
-import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.dto.*;
 import com.example.rankinggame.entities.GameSessionPlayerEntity;
-import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.StartRankingGameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -62,6 +49,7 @@ public class RankingGameController {
             @PathVariable String roomCode,
             @RequestParam UUID playerId
     ) {
+        // TODO: rework that. dirty.
         ActiveRoundResult result = getActiveRoundService.getActiveRound(roomCode, playerId);
         log.info("ActiveRoundResult {}", objectMapper.writeValueAsString(result));
         return new ActiveRoundResponse(

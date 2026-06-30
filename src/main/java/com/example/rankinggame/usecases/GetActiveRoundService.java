@@ -2,6 +2,9 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.entities.*;
+import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
+import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
+import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
@@ -30,21 +33,20 @@ public class GetActiveRoundService {
         log.info("Retrieved Room entity with code '{}' and id '{}'", room.getCode(), room.getId());
 
         if (room.getStatus() != RoomStatus.IN_GAME) {
-            throw new IllegalArgumentException("No active game is running");
+            throw new RoomHasNoActiveGameException(normalizedRoomCode);
         }
 
-        // TODO: Prefer custom exceptions. maybe no hardcoded error message strings at this service.
         GameSession gameSession = gameSessionRepository.findByRoomId(room.getId())
-                .orElseThrow(() -> new IllegalArgumentException("No active game is running"));
+                .orElseThrow(() -> new RoomHasNoActiveGameException(normalizedRoomCode));
         log.info("Retrieved GameSession entity with id '{}'", gameSession.getId());
 
         RoundEntity round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
                 .filter(candidate -> candidate.getState() == RoundState.ANSWER_SUBMISSION)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No active round is available"));
+                .orElseThrow(() -> new ActiveRoundNotFoundException(normalizedRoomCode));
         log.info("Retrieved Round entity with id '{}'", round.getId());
         QuestionEntity question = questionRepository.findById(round.getQuestionId())
-                .orElseThrow(() -> new IllegalArgumentException("Question for active round was not found"));
+                .orElseThrow(() -> new ActiveRoundQuestionNotFoundException(round.getId(), round.getQuestionId()));
         log.info("Retrieved Question entity with id '{}'", question.getId());
         int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
