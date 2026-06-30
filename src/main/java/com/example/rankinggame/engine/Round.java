@@ -8,11 +8,13 @@ import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Getter
 @Builder
 @AllArgsConstructor
 public class Round {
+    private RoundId id;
     private RoundStatus roundStatus;
     private GameParticipant captain;
     private Question question;
@@ -22,6 +24,8 @@ public class Round {
     public static Round start(GameParticipant captain, Question question) {
         return new Round(captain, question);
     }
+
+    // TODO: later static Round finish(...), and setModeToSorting(...)
 
 
     public void checkIfSubmittingAnswerAllowed() {
@@ -44,10 +48,10 @@ public class Round {
     private Round(GameParticipant captain, Question question) {
 //        this.captain = players.stream().filter(p -> p.playerId() == captainId).findFirst()
 //                .orElseThrow(InvalidPlayerException::new);
+        this.id = new RoundId(UUID.randomUUID());
         this.roundStatus = RoundStatus.ANSWER_SUBMISSION;
         this.captain = captain;
         this.question = question;
         this.submittedAnswers = new HashMap<>();
-        // TODO: How to get question id
     }
 }

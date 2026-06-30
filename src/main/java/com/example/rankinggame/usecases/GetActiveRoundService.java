@@ -6,6 +6,7 @@ import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
 import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class GetActiveRoundService {
     private final QuestionRepository questionRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
     private final JpaPlayerRepository playerRepository;
+    private final GameMapper gameMapper;
 
     @Transactional
     public ActiveRoundResult getActiveRound(String roomCode, java.util.UUID playerId) {
@@ -40,9 +42,7 @@ public class GetActiveRoundService {
                 .orElseThrow(() -> new RoomHasNoActiveGameException(normalizedRoomCode));
         log.info("Retrieved GameSession entity with id '{}'", gameSession.getId());
 
-        RoundEntity round = roundRepository.findByGameSessionId(gameSession.getId()).stream()
-                .filter(candidate -> candidate.getState() == RoundState.ANSWER_SUBMISSION)
-                .findFirst()
+        RoundEntity round = roundRepository.findById(gameSession.getCurrentRoundId())
                 .orElseThrow(() -> new ActiveRoundNotFoundException(normalizedRoomCode));
         log.info("Retrieved Round entity with id '{}'", round.getId());
         QuestionEntity question = questionRepository.findById(round.getQuestionId())
@@ -51,12 +51,13 @@ public class GetActiveRoundService {
         int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
         log.info("Retrieved active round result for room '{}'", room.getId());
+        int roundNumber = 1;
         return new ActiveRoundResult(
                 room.getId(),
                 room.getCode(),
                 gameSession.getId(),
                 round.getId(),
-                gameSession.getCurrentRoundNumber(),
+                roundNumber,
                 question.getId(),
                 question.getText(),
                 assignedCardValue

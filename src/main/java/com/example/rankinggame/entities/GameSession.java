@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -21,6 +20,9 @@ public class GameSession {
     @Column(name = "room_id", nullable = false)
     private UUID roomId;
 
+    @Column(name = "current_round_id", nullable = false)
+    private UUID currentRoundId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "game_type", nullable = false, length = 50)
     private GameType gameType;
@@ -29,7 +31,10 @@ public class GameSession {
     @Column(nullable = false, length = 32)
     private GameSessionStatus status;
 
-    @Column(name = "current_round_number", nullable = false)
-    private int currentRoundNumber;
+    /**
+     * this is a 0-based index
+     */
+    @Column(name = "current_round_index", nullable = false)
+    private int currentRoundIndex;
 
 }

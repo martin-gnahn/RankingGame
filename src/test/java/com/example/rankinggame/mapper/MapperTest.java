@@ -7,6 +7,7 @@ import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.Question;
 import com.example.rankinggame.engine.QuestionId;
 import com.example.rankinggame.engine.Round;
+import com.example.rankinggame.engine.RoundId;
 import com.example.rankinggame.engine.RoundStatus;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.GameSessionStatus;
@@ -81,8 +82,14 @@ class MapperTest {
 
     @Test
     void gameMapperMapsDomainToGameSessionProjection() {
+        UUID currentRoundId = UUID.randomUUID();
         Game domain = Game.builder()
                 .status(GameStatus.IN_PROGRESS)
+                .allRounds(List.of(
+                        round(UUID.randomUUID()),
+                        round(UUID.randomUUID()),
+                        round(currentRoundId)
+                ))
                 .currentRoundIndex(2)
                 .build();
 
@@ -90,8 +97,18 @@ class MapperTest {
 
         assertThat(entity.getId()).isNotNull();
         assertThat(entity.getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
-        assertThat(entity.getCurrentRoundNumber()).isEqualTo(3);
+        assertThat(entity.getCurrentRoundId()).isEqualTo(currentRoundId);
+        assertThat(entity.getCurrentRoundIndex()).isEqualTo(2);
         assertThat(entity.getGameType()).isEqualTo(GameType.RANKING_GAME);
+    }
+
+    private Round round(UUID roundId) {
+        return Round.builder()
+                .id(new RoundId(roundId))
+                .roundStatus(RoundStatus.ANSWER_SUBMISSION)
+                .captain(new GameParticipant(new PlayerId(UUID.randomUUID()), "Captain", true))
+                .question(new Question(new QuestionId(UUID.randomUUID()), "Question", "test"))
+                .build();
     }
 
     private QuestionEntity question(UUID questionId) {

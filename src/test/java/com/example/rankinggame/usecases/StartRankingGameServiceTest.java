@@ -2,25 +2,11 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionPlayerEntity;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.GameStartedRoomEvent;
+import com.example.rankinggame.exceptions.RoomNotInLobbyException;
 import com.example.rankinggame.mapper.*;
-import com.example.rankinggame.repositories.GameSessionPlayerRepository;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.PlayerRepository;
-import com.example.rankinggame.repositories.QuestionRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,10 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class StartRankingGameServiceTest {
     @Test
@@ -94,7 +77,7 @@ class StartRankingGameServiceTest {
         assertThat(gameSessionCaptor.getValue().getRoomId()).isEqualTo(roomId);
         assertThat(gameSessionCaptor.getValue().getGameType()).isEqualTo(GameType.RANKING_GAME);
         assertThat(gameSessionCaptor.getValue().getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
-        assertThat(gameSessionCaptor.getValue().getCurrentRoundNumber()).isEqualTo(1);
+        assertThat(gameSessionCaptor.getValue().getCurrentRoundIndex()).isZero();
 
         ArgumentCaptor<Iterable<GameSessionPlayerEntity>> gameSessionPlayersCaptor = ArgumentCaptor.forClass(Iterable.class);
         verify(gameSessionPlayerRepository).saveAll(gameSessionPlayersCaptor.capture());
@@ -177,8 +160,8 @@ class StartRankingGameServiceTest {
                 .thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", hostPlayerId, RoomStatus.IN_GAME)));
 
         assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", hostPlayerId)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Room is not in lobby");
+                .isInstanceOf(RoomNotInLobbyException.class)
+                .hasMessage("Room 'ABCD12' is not in lobby.");
 
         verify(playerRepository, never()).findById(any());
         verify(gameSessionRepository, never()).save(any());
@@ -301,7 +284,7 @@ class StartRankingGameServiceTest {
         gameSession.setRoomId(roomId);
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
-        gameSession.setCurrentRoundNumber(1);
+        gameSession.setCurrentRoundIndex(0);
         return gameSession;
     }
 

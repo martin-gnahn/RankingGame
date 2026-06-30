@@ -5,28 +5,17 @@ import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.engine.Game;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Question;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionPlayerEntity;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.exceptions.RoomNotInLobbyException;
 import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.mapper.PlayerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
-import com.example.rankinggame.repositories.GameSessionPlayerRepository;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.PlayerRepository;
-import com.example.rankinggame.repositories.QuestionRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -84,7 +73,7 @@ public class StartRankingGameService {
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
 
         if (room.getStatus() != RoomStatus.LOBBY) {
-            throw new IllegalArgumentException("Room is not in lobby");
+            throw new RoomNotInLobbyException(roomCode);
         }
 
         return room;
@@ -165,7 +154,7 @@ public class StartRankingGameService {
                 new StartRankingGameResult.StartedGame(gameSession.getId(), gameSession.getGameType()),
                 new StartRankingGameResult.StartedRound(
                         round.getId(),
-                        gameSession.getCurrentRoundNumber(),
+                        gameSession.getCurrentRoundIndex(),
                         round.getQuestionId()
                 )
         );

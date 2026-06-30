@@ -219,7 +219,7 @@ class SubmitAnswerServiceTest {
         gameSession.setRoomId(roomId);
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
-        gameSession.setCurrentRoundNumber(1);
+        gameSession.setCurrentRoundIndex(0);
         return gameSession;
     }
 

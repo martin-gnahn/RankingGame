@@ -5,6 +5,7 @@ import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
 import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
+import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,8 @@ class GetActiveRoundServiceTest {
                 roundRepository,
                 questionRepository,
                 roundCardAssignmentService,
-                mock(JpaPlayerRepository.class)
+                mock(JpaPlayerRepository.class),
+                mock(GameMapper.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
@@ -71,7 +73,8 @@ class GetActiveRoundServiceTest {
                 mock(RoundRepository.class),
                 mock(QuestionRepository.class),
                 mock(RoundCardAssignmentService.class),
-                mock(JpaPlayerRepository.class)
+                mock(JpaPlayerRepository.class),
+                mock(GameMapper.class)
         );
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", RoomStatus.LOBBY)));
 
@@ -90,7 +93,8 @@ class GetActiveRoundServiceTest {
                 mock(RoundRepository.class),
                 mock(QuestionRepository.class),
                 mock(RoundCardAssignmentService.class),
-                mock(JpaPlayerRepository.class)
+                mock(JpaPlayerRepository.class),
+                mock(GameMapper.class)
         );
         UUID roomId = UUID.randomUUID();
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", RoomStatus.IN_GAME)));
@@ -112,7 +116,8 @@ class GetActiveRoundServiceTest {
                 roundRepository,
                 mock(QuestionRepository.class),
                 mock(RoundCardAssignmentService.class),
-                mock(JpaPlayerRepository.class)
+                mock(JpaPlayerRepository.class),
+                mock(GameMapper.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
@@ -137,7 +142,8 @@ class GetActiveRoundServiceTest {
                 roundRepository,
                 questionRepository,
                 mock(RoundCardAssignmentService.class),
-                mock(JpaPlayerRepository.class)
+                mock(JpaPlayerRepository.class),
+                mock(GameMapper.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID gameSessionId = UUID.randomUUID();
@@ -170,13 +176,13 @@ class GetActiveRoundServiceTest {
         return room;
     }
 
-    private GameSession gameSession(UUID gameSessionId, UUID roomId, int currentRoundNumber) {
+    private GameSession gameSession(UUID gameSessionId, UUID roomId, int currentRoundIndex) {
         GameSession gameSession = new GameSession();
         gameSession.setId(gameSessionId);
         gameSession.setRoomId(roomId);
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
-        gameSession.setCurrentRoundNumber(currentRoundNumber);
+        gameSession.setCurrentRoundIndex(currentRoundIndex);
         return gameSession;
     }
 

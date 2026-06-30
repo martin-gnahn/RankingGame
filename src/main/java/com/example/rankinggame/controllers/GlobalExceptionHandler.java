@@ -70,6 +70,7 @@ public class GlobalExceptionHandler {
             NoPlayerInGameException.class,
             NotEnoughPlayersException.class,
             RoomHasNoActiveGameException.class,
+            RoomNotInLobbyException.class,
             ActiveRoundNotFoundException.class,
             ActiveRoundQuestionNotFoundException.class
     })

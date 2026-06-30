@@ -1,15 +1,6 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +65,7 @@ class JpaGameSessionRepositoryTest {
         gameSession.setRoomId(savedRoom.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
-        gameSession.setCurrentRoundNumber(1);
+        gameSession.setCurrentRoundIndex(0);
         GameSession savedGameSession = gameSessionRepository.saveAndFlush(gameSession);
 
         QuestionEntity question = new QuestionEntity();
@@ -99,7 +90,7 @@ class JpaGameSessionRepositoryTest {
                     assertThat(foundSession.getId()).isEqualTo(savedGameSession.getId());
                     assertThat(foundSession.getGameType()).isEqualTo(GameType.RANKING_GAME);
                     assertThat(foundSession.getStatus()).isEqualTo(GameSessionStatus.IN_PROGRESS);
-                    assertThat(foundSession.getCurrentRoundNumber()).isEqualTo(1);
+                    assertThat(foundSession.getCurrentRoundIndex()).isZero();
                 });
         assertThat(roundRepository.findByGameSessionId(savedGameSession.getId()))
                 .singleElement()

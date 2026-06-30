@@ -5,6 +5,7 @@ import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
+import com.example.rankinggame.exceptions.RoomNotInLobbyException;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.OnlyHostCanStartGame;
 import com.example.rankinggame.usecases.StartRankingGameService;
@@ -89,6 +90,23 @@ class RankingGameControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can start the game"));
+    }
+
+    @Test
+    void returnsConflictWhenStartingOutsideLobby() throws Exception {
+        StartRankingGameService startRankingGameService = mock(StartRankingGameService.class);
+        GetActiveRoundService getActiveRoundService = mock(GetActiveRoundService.class);
+        UUID playerId = UUID.randomUUID();
+        when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
+                .thenThrow(new RoomNotInLobbyException("ABCD12"));
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hostPlayerId\":\"" + playerId + "\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Room 'ABCD12' is not in lobby."));
     }
 
     @Test

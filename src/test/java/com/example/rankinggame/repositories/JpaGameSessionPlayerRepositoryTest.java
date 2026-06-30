@@ -1,13 +1,6 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionPlayerEntity;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
+import com.example.rankinggame.entities.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +60,7 @@ class JpaGameSessionPlayerRepositoryTest {
         gameSession.setRoomId(savedRoom.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
-        gameSession.setCurrentRoundNumber(1);
+        gameSession.setCurrentRoundIndex(0);
         GameSession savedGameSession = gameSessionRepository.saveAndFlush(gameSession);
 
         gameSessionPlayerRepository.saveAllAndFlush(java.util.List.of(

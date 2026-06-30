@@ -164,7 +164,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         assertThat(currentGameSessionState.roomStatus()).isEqualTo("IN_GAME");
         assertThat(currentGameSessionState.gameType()).isEqualTo("RANKING_GAME");
         assertThat(currentGameSessionState.gameSessionStatus()).isEqualTo("IN_PROGRESS");
-        assertThat(currentGameSessionState.currentRoundNumber()).isEqualTo(1);
+        assertThat(currentGameSessionState.currentRoundIndex()).isZero();
         assertThat(currentGameSessionState.roundState()).isEqualTo("SORTING");
         assertThat(currentGameSessionState.answerCount()).isEqualTo(3);
         assertThat(currentGameSessionState.distinctAnswerPlayerCount()).isEqualTo(3);
@@ -324,7 +324,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             rooms.status AS room_status,
                             game_sessions.game_type AS game_type,
                             game_sessions.status AS game_session_status,
-                            game_sessions.current_round_number AS current_round_number,
+                            game_sessions.current_round_index AS current_round_index,
                             rounds.state AS round_state,
                             COUNT(answers.id)::int AS answer_count,
                             COUNT(DISTINCT answers.player_id)::int AS distinct_answer_player_count
@@ -338,14 +338,14 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             rooms.status,
                             game_sessions.game_type,
                             game_sessions.status,
-                            game_sessions.current_round_number,
+                            game_sessions.current_round_index,
                             rounds.state
                         """,
                 (rs, rowNum) -> new CurrentGameSessionState(
                         rs.getString("room_status"),
                         rs.getString("game_type"),
                         rs.getString("game_session_status"),
-                        rs.getInt("current_round_number"),
+                        rs.getInt("current_round_index"),
                         rs.getString("round_state"),
                         rs.getInt("answer_count"),
                         rs.getInt("distinct_answer_player_count")
@@ -535,7 +535,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
             String roomStatus,
             String gameType,
             String gameSessionStatus,
-            int currentRoundNumber,
+            int currentRoundIndex,
             String roundState,
             int answerCount,
             int distinctAnswerPlayerCount

@@ -1,11 +1,6 @@
 package com.example.rankinggame.engine;
 
-import com.example.rankinggame.engine.exceptions.CannotUseSameQuestionAgainException;
-import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
-import com.example.rankinggame.engine.exceptions.GameCannotBeStartedException;
-import com.example.rankinggame.engine.exceptions.InvalidPlayerException;
-import com.example.rankinggame.engine.exceptions.NoPlayerInGameException;
-import com.example.rankinggame.engine.exceptions.NotEnoughPlayersException;
+import com.example.rankinggame.engine.exceptions.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +22,9 @@ public class Game {
     private List<Round> allRounds = new ArrayList<>();
     private GameStatus status;
 
+    /**
+     * this is a 0-based index
+     */
     private int currentRoundIndex;
 
     public Round getCurrentRound() {
