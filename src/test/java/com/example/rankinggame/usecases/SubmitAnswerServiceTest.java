@@ -3,39 +3,25 @@ package com.example.rankinggame.usecases;
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
-import com.example.rankinggame.entities.AnswerEntity;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.PlayerConnectionStatus;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
-import com.example.rankinggame.repositories.AnswerRepository;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.PlayerRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class SubmitAnswerServiceTest {
     @Test
@@ -144,6 +130,12 @@ class SubmitAnswerServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(true);
+        AnswerEntity answerEntity =
+                new AnswerEntity(
+                        UUID.randomUUID(), roundId, playerId, "Mit WLAN-Problemen.", 10, Instant.now()
+                );
+        when(answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId))
+                .thenReturn(List.of(answerEntity));
 
         assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
                 "ABCD12",
