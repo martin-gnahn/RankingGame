@@ -53,12 +53,6 @@ export class RoomApiService {
     );
   }
 
-  getPlayersInGame(roomCode: RoomCode): Observable<string> {
-    return this.http.get<string>(
-      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round/players`,
-    );
-  }
-
   getActiveRound(roomCode: RoomCode, playerId: string): Observable<ActiveRoundResponse> {
     return this.http.get<ActiveRoundResponse>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round`,

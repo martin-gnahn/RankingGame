@@ -6,6 +6,7 @@ import com.example.rankinggame.dto.StartGameRequest;
 import com.example.rankinggame.dto.StartGameResponse;
 import com.example.rankinggame.dto.StartRankingGameCommand;
 import com.example.rankinggame.dto.StartRankingGameResult;
+import com.example.rankinggame.entities.GameSessionPlayerEntity;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.StartRankingGameService;
@@ -75,11 +76,10 @@ public class RankingGameController {
         );
     }
 
-    //  List<PlayerEntity>
     @GetMapping("/current-round/players")
-    public List<PlayerEntity> getActivePlayers(
+    public List<GameSessionPlayerEntity> getActivePlayers(
             @PathVariable String roomCode
     ) {
-        return getActiveRoundService.getActivePlayers(roomCode);
+        return startRankingGameService.getActivePlayers(roomCode);
     }
 }

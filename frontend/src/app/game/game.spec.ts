@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { GameApiService } from '../core/api/game-api.service';
 import { RoomApiService } from '../core/api/room-api.service';
 import { ActiveRoundResponse } from '../core/api/room.models';
 import { RealtimeEvent } from '../core/websocket/web-socket.models';
@@ -13,6 +14,7 @@ import { Game } from './game';
 describe('Game', () => {
   let fixture: ComponentFixture<Game>;
   let roomApi: jasmine.SpyObj<RoomApiService>;
+  let gameApi: jasmine.SpyObj<GameApiService>;
   let webSocket: jasmine.SpyObj<WebSocketService>;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
@@ -35,6 +37,7 @@ describe('Game', () => {
       'getRecentChatMessages',
       'submitAnswer',
     ]);
+    gameApi = jasmine.createSpyObj<GameApiService>('GameApiService', ['getActivePlayers']);
     webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
       'disconnect',
       'joinLive',
@@ -44,6 +47,7 @@ describe('Game', () => {
     realtimeEvents = new Subject<RealtimeEvent>();
     webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
     roomApi.getRecentChatMessages.and.returnValue(of([]));
+    gameApi.getActivePlayers.and.returnValue(of([]));
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'player-1' }));
 
@@ -52,6 +56,7 @@ describe('Game', () => {
       providers: [
         provideRouter([]),
         { provide: RoomApiService, useValue: roomApi },
+        { provide: GameApiService, useValue: gameApi },
         { provide: WebSocketService, useValue: webSocket },
         {
           provide: ActivatedRoute,

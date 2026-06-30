@@ -3,9 +3,10 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import {map, Observable} from 'rxjs';
+import { map } from 'rxjs';
 
 import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
+import { GameApiService } from '../core/api/game-api.service';
 import { RoomApiService } from '../core/api/room-api.service';
 import { ActiveRoundResponse, ChatMessageResponse } from '../core/api/room.models';
 import { RealtimeEvent } from '../core/websocket/web-socket.models';
@@ -25,6 +26,7 @@ interface ScoreCard {
 })
 export class Game {
   private readonly roomApi = inject(RoomApiService);
+  private readonly gameApi = inject(GameApiService);
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
@@ -55,8 +57,8 @@ export class Game {
 
   constructor() {
     setInterval(() => {
-      let roomCodeCurrent = this.roomCode();
-      this.roomApi.getPlayersInGame(roomCodeCurrent).subscribe();
+      const roomCodeCurrent = this.roomCode();
+      this.gameApi.getActivePlayers(roomCodeCurrent).subscribe();
     }, 1000);
 
     this.loadActiveRound();
@@ -213,8 +215,4 @@ export class Game {
       && typeof message.createdAt === 'string';
   }
 
-  // protected playerData(): Observable<string> {
-  //   const roomCode = this.roomCode();
-  //   return this.roomApi.getPlayersInGame(roomCode);
-  // }
 }

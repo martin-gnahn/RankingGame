@@ -70,11 +70,4 @@ public class GetActiveRoundService {
 
         return roomCode.trim().toUpperCase(Locale.ROOT);
     }
-
-    public List<PlayerEntity> getActivePlayers(String roomCode) {
-        // TODO: Or players at current game
-        // List<PlayerEntity> playersAtCurrentRoom = playerRepository.findByRoomCode(roomCode).stream().toList();
-        List<PlayerEntity> playersAtCurrentRoom = playerRepository.findAll();
-        return playersAtCurrentRoom;
-    }
 }

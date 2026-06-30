@@ -15,6 +15,7 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.exceptions.QuestionUnavailableException;
+import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.mapper.PlayerMapper;
@@ -183,5 +184,11 @@ public class StartRankingGameService {
         }
 
         return command.hostPlayerId();
+    }
+
+    public List<GameSessionPlayerEntity> getActivePlayers(String roomCode) {
+        var room = roomRepository.findByCode(roomCode).orElseThrow(() -> new RoomNotFoundException(roomCode));
+        var gameSession = gameSessionRepository.findByRoomId(room.getId()).orElseThrow(() -> new RoomHasNoActiveGameException(roomCode));
+        return gameSessionPlayerRepository.findByGameSessionId(gameSession.getId());
     }
 }

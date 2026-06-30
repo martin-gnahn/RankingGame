@@ -9,4 +9,6 @@ public interface GameSessionPlayerRepository {
     <S extends GameSessionPlayerEntity> List<S> saveAll(Iterable<S> gameSessionPlayers);
 
     List<GameSessionPlayerEntity> findByGameSessionId(UUID gameSessionId);
+
+    List<GameSessionPlayerEntity> findAll();
 }
