@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import {test} from '@playwright/test';
 
-import { createRoom, expectPlayerVisible, joinRoom, uniquePlayerName } from './room-flow-helpers';
+import {createRoom, expectPlayerVisible, joinRoom, uniquePlayerName} from './room-flow-helpers';
 
 test('shows a joined player in the host lobby', async ({ browser, page: hostPage }) => {
   const guestContext = await browser.newContext();
@@ -12,11 +12,11 @@ test('shows a joined player in the host lobby', async ({ browser, page: hostPage
     await hostPage.goto('/');
 
     const roomCode = await createRoom(hostPage, hostName);
+    await expectPlayerVisible(hostPage, hostName);
 
     await guestPage.goto('/');
     await joinRoom(guestPage, roomCode, guestName);
 
-    await hostPage.reload();
     await expectPlayerVisible(hostPage, guestName);
   } finally {
     await guestContext.close();

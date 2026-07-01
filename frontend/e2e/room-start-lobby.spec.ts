@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test';
+import {expect, test} from '@playwright/test';
 
 import {
   createRoom,
   expectGameScreen,
   expectPlayerConnectionStatus,
+  expectStartGameButtonState,
   joinRoom,
   startGame,
   uniquePlayerName,
@@ -18,9 +19,8 @@ test('shows an error when the host starts with no other players in the lobby', a
   await createRoom(hostPage, hostName);
 
   await expect(hostPage.getByText('1 Spieler')).toBeVisible();
-  await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
-  await hostPage.getByRole('button', { name: 'Spiel starten' }).click();
-  await expect(hostPage.getByRole('alert')).toContainText(
+  await expectStartGameButtonState(hostPage, 'disabled');
+  await expect(hostPage.locator('.waiting-note')).toContainText(
     'At least 2 players are required to start the game',
   );
   await expect(hostPage).toHaveURL(/\/lobby\/[A-Z0-9]{4,8}(?:\?.*)?$/);
@@ -48,9 +48,8 @@ test('shows an error when every non-host player is disconnected', async ({
     guestContextClosed = true;
     await expectPlayerConnectionStatus(hostPage, guestName, 'Getrennt');
 
-    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
-    await hostPage.getByRole('button', { name: 'Spiel starten' }).click();
-    await expect(hostPage.getByRole('alert')).toContainText(
+    await expectStartGameButtonState(hostPage, 'disabled');
+    await expect(hostPage.locator('.waiting-note')).toContainText(
       'At least 2 players are required to start the game',
     );
     await expect(hostPage).toHaveURL(new RegExp(`/lobby/${roomCode}(?:\\?.*)?$`));
@@ -93,7 +92,7 @@ test('allows the host to start when one joined player remains online', async ({
     await expectPlayerConnectionStatus(hostPage, guestOneName, 'Getrennt');
     await expectPlayerConnectionStatus(hostPage, guestTwoName, 'Online');
 
-    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
+    await expectStartGameButtonState(hostPage, 'enabled');
     await startGame(hostPage);
 
     await expectGameScreen(hostPage);
@@ -127,7 +126,7 @@ test('allows the host to start when another player is online while non-host play
 
     await expectPlayerConnectionStatus(hostPage, guestName, 'Online');
     await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeVisible();
-    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
+    await expectStartGameButtonState(hostPage, 'enabled');
     await expect(guestPage.getByRole('button', { name: 'Spiel starten' })).toHaveCount(0);
     await expect(guestPage.getByText('Der Host startet das Spiel.')).toBeVisible();
 

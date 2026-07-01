@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import {expect, Locator, Page} from '@playwright/test';
 
 const backendHealthUrl = process.env.E2E_BACKEND_HEALTH_URL ?? 'http://localhost:8080/health';
 let backendReady = false;
@@ -49,10 +49,23 @@ export async function expectPlayerConnectionStatus(
   ).toBeVisible();
 }
 
+export async function expectStartGameButtonState(
+  page: Page,
+  expectedState: 'enabled' | 'disabled',
+): Promise<void> {
+  const startButton = startGameButton(page);
+
+  if (expectedState === 'enabled') {
+    await expect(startButton).toBeEnabled();
+    return;
+  }
+
+  await expect(startButton).toBeDisabled();
+}
+
 export async function startGame(page: Page): Promise<void> {
-  const startButton = page.getByRole('button', { name: 'Spiel starten' });
-  await expect(startButton).toBeEnabled();
-  await startButton.click();
+  await expectStartGameButtonState(page, 'enabled');
+  await startGameButton(page).click();
 }
 
 export async function expectGameScreen(page: Page): Promise<void> {
@@ -107,6 +120,10 @@ export function roomCodeFromUrl(page: Page): string {
   }
 
   return roomCode;
+}
+
+function startGameButton(page: Page): Locator {
+  return page.getByRole('button', {name: 'Spiel starten'});
 }
 
 async function ensureBackendReady(page: Page): Promise<void> {
