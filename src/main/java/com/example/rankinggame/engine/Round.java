@@ -35,9 +35,13 @@ public class Round {
         }
     }
 
-    public void markSortingIfAllAnswersSubmitted(List<GameParticipant> requiredPlayers) {
-        boolean allPlayersHaveSubmitted = requiredPlayers.stream()
+    public boolean allAnswersSubmitted(List<GameParticipant> requiredPlayers) {
+        return requiredPlayers.stream()
                 .allMatch(pl -> submittedAnswers.containsKey(pl.playerId()));
+    }
+
+    public void markSortingIfAllAnswersSubmitted(List<GameParticipant> requiredPlayers) {
+        boolean allPlayersHaveSubmitted = allAnswersSubmitted(requiredPlayers);
         if (allPlayersHaveSubmitted && roundStatus == RoundStatus.ANSWER_SUBMISSION) {
             roundStatus = RoundStatus.SORTING;
         }
@@ -61,4 +65,6 @@ public class Round {
         this.question = question;
         this.submittedAnswers = new HashMap<>();
     }
+
+
 }

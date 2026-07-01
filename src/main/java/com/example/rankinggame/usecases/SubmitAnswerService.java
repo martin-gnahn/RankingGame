@@ -2,7 +2,10 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.engine.*;
+import com.example.rankinggame.engine.PlayerId;
+import com.example.rankinggame.engine.Round;
+import com.example.rankinggame.engine.RoundId;
+import com.example.rankinggame.engine.SubmittedAnswer;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RoomEntity;
@@ -16,8 +19,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +47,6 @@ public class SubmitAnswerService {
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
 
-        List<GameParticipant> requiredPlayers =
-                gameParticipantContextLoader.getAllPlayers(context.gameSession());
-        domainRound.markSortingIfAllAnswersSubmitted(requiredPlayers);
-
         AnswerEntity answer = answerMapper.toEntity(
                 roundId,
                 submittedAnswer
@@ -57,7 +54,7 @@ public class SubmitAnswerService {
 
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
-            AnswerSubmissionProgress progress = roundProgressService.updateAfterAnswerSubmitted(context.room(), context.round());
+            AnswerSubmissionProgress progress = roundProgressService.updateAfterAnswerSubmitted(context.gameSession(), domainRound);
             publishAnswerSubmittedEvent(context.room(), context.round(), progress);
             return new SubmitAnswerResult(savedAnswer.getId(), roundId.value(), playerId.value(), true);
         } catch (DataIntegrityViolationException exception) {
