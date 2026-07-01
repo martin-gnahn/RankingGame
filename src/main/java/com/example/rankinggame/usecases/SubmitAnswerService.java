@@ -30,7 +30,6 @@ public class SubmitAnswerService {
     private final AnswerMapper answerMapper;
     private final AnswerSubmissionContextLoader answerSubmissionContextLoader;
     private final RoundProgressService roundProgressService;
-    private final GameParticipantContextLoader gameParticipantContextLoader;
 
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
