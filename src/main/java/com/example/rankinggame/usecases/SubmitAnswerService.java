@@ -53,7 +53,7 @@ public class SubmitAnswerService {
 
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
-            AnswerSubmissionProgress progress = roundProgressService.updateAfterAnswerSubmitted(context.gameSession(), domainRound);
+            AnswerSubmissionProgress progress = roundProgressService.updateAfterAnswerSubmitted(context, domainRound);
             publishAnswerSubmittedEvent(context.room(), context.round(), progress);
             return new SubmitAnswerResult(savedAnswer.getId(), roundId.value(), playerId.value(), true);
         } catch (DataIntegrityViolationException exception) {
