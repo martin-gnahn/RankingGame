@@ -40,12 +40,7 @@ public class SubmitAnswerService {
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
         String normalizedRoomCode = roomCodeService.normalizeRoomCode(command);
-        if (command.roundId() == null) {
-            throw new RoundIdRequiredException();
-        }
-        if (command.playerId() == null) {
-            throw new PlayerIdRequiredException();
-        }
+        ensurePresenceOfRoundIdAndPlayerId(command);
 
         EntityHolder requiredEntities = getRequiredEntities(command, normalizedRoomCode);
         RoundId roundId = new RoundId(requiredEntities.round().getId());
@@ -58,7 +53,7 @@ public class SubmitAnswerService {
         domainRound.checkIfSubmittingAnswerAllowed();
         String answerTextValue = AnswerText.normalizeText(command.answerText());
 
-        UUID roomId =requiredEntities.room().getId();
+        UUID roomId = requiredEntities.room().getId();
         int cardValue = roundCardAssignmentService.getCardValue(roomId, roundId.value(), playerId.value());
 
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, answerTextValue, cardValue);
@@ -71,10 +66,19 @@ public class SubmitAnswerService {
         try {
             AnswerEntity savedAnswer = answerRepository.save(answer);
             AnswerSubmissionProgress progress = updateRoundProgress(requiredEntities.room(), requiredEntities.round());
-            publishAnswerSubmitted(requiredEntities.room(), requiredEntities.round(), progress);
+            publishAnswerSubmittedEvent(requiredEntities.room(), requiredEntities.round(), progress);
             return new SubmitAnswerResult(savedAnswer.getId(), roundId.value(), playerId.value(), true);
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
+        }
+    }
+
+    private void ensurePresenceOfRoundIdAndPlayerId(SubmitAnswerCommand command) {
+        if (command.roundId() == null) {
+            throw new RoundIdRequiredException();
+        }
+        if (command.playerId() == null) {
+            throw new PlayerIdRequiredException();
         }
     }
 
@@ -83,19 +87,18 @@ public class SubmitAnswerService {
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
         PlayerEntity player = playerRepository.findById(command.playerId())
                 .filter(candidate -> candidate.getRoomId().equals(room.getId()))
-                .orElseThrow(() -> new IllegalArgumentException("Player is not part of this room"));
+                .orElseThrow(PlayerNotInRoomException::new);
         RoundEntity round = roundRepository.findById(command.roundId())
-                .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
+                .orElseThrow(RoundNotPartOfActiveGameException::new);
         EntityHolder requiredEntities = new EntityHolder(room, player, round);
         gameSessionRepository.findByRoomId(requiredEntities.room().getId())
                 .filter(candidate -> candidate.getId().equals(requiredEntities.round().getGameSessionId()))
-                .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
+                .orElseThrow(RoundNotPartOfActiveGameException::new);
         return requiredEntities;
     }
 
     private AnswerSubmissionProgress updateRoundProgress(RoomEntity room, RoundEntity round) {
         long connectedPlayerCount = playerRepository.findByRoomId(room.getId()).stream()
-                // TODO: error. Players get disconnected.
                 .filter(player -> player.getConnectionStatus() == PlayerConnectionStatus.CONNECTED)
                 .count();
         long submittedAnswerCount = answerRepository.countByRoundId(round.getId());
@@ -109,7 +112,7 @@ public class SubmitAnswerService {
         return new AnswerSubmissionProgress(submittedAnswerCount, connectedPlayerCount, allAnswersSubmitted);
     }
 
-    private void publishAnswerSubmitted(
+    private void publishAnswerSubmittedEvent(
             RoomEntity room,
             RoundEntity round,
             AnswerSubmissionProgress progress

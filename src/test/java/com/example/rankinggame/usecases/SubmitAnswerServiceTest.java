@@ -177,6 +177,84 @@ class SubmitAnswerServiceTest {
                 .hasMessage("Player id is required");
     }
 
+    @Test
+    void rejectsPlayerOutsideRoomWithDomainException() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        RoundRepository roundRepository = mock(RoundRepository.class);
+        AnswerRepository answerRepository = mock(AnswerRepository.class);
+        SubmitAnswerService service = new SubmitAnswerService(
+                roomRepository,
+                playerRepository,
+                gameSessionRepository,
+                roundRepository,
+                answerRepository,
+                mock(RoundCardAssignmentService.class),
+                roundMapper(),
+                new RoomCodeService(),
+                mock(ApplicationEventPublisher.class),
+                new AnswerMapper()
+        );
+        UUID roomId = UUID.randomUUID();
+        UUID otherRoomId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId)));
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player(playerId, otherRoomId)));
+
+        assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
+                "ABCD12",
+                roundId,
+                playerId,
+                "Mit WLAN-Problemen."
+        )))
+                .isInstanceOf(PlayerNotInRoomException.class)
+                .hasMessage("Player is not part of this room");
+        verify(roundRepository, never()).findById(any());
+        verify(answerRepository, never()).save(any());
+    }
+
+    @Test
+    void rejectsRoundOutsideActiveGameWithDomainException() {
+        RoomRepository roomRepository = mock(RoomRepository.class);
+        PlayerRepository playerRepository = mock(PlayerRepository.class);
+        GameSessionRepository gameSessionRepository = mock(GameSessionRepository.class);
+        RoundRepository roundRepository = mock(RoundRepository.class);
+        AnswerRepository answerRepository = mock(AnswerRepository.class);
+        SubmitAnswerService service = new SubmitAnswerService(
+                roomRepository,
+                playerRepository,
+                gameSessionRepository,
+                roundRepository,
+                answerRepository,
+                mock(RoundCardAssignmentService.class),
+                roundMapper(),
+                new RoomCodeService(),
+                mock(ApplicationEventPublisher.class),
+                new AnswerMapper()
+        );
+        UUID roomId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID activeGameSessionId = UUID.randomUUID();
+        UUID otherGameSessionId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId)));
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player(playerId, roomId)));
+        when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, otherGameSessionId)));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession(activeGameSessionId, roomId)));
+
+        assertThatThrownBy(() -> service.submitAnswer(new SubmitAnswerCommand(
+                "ABCD12",
+                roundId,
+                playerId,
+                "Mit WLAN-Problemen."
+        )))
+                .isInstanceOf(RoundNotPartOfActiveGameException.class)
+                .hasMessage("Round is not part of the active game");
+        verify(answerRepository, never()).save(any());
+    }
+
     private SubmitAnswerService serviceWithMocks() {
         return new SubmitAnswerService(
                 mock(RoomRepository.class),

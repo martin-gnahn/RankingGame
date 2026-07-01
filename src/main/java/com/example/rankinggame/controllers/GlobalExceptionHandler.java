@@ -44,7 +44,8 @@ public class GlobalExceptionHandler {
             OnlyHostCanStartGame.class,
             OnlyHostCanQueryAnswers.class,
             OnlyHostCanSortAnswers.class,
-            OnlyRoomPlayersCanQueryAnswers.class
+            OnlyRoomPlayersCanQueryAnswers.class,
+            PlayerNotInRoomException.class
     })
     public ResponseEntity<ApiError> handleAccessDenied(RuntimeException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(ErrorConstants.ACCESS_DENIED, exception.getMessage()));
@@ -69,6 +70,7 @@ public class GlobalExceptionHandler {
             GameCannotBeStartedException.class,
             NoPlayerInGameException.class,
             NotEnoughPlayersException.class,
+            RoundNotPartOfActiveGameException.class,
             RoomHasNoActiveGameException.class,
             RoomNotInLobbyException.class,
             ActiveRoundNotFoundException.class,

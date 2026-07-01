@@ -2,9 +2,7 @@ package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
-import com.example.rankinggame.usecases.GetSubmittedAnswersService;
-import com.example.rankinggame.usecases.OnlyRoomPlayersCanQueryAnswers;
-import com.example.rankinggame.usecases.SubmitAnswerService;
+import com.example.rankinggame.usecases.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -101,6 +99,36 @@ class AnswerControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("ANSWER_ALREADY_SUBMITTED"))
                 .andExpect(jsonPath("$.message").value("Player already submitted an answer for this round"));
+    }
+
+    @Test
+    void returnsForbiddenWhenSubmittingPlayerIsOutsideRoom() throws Exception {
+        UUID roundId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
+                .thenThrow(new PlayerNotInRoomException());
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.message").value("Player is not part of this room"));
+    }
+
+    @Test
+    void returnsConflictWhenSubmittingToRoundOutsideActiveGame() throws Exception {
+        UUID roundId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
+                .thenThrow(new RoundNotPartOfActiveGameException());
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Round is not part of the active game"));
     }
 
     @Test
