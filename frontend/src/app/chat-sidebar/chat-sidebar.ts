@@ -1,7 +1,7 @@
-import { Component, computed, input, output } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {Component, computed, input, output, signal} from '@angular/core';
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 
-import { ChatMessageResponse } from '../core/api/room.models';
+import {ChatMessageResponse} from '../core/api/room.models';
 
 @Component({
   selector: 'app-chat-sidebar',
@@ -15,10 +15,15 @@ export class ChatSidebar {
   readonly disabled = input(false);
   readonly sendMessage = output<string>();
 
+  protected readonly isCollapsed = signal(false);
   protected readonly hasMessages = computed(() => this.messages().length > 0);
   protected readonly form = new FormBuilder().nonNullable.group({
     body: ['', [Validators.required, Validators.maxLength(500)]],
   });
+
+  protected toggleCollapsed(): void {
+    this.isCollapsed.update((isCollapsed) => !isCollapsed);
+  }
 
   protected submit(): void {
     if (this.disabled()) {

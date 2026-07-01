@@ -1,40 +1,55 @@
-<aside class="chat-sidebar" aria-labelledby="chat-title">
+<aside [class.is-collapsed]="isCollapsed()" aria-labelledby="chat-title" class="chat-sidebar">
   <header class="chat-header">
     <div>
       <p class="chat-eyebrow">Live</p>
       <h2 id="chat-title">Chat</h2>
     </div>
+    <button
+      (click)="toggleCollapsed()"
+      [attr.aria-expanded]="!isCollapsed()"
+      [attr.aria-label]="isCollapsed() ? 'Chat öffnen' : 'Chat minimieren'"
+      [attr.title]="isCollapsed() ? 'Chat öffnen' : 'Chat minimieren'"
+      aria-controls="chat-content"
+      class="collapse-button"
+      type="button"
+    >
+      <span aria-hidden="true">{{ isCollapsed() ? '+' : '-' }}</span>
+    </button>
   </header>
 
-  <div class="message-list" role="log" aria-live="polite" aria-relevant="additions">
-    @if (hasMessages()) {
-      @for (message of messages(); track message.messageId) {
-        <article class="message" [class.own-message]="isOwnMessage(message)">
-          <div class="message-meta">
-            <strong>{{ message.senderNickname }}</strong>
-            <time [attr.datetime]="message.createdAt">{{ messageTime(message) }}</time>
-          </div>
-          <p>{{ message.body }}</p>
-        </article>
-      }
-    } @else {
-      <p class="empty-chat">Noch keine Nachrichten.</p>
-    }
-  </div>
+  @if (!isCollapsed()) {
+    <div class="chat-content" id="chat-content">
+      <div aria-live="polite" aria-relevant="additions" class="message-list" role="log">
+        @if (hasMessages()) {
+          @for (message of messages(); track message.messageId) {
+            <article [class.own-message]="isOwnMessage(message)" class="message">
+              <div class="message-meta">
+                <strong>{{ message.senderNickname }}</strong>
+                <time [attr.datetime]="message.createdAt">{{ messageTime(message) }}</time>
+              </div>
+              <p>{{ message.body }}</p>
+            </article>
+          }
+        } @else {
+          <p class="empty-chat">Noch keine Nachrichten.</p>
+        }
+      </div>
 
-  <form class="chat-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <label for="chat-body">Nachricht</label>
-    <textarea
-      id="chat-body"
-      formControlName="body"
-      rows="3"
-      maxlength="500"
-      placeholder="Schreib etwas"
-      [readonly]="disabled()"
-    ></textarea>
-    @if (form.controls.body.touched && form.controls.body.invalid) {
-      <p class="chat-error">Bitte gib eine Nachricht mit maximal 500 Zeichen ein.</p>
-    }
-    <button class="send-button" type="submit" [disabled]="disabled()">Senden</button>
-  </form>
+      <form (ngSubmit)="submit()" [formGroup]="form" class="chat-form" novalidate>
+        <label for="chat-body">Nachricht</label>
+        <textarea
+          [readonly]="disabled()"
+          formControlName="body"
+          id="chat-body"
+          maxlength="500"
+          placeholder="Schreib etwas"
+          rows="3"
+        ></textarea>
+        @if (form.controls.body.touched && form.controls.body.invalid) {
+          <p class="chat-error">Bitte gib eine Nachricht mit maximal 500 Zeichen ein.</p>
+        }
+        <button [disabled]="disabled()" class="send-button" type="submit">Senden</button>
+      </form>
+    </div>
+  }
 </aside>

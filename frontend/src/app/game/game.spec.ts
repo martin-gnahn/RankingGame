@@ -194,6 +194,44 @@ describe('Game', () => {
     expect(textContent()).toContain('Gesendet');
   });
 
+  it('should collapse and restore the chat sidebar', () => {
+    roomApi.getRecentChatMessages.and.returnValue(of([
+      {
+        messageId: 'message-1',
+        playerId: 'player-2',
+        senderNickname: 'Alex',
+        body: 'Ich bin drin',
+        createdAt: '2026-06-24T10:15:30Z',
+      },
+    ]));
+    createComponent();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const collapseButton = compiled.querySelector<HTMLButtonElement>('.collapse-button')!;
+
+    expect(collapseButton.getAttribute('aria-expanded')).toBe('true');
+    expect(compiled.querySelector('.message-list')).not.toBeNull();
+    expect(compiled.querySelector('.chat-form')).not.toBeNull();
+
+    collapseButton.click();
+    fixture.detectChanges();
+
+    expect(collapseButton.getAttribute('aria-expanded')).toBe('false');
+    expect(collapseButton.getAttribute('aria-label')).toBe('Chat öffnen');
+    expect(compiled.querySelector('.message-list')).toBeNull();
+    expect(compiled.querySelector('.chat-form')).toBeNull();
+    expect(textContent()).not.toContain('Ich bin drin');
+
+    collapseButton.click();
+    fixture.detectChanges();
+
+    expect(collapseButton.getAttribute('aria-expanded')).toBe('true');
+    expect(collapseButton.getAttribute('aria-label')).toBe('Chat minimieren');
+    expect(compiled.querySelector('.message-list')).not.toBeNull();
+    expect(compiled.querySelector('.chat-form')).not.toBeNull();
+    expect(textContent()).toContain('Ich bin drin');
+  });
+
   it('should unsubscribe from room updates without disconnecting the shared websocket', () => {
     const unsubscribeSpy = jasmine.createSpy('unsubscribe');
     webSocket.subscribeToRoom.and.returnValue(
