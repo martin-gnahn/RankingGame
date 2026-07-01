@@ -1,12 +1,10 @@
 package com.example.rankinggame.integration;
 
-import com.example.rankinggame.dto.StartGameResponse;
-import com.example.rankinggame.dto.SubmitAnswerResponse;
-import com.example.rankinggame.dto.SubmittedAnswerResponse;
-import com.example.rankinggame.dto.SubmittedAnswersResponse;
+import com.example.rankinggame.dto.*;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +23,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     public static final String MARTA = "Marta";
     public static final String ALEX = "Alex";
     public static final String SAM = "Sam";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void createsRoomJoinsSecondPlayerAndReadsLobbyFromPostgres() throws Exception {
@@ -95,22 +94,12 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "playerId": "%s",
-                                  "value": "Answer1"
-                                }
-                                """.formatted(hostPlayerId)))
+                        .content(submitAnswerRequest(hostPlayerId, "Answer1")))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "playerId": "%s",
-                                  "value": "Answer2"
-                                }
-                                """.formatted(guestPlayerId)))
+                        .content(submitAnswerRequest(guestPlayerId, "Answer2")))
                 .andExpect(status().isCreated());
 
         String roundState = jdbcTemplate.queryForObject(
@@ -294,12 +283,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             startedGame.roundId()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "playerId": "%s",
-                                  "value": "%s"
-                                }
-                                """.formatted(playerId, answerText))
+                        .content(submitAnswerRequest(playerId, answerText))
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.answerId").isString())
@@ -316,6 +300,10 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 readUuid(submitAnswerResponse, "$.playerId"),
                 JsonPath.read(submitAnswerResponse, "$.submitted")
         );
+    }
+
+    private String submitAnswerRequest(String playerId, String answerText) {
+        return objectMapper.writeValueAsString(new SubmitAnswerRequest(UUID.fromString(playerId), answerText));
     }
 
     private CurrentGameSessionState queryCurrentGameSessionState(StartGameResponse startedGame) {
@@ -367,7 +355,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .andExpect(jsonPath("$.gameType").value("RANKING_GAME"))
                 .andExpect(jsonPath("$.gameSessionId").isString())
                 .andExpect(jsonPath("$.roundId").isString())
-                .andExpect(jsonPath("$.roundNumber").value(1))
+                .andExpect(jsonPath("$.roundNumber").value(0))
                 .andExpect(jsonPath("$.questionId").isString())
                 .andReturn()
                 .getResponse()

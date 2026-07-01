@@ -15,6 +15,6 @@ public record StartRankingGameResult(
     public record StartedGame(UUID id, GameType gameType) {
     }
 
-    public record StartedRound(UUID id, int number, UUID questionId) {
+    public record StartedRound(UUID id, int index, UUID questionId) {
     }
 }

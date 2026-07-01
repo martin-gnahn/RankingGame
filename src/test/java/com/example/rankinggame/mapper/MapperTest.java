@@ -1,21 +1,7 @@
 package com.example.rankinggame.mapper;
 
-import com.example.rankinggame.engine.Game;
-import com.example.rankinggame.engine.GameStatus;
-import com.example.rankinggame.engine.GameParticipant;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.Question;
-import com.example.rankinggame.engine.QuestionId;
-import com.example.rankinggame.engine.Round;
-import com.example.rankinggame.engine.RoundId;
-import com.example.rankinggame.engine.RoundStatus;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.GameSessionStatus;
-import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.engine.*;
+import com.example.rankinggame.entities.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -64,10 +50,12 @@ class MapperTest {
     void roundMapperMapsDomainToEntity() {
         UUID questionId = UUID.randomUUID();
         UUID captainPlayerId = UUID.randomUUID();
+        RoundId roundId = new RoundId(UUID.randomUUID());
         Round domain = Round.builder()
                 .roundStatus(RoundStatus.ANSWER_SUBMISSION)
                 .captain(new GameParticipant(new PlayerId(captainPlayerId), "Alex", true))
                 .question(new Question(new QuestionId(questionId), "Question", "test"))
+                .id(roundId)
                 .build();
 
         RoundEntity entity = roundMapper.toEntity(domain);
@@ -78,6 +66,7 @@ class MapperTest {
         assertThat(entity.getQuestionEntity().getText()).isEqualTo("Question");
         assertThat(entity.getQuestionEntity().getCategory()).isEqualTo("test");
         assertThat(entity.getQuestionEntity().isActive()).isTrue();
+        assertThat(entity.getId()).isEqualTo(roundId.value());
     }
 
     @Test

@@ -1,51 +1,79 @@
 package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.dto.GetSubmittedAnswersCommand;
-import com.example.rankinggame.dto.SubmitAnswerCommand;
-import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.dto.SubmittedAnswerResult;
-import com.example.rankinggame.dto.SubmittedAnswersResult;
+import com.example.rankinggame.dto.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.GetSubmittedAnswersService;
 import com.example.rankinggame.usecases.OnlyRoomPlayersCanQueryAnswers;
 import com.example.rankinggame.usecases.SubmitAnswerService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.rankinggame.controllers.ErrorConstants.VALIDATION_ERROR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(MockitoExtension.class)
 class AnswerControllerTest {
+    @Mock
+    private SubmitAnswerService submitAnswerService;
+
+    @Mock
+    private GetSubmittedAnswersService getSubmittedAnswersService;
+
+    @InjectMocks
+    private AnswerController answerController;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUpMockMvc() {
+        mockMvc = MockMvcBuilders.standaloneSetup(answerController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @Test
+    void returnsBadRequestWhenAnswerTextIsBlank() throws Exception {
+        UUID roundId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submitAnswerRequest(playerId, " ")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(VALIDATION_ERROR));
+    }
+
     @Test
     void submitsAnswerViaApiEndpoint() throws Exception {
-        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         UUID answerId = UUID.randomUUID();
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenReturn(new SubmitAnswerResult(answerId, roundId, playerId, true));
-        MockMvc mockMvc = mockMvc(submitAnswerService, mock(GetSubmittedAnswersService.class));
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "playerId": "%s",
-                                  "value": "Mit WLAN-Problemen."
-                                }
-                                """.formatted(playerId)))
+                        .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.answerId").value(answerId.toString()))
                 .andExpect(jsonPath("$.roundId").value(roundId.toString()))
@@ -62,21 +90,14 @@ class AnswerControllerTest {
 
     @Test
     void returnsConflictWhenAnswerWasAlreadySubmitted() throws Exception {
-        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenThrow(new AnswerAlreadySubmittedException());
-        MockMvc mockMvc = mockMvc(submitAnswerService, mock(GetSubmittedAnswersService.class));
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "playerId": "%s",
-                                  "value": "Mit WLAN-Problemen."
-                                }
-                                """.formatted(playerId)))
+                        .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("ANSWER_ALREADY_SUBMITTED"))
                 .andExpect(jsonPath("$.message").value("Player already submitted an answer for this round"));
@@ -84,8 +105,6 @@ class AnswerControllerTest {
 
     @Test
     void returnsSubmittedAnswersViaApiEndpoint() throws Exception {
-        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
-        GetSubmittedAnswersService getSubmittedAnswersService = mock(GetSubmittedAnswersService.class);
         UUID roundId = UUID.randomUUID();
         UUID hostPlayerId = UUID.randomUUID();
         UUID answerId = UUID.randomUUID();
@@ -98,7 +117,6 @@ class AnswerControllerTest {
                         "Mit WLAN-Problemen.",
                         7
                 ))));
-        MockMvc mockMvc = mockMvc(submitAnswerService, getSubmittedAnswersService);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
                         .param("playerId", hostPlayerId.toString()))
@@ -118,13 +136,10 @@ class AnswerControllerTest {
 
     @Test
     void returnsForbiddenWhenNonRoomPlayerQueriesSubmittedAnswers() throws Exception {
-        SubmitAnswerService submitAnswerService = mock(SubmitAnswerService.class);
-        GetSubmittedAnswersService getSubmittedAnswersService = mock(GetSubmittedAnswersService.class);
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(getSubmittedAnswersService.getSubmittedAnswers(any(GetSubmittedAnswersCommand.class)))
                 .thenThrow(new OnlyRoomPlayersCanQueryAnswers());
-        MockMvc mockMvc = mockMvc(submitAnswerService, getSubmittedAnswersService);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
                         .param("playerId", playerId.toString()))
@@ -133,12 +148,7 @@ class AnswerControllerTest {
                 .andExpect(jsonPath("$.message").value("Only players in this room can query submitted answers"));
     }
 
-    private MockMvc mockMvc(
-            SubmitAnswerService submitAnswerService,
-            GetSubmittedAnswersService getSubmittedAnswersService
-    ) {
-        return MockMvcBuilders.standaloneSetup(new AnswerController(submitAnswerService, getSubmittedAnswersService))
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
+    private String submitAnswerRequest(UUID playerId, String answerText) {
+        return objectMapper.writeValueAsString(new SubmitAnswerRequest(playerId, answerText));
     }
 }

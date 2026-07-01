@@ -12,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -56,11 +58,12 @@ class JpaGameSessionPlayerRepositoryTest {
         PlayerEntity savedGuest = playerRepository.saveAndFlush(guest);
 
         GameSession gameSession = new GameSession();
-        gameSession.setId(java.util.UUID.randomUUID());
+        gameSession.setId(UUID.randomUUID());
         gameSession.setRoomId(savedRoom.getId());
         gameSession.setGameType(GameType.RANKING_GAME);
         gameSession.setStatus(GameSessionStatus.IN_PROGRESS);
         gameSession.setCurrentRoundIndex(0);
+        gameSession.setCurrentRoundId(UUID.randomUUID());
         GameSession savedGameSession = gameSessionRepository.saveAndFlush(gameSession);
 
         gameSessionPlayerRepository.saveAllAndFlush(java.util.List.of(

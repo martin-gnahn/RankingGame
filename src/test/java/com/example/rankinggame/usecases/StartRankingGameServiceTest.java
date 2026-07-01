@@ -68,7 +68,7 @@ class StartRankingGameServiceTest {
         assertThat(result.game().id()).isEqualTo(gameSessionId);
         assertThat(result.game().gameType()).isEqualTo(GameType.RANKING_GAME);
         assertThat(result.round().id()).isEqualTo(roundId);
-        assertThat(result.round().number()).isEqualTo(1);
+        assertThat(result.round().index()).isEqualTo(0);
         assertThat(result.round().questionId()).isEqualTo(questionId);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_GAME);
 

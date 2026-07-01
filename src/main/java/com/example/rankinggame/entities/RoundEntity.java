@@ -16,7 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RoundEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "game_session_id", nullable = false)

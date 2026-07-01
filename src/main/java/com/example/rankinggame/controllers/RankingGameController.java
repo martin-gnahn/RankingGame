@@ -27,7 +27,7 @@ public class RankingGameController {
     @ResponseStatus(HttpStatus.CREATED)
     public StartGameResponse startRankingGame(
             @PathVariable String roomCode,
-            @Valid @RequestBody(required = false) StartGameRequest request
+            @Valid @RequestBody StartGameRequest request
     ) {
         StartRankingGameResult result = startRankingGameService.startGame(new StartRankingGameCommand(
                 roomCode,
@@ -39,7 +39,7 @@ public class RankingGameController {
                 result.game().id(),
                 result.game().gameType().name(),
                 result.round().id(),
-                result.round().number(),
+                result.round().index(),
                 result.round().questionId()
         );
     }

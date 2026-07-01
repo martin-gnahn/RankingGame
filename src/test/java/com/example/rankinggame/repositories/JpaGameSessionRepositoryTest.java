@@ -77,6 +77,8 @@ class JpaGameSessionRepositoryTest {
         QuestionEntity savedQuestion = questionRepository.saveAndFlush(question);
 
         RoundEntity round = new RoundEntity();
+        UUID roundId = UUID.randomUUID();
+        round.setId(roundId);
         round.setGameSessionId(savedGameSession.getId());
         round.setQuestionId(savedQuestion.getId());
         round.setCaptainPlayerId(savedPlayer.getId());
