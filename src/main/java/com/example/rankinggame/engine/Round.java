@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,6 +35,14 @@ public class Round {
         }
     }
 
+    public void markSortingIfAllAnswersSubmitted(List<GameParticipant> requiredPlayers) {
+        boolean allPlayersHaveSubmitted = requiredPlayers.stream()
+                .allMatch(pl -> submittedAnswers.containsKey(pl.playerId()));
+        if (allPlayersHaveSubmitted && roundStatus == RoundStatus.ANSWER_SUBMISSION) {
+            roundStatus = RoundStatus.SORTING;
+        }
+    }
+
     public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
         checkIfSubmittingAnswerAllowed();
         if (submittedAnswers.containsKey(playerId)) {
@@ -46,8 +55,6 @@ public class Round {
     }
 
     private Round(GameParticipant captain, Question question) {
-//        this.captain = players.stream().filter(p -> p.playerId() == captainId).findFirst()
-//                .orElseThrow(InvalidPlayerException::new);
         this.id = new RoundId(UUID.randomUUID());
         this.roundStatus = RoundStatus.ANSWER_SUBMISSION;
         this.captain = captain;

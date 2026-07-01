@@ -2,10 +2,7 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
 import com.example.rankinggame.dto.SubmitAnswerResult;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.Round;
-import com.example.rankinggame.engine.RoundId;
-import com.example.rankinggame.engine.SubmittedAnswer;
+import com.example.rankinggame.engine.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RoomEntity;
@@ -20,6 +17,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class SubmitAnswerService {
@@ -30,6 +29,7 @@ public class SubmitAnswerService {
     private final AnswerMapper answerMapper;
     private final AnswerSubmissionContextLoader answerSubmissionContextLoader;
     private final RoundProgressService roundProgressService;
+    private final GameParticipantContextLoader gameParticipantContextLoader;
 
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
@@ -45,6 +45,10 @@ public class SubmitAnswerService {
         Round domainRound = roundMapper.toDomain(context.round(), existingSubmittedAnswers);
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
+
+        List<GameParticipant> requiredPlayers =
+                gameParticipantContextLoader.getAllPlayers(context.gameSession());
+        domainRound.markSortingIfAllAnswersSubmitted(requiredPlayers);
 
         AnswerEntity answer = answerMapper.toEntity(
                 roundId,
