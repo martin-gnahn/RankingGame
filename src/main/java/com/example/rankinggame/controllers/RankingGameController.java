@@ -57,7 +57,7 @@ public class RankingGameController {
                 result.roomCode(),
                 result.gameSessionId(),
                 result.roundId(),
-                result.roundNumber(),
+                result.roundIndex(),
                 result.questionId(),
                 result.questionText(),
                 result.assignedCardValue()

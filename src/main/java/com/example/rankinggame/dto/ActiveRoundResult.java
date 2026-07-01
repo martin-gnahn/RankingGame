@@ -7,8 +7,7 @@ public record ActiveRoundResult(
         String roomCode,
         UUID gameSessionId,
         UUID roundId,
-        /// roundNumber is 1-based
-        int roundNumber,
+        int roundIndex,
         UUID questionId,
         String questionText,
         int assignedCardValue

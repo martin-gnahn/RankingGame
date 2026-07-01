@@ -24,6 +24,7 @@ public class RoundMapper {
 
     public Round toDomain(RoundEntity roundEntity, GameParticipant captain, List<AnswerEntity> otherSubmittedAnswers) {
         return Round.builder()
+                .id(new RoundId(roundEntity.getId()))
                 .submittedAnswers(answerMapper.toDomainMap(otherSubmittedAnswers))
                 .roundStatus(toDomainStatus(roundEntity.getState()))
                 .captain(captain)

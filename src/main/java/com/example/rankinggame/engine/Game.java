@@ -23,7 +23,7 @@ public class Game {
     private GameStatus status;
 
     /**
-     * this is a 0-based index
+     * this is a 0-based roundIndex
      */
     private int currentRoundIndex;
 
