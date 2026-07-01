@@ -11,9 +11,7 @@ import org.springframework.web.socket.config.annotation.StompWebSocketEndpointRe
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class WebSocketConfigTest {
     private final WebSocketConfig config = new WebSocketConfig();
@@ -29,8 +27,7 @@ class WebSocketConfigTest {
         verify(registry).addEndpoint(WebSocketConfig.WEBSOCKET_ENDPOINT);
         verify(registration).setAllowedOrigins(
                 AllowedOriginConstants.LOCAL_FRONTEND_ORIGIN,
-                AllowedOriginConstants.RAILWAY_FRONTEND_ORIGIN,
-                AllowedOriginConstants.WWW_RAILWAY_FRONTEND_ORIGIN
+                AllowedOriginConstants.VERCEL_FRONTEND_ORIGIN
         );
     }
 
