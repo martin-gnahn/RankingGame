@@ -40,6 +40,7 @@ public class RoundMapper {
                         .map(PlayerId::value)
                         .orElse(null)
         );
+        roundEntity.setId(round.getId().value());
         roundEntity.setQuestionEntity(questionMapper.toEntity(round.getQuestion()));
         return roundEntity;
     }

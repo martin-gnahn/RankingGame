@@ -69,7 +69,7 @@ public class Game {
         final GameParticipant newCaptain = getNextCaptain();
         Round newRound = Round.start(newCaptain, nextQuestion);
         allRounds.add(newRound);
-        currentRoundIndex = allRounds.size();
+        currentRoundIndex = allRounds.size() - 1;
         return newRound;
     }
 

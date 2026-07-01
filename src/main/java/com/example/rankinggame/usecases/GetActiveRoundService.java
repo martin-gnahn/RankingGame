@@ -51,7 +51,7 @@ public class GetActiveRoundService {
         int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
         log.info("Retrieved active round result for room '{}'", room.getId());
-        int roundNumber = 1;
+        int roundNumber = gameSession.getCurrentRoundIndex() + 1;
         return new ActiveRoundResult(
                 room.getId(),
                 room.getCode(),
