@@ -62,7 +62,6 @@ class SubmitAnswerServiceTest {
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
-        when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(false);
         when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(player));
         when(answerRepository.countByRoundId(roundId)).thenReturn(1L);
         when(answerRepository.save(any(AnswerEntity.class))).thenAnswer(invocation -> {
@@ -135,7 +134,6 @@ class SubmitAnswerServiceTest {
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, gameSessionId)));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
-        when(answerRepository.existsByRoundIdAndPlayerId(roundId, playerId)).thenReturn(true);
         AnswerEntity answerEntity =
                 new AnswerEntity(
                         UUID.randomUUID(), roundId, playerId, "Mit WLAN-Problemen.", 10, Instant.now()

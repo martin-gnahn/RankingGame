@@ -31,11 +31,6 @@ public class SubmitAnswerService {
     private final AnswerSubmissionContextLoader answerSubmissionContextLoader;
     private final RoundProgressService roundProgressService;
 
-    /**
-     * Answer submission by a specific user.
-     * @param command contains the params needed by answer submission
-     * @return the result of the answer submission
-     */
     @Transactional
     public SubmitAnswerResult submitAnswer(SubmitAnswerCommand command) {
         ensurePresenceOfRoundIdAndPlayerId(command);
@@ -44,10 +39,10 @@ public class SubmitAnswerService {
         RoundId roundId = new RoundId(context.round().getId());
         PlayerId playerId = new PlayerId(context.player().getId());
 
-        var otherSubmittedAnswers =
+        var existingSubmittedAnswers =
                 answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId.value());
 
-        Round domainRound = roundMapper.toDomain(context.round(), otherSubmittedAnswers);
+        Round domainRound = roundMapper.toDomain(context.round(), existingSubmittedAnswers);
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
 
