@@ -50,7 +50,7 @@ public class RoundMapper {
         return state == null ? null : RoundStatus.valueOf(state.name());
     }
 
-    private RoundState toEntityState(RoundStatus status) {
+    public RoundState toEntityState(RoundStatus status) {
         return status == null ? null : RoundState.valueOf(status.name());
     }
 
