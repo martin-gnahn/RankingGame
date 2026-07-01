@@ -28,7 +28,7 @@ public class Round {
     // TODO: later static Round finish(...), and setModeToSorting(...)
 
 
-    public void checkIfSubmittingAnswerAllowed() {
+    private void checkIfSubmittingAnswerAllowed() {
         if (roundStatus != RoundStatus.ANSWER_SUBMISSION) {
             throw new AnswersNotAcceptedException();
         }

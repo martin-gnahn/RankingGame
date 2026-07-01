@@ -34,16 +34,19 @@ class SubmitAnswerServiceTest {
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         SubmitAnswerService service = new SubmitAnswerService(
-                roomRepository,
-                playerRepository,
-                gameSessionRepository,
-                roundRepository,
                 answerRepository,
                 roundCardAssignmentService,
                 roundMapper(),
-                new RoomCodeService(),
                 eventPublisher,
-                new AnswerMapper()
+                new AnswerMapper(),
+                new AnswerSubmissionContextLoader(
+                        roomRepository,
+                        roundRepository,
+                        playerRepository,
+                        gameSessionRepository,
+                        new RoomCodeService()
+                ),
+                new RoundProgressService(playerRepository, answerRepository, roundRepository)
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -108,16 +111,19 @@ class SubmitAnswerServiceTest {
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         SubmitAnswerService service = new SubmitAnswerService(
-                roomRepository,
-                playerRepository,
-                gameSessionRepository,
-                roundRepository,
                 answerRepository,
                 roundCardAssignmentService,
                 roundMapper(),
-                new RoomCodeService(),
                 eventPublisher,
-                new AnswerMapper()
+                new AnswerMapper(),
+                new AnswerSubmissionContextLoader(
+                        roomRepository,
+                        roundRepository,
+                        playerRepository,
+                        gameSessionRepository,
+                        new RoomCodeService()
+                ),
+                mock(RoundProgressService.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -185,16 +191,19 @@ class SubmitAnswerServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         SubmitAnswerService service = new SubmitAnswerService(
-                roomRepository,
-                playerRepository,
-                gameSessionRepository,
-                roundRepository,
                 answerRepository,
                 mock(RoundCardAssignmentService.class),
                 roundMapper(),
-                new RoomCodeService(),
                 mock(ApplicationEventPublisher.class),
-                new AnswerMapper()
+                new AnswerMapper(),
+                new AnswerSubmissionContextLoader(
+                        roomRepository,
+                        roundRepository,
+                        playerRepository,
+                        gameSessionRepository,
+                        new RoomCodeService()
+                ),
+                mock(RoundProgressService.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID otherRoomId = UUID.randomUUID();
@@ -223,16 +232,19 @@ class SubmitAnswerServiceTest {
         RoundRepository roundRepository = mock(RoundRepository.class);
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         SubmitAnswerService service = new SubmitAnswerService(
-                roomRepository,
-                playerRepository,
-                gameSessionRepository,
-                roundRepository,
                 answerRepository,
                 mock(RoundCardAssignmentService.class),
                 roundMapper(),
-                new RoomCodeService(),
                 mock(ApplicationEventPublisher.class),
-                new AnswerMapper()
+                new AnswerMapper(),
+                new AnswerSubmissionContextLoader(
+                        roomRepository,
+                        roundRepository,
+                        playerRepository,
+                        gameSessionRepository,
+                        new RoomCodeService()
+                ),
+                mock(RoundProgressService.class)
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -257,16 +269,13 @@ class SubmitAnswerServiceTest {
 
     private SubmitAnswerService serviceWithMocks() {
         return new SubmitAnswerService(
-                mock(RoomRepository.class),
-                mock(PlayerRepository.class),
-                mock(GameSessionRepository.class),
-                mock(RoundRepository.class),
                 mock(AnswerRepository.class),
                 mock(RoundCardAssignmentService.class),
                 roundMapper(),
-                new RoomCodeService(),
                 mock(ApplicationEventPublisher.class),
-                mock(AnswerMapper.class)
+                mock(AnswerMapper.class),
+                mock(AnswerSubmissionContextLoader.class),
+                mock(RoundProgressService.class)
         );
     }
 
