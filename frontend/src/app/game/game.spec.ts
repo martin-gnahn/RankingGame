@@ -1,15 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { provideRouter } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute, convertToParamMap, provideRouter} from '@angular/router';
+import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
 
-import { GameApiService } from '../core/api/game-api.service';
-import { RoomApiService } from '../core/api/room-api.service';
-import { ActiveRoundResponse } from '../core/api/room.models';
-import { RealtimeEvent } from '../core/websocket/web-socket.models';
-import { WebSocketService } from '../core/websocket/web-socket.service';
-import { Game } from './game';
+import {GameApiService} from '../core/api/game-api.service';
+import {RoomApiService} from '../core/api/room-api.service';
+import {ActiveRoundResponse} from '../core/api/room.models';
+import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {WebSocketService} from '../core/websocket/web-socket.service';
+import {Game} from './game';
 
 describe('Game', () => {
   let fixture: ComponentFixture<Game>;
@@ -112,7 +111,7 @@ describe('Game', () => {
     createComponent();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="value"]');
+    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea[formControlName="answerText"]');
     textarea!.value = 'Mit WLAN-Problemen.';
     textarea!.dispatchEvent(new Event('input'));
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
@@ -193,6 +192,19 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(textContent()).toContain('Gesendet');
+  });
+
+  it('should unsubscribe from room updates without disconnecting the shared websocket', () => {
+    const unsubscribeSpy = jasmine.createSpy('unsubscribe');
+    webSocket.subscribeToRoom.and.returnValue(
+      new Observable<RealtimeEvent>(() => () => unsubscribeSpy()),
+    );
+
+    createComponent();
+    fixture.destroy();
+
+    expect(unsubscribeSpy).toHaveBeenCalled();
+    expect(webSocket.disconnect).not.toHaveBeenCalled();
   });
 
   function compiledAssignedCardText(fixture: ComponentFixture<Game>): string {

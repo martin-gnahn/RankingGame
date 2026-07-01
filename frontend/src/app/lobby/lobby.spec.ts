@@ -1,14 +1,13 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Router, provideRouter } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute, convertToParamMap, provideRouter, Router} from '@angular/router';
+import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
 
-import { RoomApiService } from '../core/api/room-api.service';
-import { RoomResponse } from '../core/api/room.models';
-import { RealtimeEvent } from '../core/websocket/web-socket.models';
-import { WebSocketService } from '../core/websocket/web-socket.service';
-import { Lobby } from './lobby';
+import {RoomApiService} from '../core/api/room-api.service';
+import {RoomResponse} from '../core/api/room.models';
+import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {WebSocketService} from '../core/websocket/web-socket.service';
+import {Lobby} from './lobby';
 
 describe('Lobby', () => {
   let fixture: ComponentFixture<Lobby>;
@@ -331,12 +330,17 @@ describe('Lobby', () => {
     expect(textContent()).toContain('Los gehts');
   });
 
-  it('should disconnect the websocket when the lobby is destroyed', () => {
+  it('should unsubscribe from room updates without disconnecting the shared websocket', () => {
+    const unsubscribeSpy = jasmine.createSpy('unsubscribe');
     roomApi.getRoom.and.returnValue(of(roomResponse));
+    webSocket.subscribeToRoom.and.returnValue(
+      new Observable<RealtimeEvent>(() => () => unsubscribeSpy()),
+    );
 
     createComponent();
     fixture.destroy();
 
-    expect(webSocket.disconnect).toHaveBeenCalled();
+    expect(unsubscribeSpy).toHaveBeenCalled();
+    expect(webSocket.disconnect).not.toHaveBeenCalled();
   });
 });

@@ -1,14 +1,14 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, map } from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
+import {Component, computed, effect, inject, signal} from '@angular/core';
+import {toSignal} from '@angular/core/rxjs-interop';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {map, Subscription} from 'rxjs';
 
-import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
-import { RoomApiService } from '../core/api/room-api.service';
-import { ChatMessageResponse, RoomResponse } from '../core/api/room.models';
-import { RealtimeEvent } from '../core/websocket/web-socket.models';
-import { WebSocketService } from '../core/websocket/web-socket.service';
+import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
+import {RoomApiService} from '../core/api/room-api.service';
+import {ChatMessageResponse, RoomResponse} from '../core/api/room.models';
+import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {WebSocketService} from '../core/websocket/web-socket.service';
 
 @Component({
   selector: 'app-lobby',
@@ -90,7 +90,6 @@ export class Lobby {
 
       onCleanup(() => {
         subscription.unsubscribe();
-        this.webSocket.disconnect();
       });
     });
   }

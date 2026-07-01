@@ -37,10 +37,11 @@ public class RoomLiveController {
             return;
         }
 
-        chatMessageService.sendMessage(new SendChatMessageCommand(
+        SendChatMessageCommand command = new SendChatMessageCommand(
                 roomCode,
                 request.playerId(),
                 request.body()
-        ));
+        );
+        chatMessageService.sendMessage(command);
     }
 }

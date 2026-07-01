@@ -1,17 +1,17 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
+import {Component, computed, effect, inject, signal} from '@angular/core';
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
+import {toSignal} from '@angular/core/rxjs-interop';
+import {ActivatedRoute, RouterLink} from '@angular/router';
+import {map} from 'rxjs';
 
-import { ChatSidebar } from '../chat-sidebar/chat-sidebar';
-import { GameApiService } from '../core/api/game-api.service';
-import { RoomApiService } from '../core/api/room-api.service';
-import { ActiveRoundResponse, ChatMessageResponse } from '../core/api/room.models';
-import { RealtimeEvent } from '../core/websocket/web-socket.models';
-import { WebSocketService } from '../core/websocket/web-socket.service';
-import { notBlankValidator } from '../shared/validators/not-blank.validator';
+import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
+import {GameApiService} from '../core/api/game-api.service';
+import {RoomApiService} from '../core/api/room-api.service';
+import {ActiveRoundResponse, ChatMessageResponse} from '../core/api/room.models';
+import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {WebSocketService} from '../core/websocket/web-socket.service';
+import {notBlankValidator} from '../shared/validators/not-blank.validator';
 
 interface ScoreCard {
   value: number;
@@ -83,7 +83,6 @@ export class Game {
 
       onCleanup(() => {
         subscription.unsubscribe();
-        this.webSocket.disconnect();
       });
     });
   }
