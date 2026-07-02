@@ -19,6 +19,7 @@ public class RoundProgressService {
     public AnswerSubmissionProgress updateAfterAnswerSubmitted(AnswerSubmissionContext context, Round domainRound) {
         var gameSession = context.gameSession();
         var roundEntity = context.round();
+        // pessimistic lock to prevent that two players simultaneously set round state to sorting
         roundRepository.findByIdForUpdate(roundEntity.getId())
                 .orElseThrow(RoundNotPartOfActiveGameException::new);
 
