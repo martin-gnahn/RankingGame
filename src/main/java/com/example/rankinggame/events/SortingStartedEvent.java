@@ -1,9 +1,8 @@
-
 package com.example.rankinggame.events;
 
 import java.util.UUID;
 
-public record RoundStateSetToSortingEvent(
+public record SortingStartedEvent(
         String roomCode,
         UUID roundId
 ) {

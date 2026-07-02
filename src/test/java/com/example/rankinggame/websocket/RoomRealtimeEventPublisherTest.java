@@ -1,11 +1,7 @@
 package com.example.rankinggame.websocket;
 
-import com.example.rankinggame.events.AnswerSubmittedEvent;
-import com.example.rankinggame.events.ChatMessageSentEvent;
 import com.example.rankinggame.entities.GameType;
-import com.example.rankinggame.events.GameStartedRoomEvent;
-import com.example.rankinggame.events.PlayerJoinedRoomEvent;
-import com.example.rankinggame.events.PlayerLeftRoomEvent;
+import com.example.rankinggame.events.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -112,5 +108,19 @@ class RoomRealtimeEventPublisherTest {
                 3,
                 false
         ));
+    }
+
+    @Test
+    void publishesSortingStartedToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID roundId = UUID.randomUUID();
+
+        publisher.publishSortingStarted(new SortingStartedEvent("ABCD12", roundId));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.SORTING_STARTED);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new SortingStartedPayload(roundId));
     }
 }
