@@ -1,19 +1,24 @@
 package com.example.rankinggame.integration;
 
 import com.example.rankinggame.dto.*;
+import com.example.rankinggame.usecases.RoundProgressService;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -24,6 +29,9 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     public static final String ALEX = "Alex";
     public static final String SAM = "Sam";
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @MockitoSpyBean
+    private RoundProgressService roundProgressService;
 
     @Test
     void createsRoomJoinsSecondPlayerAndReadsLobbyFromPostgres() throws Exception {
@@ -171,6 +179,77 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         int a = 0;
 
         // Future backbone: submit a real ranking payload and persist ranking entries.
+    }
+
+    @Test
+    void simultaneousFinalAnswerSubmissionsMoveRoundToSortingOnce() throws Exception {
+        CreatedRoom createdRoom = createRoom(MARTA);
+        String firstGuestPlayerId = joinRoom(createdRoom, ALEX);
+        String secondGuestPlayerId = joinRoom(createdRoom, SAM);
+        StartGameResponse startedGame = startGame(createdRoom);
+
+        SubmitAnswerResponse hostAnswer = submitAnswer(
+                createdRoom,
+                startedGame,
+                createdRoom.hostPlayerId(),
+                "Answer1"
+        );
+        FinalAnswerSubmissions finalSubmissions = submitMissingAnswersAtSameProgressBoundary(
+                createdRoom,
+                startedGame,
+                firstGuestPlayerId,
+                secondGuestPlayerId
+        );
+
+        CurrentGameSessionState currentGameSessionState = queryCurrentGameSessionState(startedGame);
+
+        assertThat(hostAnswer.submitted()).isTrue();
+        assertThat(finalSubmissions.firstGuestAnswer().submitted()).isTrue();
+        assertThat(finalSubmissions.secondGuestAnswer().submitted()).isTrue();
+        assertThat(currentGameSessionState.roundState()).isEqualTo("SORTING");
+        assertThat(currentGameSessionState.answerCount()).isEqualTo(3);
+        assertThat(currentGameSessionState.distinctAnswerPlayerCount()).isEqualTo(3);
+    }
+
+    private FinalAnswerSubmissions submitMissingAnswersAtSameProgressBoundary(
+            CreatedRoom createdRoom,
+            StartGameResponse startedGame,
+            String firstGuestPlayerId,
+            String secondGuestPlayerId
+    ) throws Exception {
+        CountDownLatch bothFinalSubmissionsReachedProgressCheck = new CountDownLatch(2);
+        CountDownLatch releaseProgressCheck = new CountDownLatch(1);
+
+        doAnswer(invocation -> {
+            bothFinalSubmissionsReachedProgressCheck.countDown();
+            assertThat(releaseProgressCheck.await(5, TimeUnit.SECONDS)).isTrue();
+            return invocation.callRealMethod();
+        }).when(roundProgressService).updateAfterAnswerSubmitted(any(), any());
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<SubmitAnswerResponse> firstGuestAnswer = executor.submit(() -> submitAnswer(
+                    createdRoom,
+                    startedGame,
+                    firstGuestPlayerId,
+                    "Answer2"
+            ));
+            Future<SubmitAnswerResponse> secondGuestAnswer = executor.submit(() -> submitAnswer(
+                    createdRoom,
+                    startedGame,
+                    secondGuestPlayerId,
+                    "Answer3"
+            ));
+
+            assertThat(bothFinalSubmissionsReachedProgressCheck.await(5, TimeUnit.SECONDS)).isTrue();
+            releaseProgressCheck.countDown();
+
+            return new FinalAnswerSubmissions(
+                    firstGuestAnswer.get(10, TimeUnit.SECONDS),
+                    secondGuestAnswer.get(10, TimeUnit.SECONDS)
+            );
+        } finally {
+            releaseProgressCheck.countDown();
+        }
     }
 
     private QueriedSubmittedAnswers querySubmittedAnswersForAllPlayers(
@@ -476,6 +555,12 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private record SubmittedAnswers(
             SubmitAnswerResponse hostAnswer,
+            SubmitAnswerResponse firstGuestAnswer,
+            SubmitAnswerResponse secondGuestAnswer
+    ) {
+    }
+
+    private record FinalAnswerSubmissions(
             SubmitAnswerResponse firstGuestAnswer,
             SubmitAnswerResponse secondGuestAnswer
     ) {
