@@ -11,6 +11,7 @@ import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
+import com.example.rankinggame.events.RoundStateSetToSortingEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.AnswerRepository;
@@ -82,5 +83,11 @@ public class SubmitAnswerService {
                 progress.requiredAnswerCount(),
                 progress.allAnswersSubmitted()
         ));
+        if (progress.allAnswersSubmitted()) {
+            eventPublisher.publishEvent(new RoundStateSetToSortingEvent(
+                    room.getCode(),
+                    round.getId()
+            ));
+        }
     }
 }

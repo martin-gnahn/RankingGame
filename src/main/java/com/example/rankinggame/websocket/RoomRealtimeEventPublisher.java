@@ -1,10 +1,6 @@
 package com.example.rankinggame.websocket;
 
-import com.example.rankinggame.events.AnswerSubmittedEvent;
-import com.example.rankinggame.events.ChatMessageSentEvent;
-import com.example.rankinggame.events.GameStartedRoomEvent;
-import com.example.rankinggame.events.PlayerJoinedRoomEvent;
-import com.example.rankinggame.events.PlayerLeftRoomEvent;
+import com.example.rankinggame.events.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -55,6 +51,16 @@ public class RoomRealtimeEventPublisher {
                         event.submittedAnswerCount(),
                         event.requiredAnswerCount(),
                         event.allAnswersSubmitted()
+                )
+        ));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishAnswerSubmitted(RoundStateSetToSortingEvent event) {
+        publish(event.roomCode(), new RoomRealtimeEvent(
+                ANSWER_SUBMITTED,
+                new RoundStateSetToSortingPayload(
+                        event.roundId()
                 )
         ));
     }

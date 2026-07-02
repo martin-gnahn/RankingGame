@@ -6,6 +6,7 @@ import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
+import com.example.rankinggame.mapper.PlayerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.*;
@@ -33,10 +34,11 @@ class SubmitAnswerServiceTest {
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         RoundCardAssignmentService roundCardAssignmentService = mock(RoundCardAssignmentService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+        RoundMapper roundMapper = roundMapper();
         SubmitAnswerService service = new SubmitAnswerService(
                 answerRepository,
                 roundCardAssignmentService,
-                roundMapper(),
+                roundMapper,
                 eventPublisher,
                 new AnswerMapper(),
                 new AnswerSubmissionContextLoader(
@@ -46,7 +48,11 @@ class SubmitAnswerServiceTest {
                         gameSessionRepository,
                         new RoomCodeService()
                 ),
-                new RoundProgressService(playerRepository, answerRepository, roundRepository)
+                new RoundProgressService(
+                        roundRepository,
+                        new GameParticipantContextLoader(playerRepository, new PlayerMapper()),
+                        roundMapper
+                )
         );
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -62,8 +68,7 @@ class SubmitAnswerServiceTest {
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
-        when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(player));
-        when(answerRepository.countByRoundId(roundId)).thenReturn(1L);
+        when(playerRepository.findByGameSessionId(gameSessionId)).thenReturn(java.util.List.of(player));
         when(answerRepository.save(any(AnswerEntity.class))).thenAnswer(invocation -> {
             AnswerEntity answer = invocation.getArgument(0);
             answer.setId(answerId);
