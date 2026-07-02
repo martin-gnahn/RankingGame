@@ -40,11 +40,21 @@ public class Round {
                 .allMatch(pl -> submittedAnswers.containsKey(pl.playerId()));
     }
 
-    public void markSortingIfAllAnswersSubmitted(List<GameParticipant> requiredPlayers) {
-        boolean allPlayersHaveSubmitted = allAnswersSubmitted(requiredPlayers);
-        if (allPlayersHaveSubmitted && roundStatus == RoundStatus.ANSWER_SUBMISSION) {
-            roundStatus = RoundStatus.SORTING;
+    public boolean startSortingIfAllAnswersSubmitted(int submittedCount, int requiredCount) {
+        if (requiredCount <= 0) {
+            return false;
         }
+
+        if (roundStatus != RoundStatus.ANSWER_SUBMISSION) {
+            return false;
+        }
+
+        if (submittedCount < requiredCount) {
+            return false;
+        }
+
+        roundStatus = RoundStatus.SORTING;
+        return true;
     }
 
     public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText, int cardValue) {

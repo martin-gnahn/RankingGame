@@ -1,6 +1,5 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.entities.GameSession;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.mapper.PlayerMapper;
@@ -17,8 +16,8 @@ class GameParticipantContextLoader {
     private final PlayerRepository playerRepository;
     private final PlayerMapper playerMapper;
 
-    public List<GameParticipant> getAllPlayers(GameSession gameSession) {
+    public int getPlayersCount(GameSession gameSession) {
         List<PlayerEntity> byGameSessionId = playerRepository.findByGameSessionId(gameSession.getId());
-        return playerMapper.toParticipants(byGameSessionId);
+        return byGameSessionId.size();
     }
 }

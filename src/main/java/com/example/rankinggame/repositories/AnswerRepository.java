@@ -10,7 +10,7 @@ public interface AnswerRepository {
 
     boolean existsByRoundIdAndPlayerId(UUID roundId, UUID playerId);
 
-    long countByRoundId(UUID roundId);
+    int countByRoundId(UUID roundId);
 
     List<AnswerEntity> findByRoundIdOrderBySubmittedAtAsc(UUID roundId);
 }

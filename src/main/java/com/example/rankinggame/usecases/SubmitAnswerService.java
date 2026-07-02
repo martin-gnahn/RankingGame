@@ -81,9 +81,9 @@ public class SubmitAnswerService {
                 round.getId(),
                 progress.submittedAnswerCount(),
                 progress.requiredAnswerCount(),
-                progress.allAnswersSubmitted()
+                progress.sortingHasStarted()
         ));
-        if (progress.allAnswersSubmitted()) {
+        if (progress.sortingHasStarted()) {
             eventPublisher.publishEvent(new SortingStartedEvent(
                     room.getCode(),
                     round.getId()

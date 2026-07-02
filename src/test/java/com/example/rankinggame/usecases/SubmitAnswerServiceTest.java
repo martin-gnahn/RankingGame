@@ -51,7 +51,8 @@ class SubmitAnswerServiceTest {
                 new RoundProgressService(
                         roundRepository,
                         new GameParticipantContextLoader(playerRepository, new PlayerMapper()),
-                        roundMapper
+                        roundMapper,
+                        mock(AnswerRepository.class)
                 )
         );
         UUID roomId = UUID.randomUUID();
