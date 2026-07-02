@@ -41,9 +41,16 @@ export class Game {
   protected readonly loading = signal(false);
   protected readonly submitting = signal(false);
   protected readonly submitted = signal(false);
+  protected readonly sortingStarted = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly submitErrorMessage = signal('');
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
+  protected readonly isCurrentPlayerCaptain = computed(() => this.queryParamMap()?.get('role') === 'host');
+  protected readonly sortingHintMessage = computed(() =>
+    this.isCurrentPlayerCaptain()
+      ? 'Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.'
+      : 'Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...',
+  );
   protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
     return {
@@ -162,6 +169,7 @@ export class Game {
     this.roomApi.getActiveRound(roomCode, playerId).subscribe({
       next: (activeRound) => {
         this.activeRound.set(activeRound);
+        this.sortingStarted.set(false);
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -186,6 +194,18 @@ export class Game {
     const payload = event.payload;
     if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
       this.chatMessages.update((messages) => [...messages, payload]);
+      return;
+    }
+
+    if (event.type === 'SORTING_STARTED' && this.isSortingStartedPayload(payload)) {
+      const activeRound = this.activeRound();
+      if (!activeRound || payload.roundId !== activeRound.roundId) {
+        return;
+      }
+
+      this.sortingStarted.set(true);
+      this.submitted.set(true);
+      this.form.disable();
     }
   }
 
@@ -212,6 +232,14 @@ export class Game {
       && typeof message.senderNickname === 'string'
       && typeof message.body === 'string'
       && typeof message.createdAt === 'string';
+  }
+
+  private isSortingStartedPayload(payload: unknown): payload is { roundId: string } {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    return typeof (payload as { roundId?: unknown }).roundId === 'string';
   }
 
 }

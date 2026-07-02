@@ -266,6 +266,12 @@ textarea:disabled {
   font-weight: 800;
 }
 
+.sorting-state {
+  border-color: rgba(18, 109, 116, 0.22);
+  background: #eef9fb;
+  color: #0c3d43;
+}
+
 .state-message {
   display: flex;
   align-items: center;

@@ -127,6 +127,48 @@ describe('Game', () => {
     expect(roomApi.submitAnswer).toHaveBeenCalledTimes(1);
   });
 
+  it('should show the sorting hint when sorting starts for the active round', () => {
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-1'},
+    });
+    fixture.detectChanges();
+
+    expect(textContent()).toContain('Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...');
+    expect(textContent()).not.toContain('Warte auf die anderen Spieler.');
+    expect((fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>('#answerText')?.disabled)
+      .toBeTrue();
+  });
+
+  it('should show the captain sorting hint for the host player', () => {
+    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-1'},
+    });
+    fixture.detectChanges();
+
+    expect(textContent()).toContain('Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.');
+  });
+
+  it('should ignore sorting started events for a different round', () => {
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-2'},
+    });
+    fixture.detectChanges();
+
+    expect(textContent()).not.toContain('Alle Antworten wurden abgegeben.');
+    expect((fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>('#answerText')?.disabled)
+      .toBeFalse();
+  });
+
   it('should require answer text before submitting', () => {
     createComponent();
 
