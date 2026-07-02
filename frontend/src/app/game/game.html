@@ -78,6 +78,9 @@
           <section aria-live="polite" class="waiting-state sorting-state" role="status">
             <p>{{ sortingHintMessage() }}</p>
           </section>
+          <section aria-live="assertive" class="waiting-state sorting-state" role="status">
+            <p>{{ JSON.stringify(allSubmittedAnswers()) }}</p>
+          </section>
         } @else if (submitted()) {
           <section class="waiting-state" role="status">
             <p>Antwort gespeichert. Warte auf die anderen Spieler.</p>

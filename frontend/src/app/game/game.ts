@@ -1,5 +1,5 @@
 import {HttpErrorResponse} from '@angular/common/http';
-import {Component, computed, effect, inject, signal} from '@angular/core';
+import {Component, computed, effect, inject, signal, WritableSignal} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {ActivatedRoute, RouterLink} from '@angular/router';
@@ -8,7 +8,7 @@ import {map} from 'rxjs';
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {GameApiService} from '../core/api/game-api.service';
 import {RoomApiService} from '../core/api/room-api.service';
-import {ActiveRoundResponse, ChatMessageResponse} from '../core/api/room.models';
+import {ActiveRoundResponse, AnswerDto, ChatMessageResponse} from '../core/api/room.models';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {notBlankValidator} from '../shared/validators/not-blank.validator';
@@ -17,6 +17,7 @@ interface ScoreCard {
   value: number;
   tone: 'low' | 'middle' | 'high';
 }
+
 
 @Component({
   selector: 'app-game',
@@ -51,6 +52,8 @@ export class Game {
       ? 'Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.'
       : 'Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...',
   );
+  protected readonly allSubmittedAnswers: WritableSignal<AnswerDto[]> = signal([]);
+
   protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
     return {
@@ -61,8 +64,14 @@ export class Game {
   protected readonly form = this.formBuilder.nonNullable.group({
     answerText: ['', [Validators.required, notBlankValidator(), Validators.maxLength(500)]],
   });
+  protected readonly JSON = JSON;
+
+  protected isAssignedCard(assignedCardValue: number, cardValue: number): boolean {
+    return Number(assignedCardValue) === cardValue;
+  }
 
   constructor() {
+    // TODO: I dont understand that
     setInterval(() => {
       const roomCodeCurrent = this.roomCode();
       this.gameApi.getActivePlayers(roomCodeCurrent).subscribe();
@@ -92,10 +101,6 @@ export class Game {
         subscription.unsubscribe();
       });
     });
-  }
-
-  protected isAssignedCard(assignedCardValue: number, cardValue: number): boolean {
-    return Number(assignedCardValue) === cardValue;
   }
 
   protected submitAnswer(): void {
@@ -190,23 +195,16 @@ export class Game {
     onCleanup?.(() => subscription.unsubscribe());
   }
 
-  private handleRealtimeEvent(event: RealtimeEvent): void {
-    const payload = event.payload;
-    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
-      this.chatMessages.update((messages) => [...messages, payload]);
+  protected displayAllSubmittedAnswers() {
+    const roomCode = this.roomCode();
+    const activeRound = this.activeRound();
+    if (!this.sortingStarted() || !activeRound) {
       return;
     }
-
-    if (event.type === 'SORTING_STARTED' && this.isSortingStartedPayload(payload)) {
-      const activeRound = this.activeRound();
-      if (!activeRound || payload.roundId !== activeRound.roundId) {
-        return;
-      }
-
-      this.sortingStarted.set(true);
-      this.submitted.set(true);
-      this.form.disable();
-    }
+    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId)
+      .subscribe(answers => {
+        this.allSubmittedAnswers.set(answers);
+      })
   }
 
   private toErrorMessage(error: unknown): string {
@@ -242,4 +240,25 @@ export class Game {
     return typeof (payload as { roundId?: unknown }).roundId === 'string';
   }
 
+  private handleRealtimeEvent(event: RealtimeEvent): void {
+    const payload = event.payload;
+    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
+      this.chatMessages.update((messages) => [...messages, payload]);
+      return;
+    }
+
+    // TODO: extract to dedicated method and maybe dedicated service. The realtime event handling.
+    // To make this service here thinner.
+    if (event.type === 'SORTING_STARTED' && this.isSortingStartedPayload(payload)) {
+      const activeRound = this.activeRound();
+      if (!activeRound || payload.roundId !== activeRound.roundId) {
+        return;
+      }
+
+      this.sortingStarted.set(true);
+      this.submitted.set(true);
+      this.displayAllSubmittedAnswers();
+      this.form.disable();
+    }
+  }
 }
