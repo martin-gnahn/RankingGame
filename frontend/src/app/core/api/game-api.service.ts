@@ -3,7 +3,7 @@ import {Injectable} from '@angular/core';
 import {Observable, tap} from 'rxjs';
 
 import {environment} from '../../../environments/environment';
-import {AnswerDto, RoomCode} from './room.models';
+import {AnswerResponseDto, RoomCode} from './room.models';
 import {GameSessionPlayerResponse} from './game.models';
 
 @Injectable({
@@ -26,13 +26,15 @@ export class GameApiService {
       );
   }
 
-  getSubmittedAnswers(roomCode: RoomCode, roundId: string): Observable<AnswerDto[]> {
+  getSubmittedAnswers(roomCode: RoomCode, roundId: string, playerId: string): Observable<AnswerResponseDto> {
     return this.http
-      .get<AnswerDto[]>(
+      .get<AnswerResponseDto>(
         `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answers`,
+        {params: {playerId}},
       )
       .pipe(
         tap((answers) => {
+          debugger;
           console.log('Submitted answers by all players', answers);
         }),
       );

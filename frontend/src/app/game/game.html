@@ -79,7 +79,11 @@
             <p>{{ sortingHintMessage() }}</p>
           </section>
           <section aria-live="assertive" class="waiting-state sorting-state" role="status">
-            <p>{{ JSON.stringify(allSubmittedAnswers()) }}</p>
+            <ul>
+              @for (answer of allSubmittedAnswers(); track answer.answerId) {
+                <li>{{ answer.answerText }} von '{{ answer.nickname }}'</li>
+              }
+            </ul>
           </section>
         } @else if (submitted()) {
           <section class="waiting-state" role="status">

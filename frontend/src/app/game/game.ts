@@ -198,12 +198,14 @@ export class Game {
   protected displayAllSubmittedAnswers() {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
+    const currentPlayerId = this.currentPlayerId();
     if (!this.sortingStarted() || !activeRound) {
       return;
     }
-    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId)
-      .subscribe(answers => {
-        this.allSubmittedAnswers.set(answers);
+    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId, currentPlayerId)
+    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId, currentPlayerId)
+      .subscribe(answerResponse => {
+        this.allSubmittedAnswers.set(answerResponse.answers);
       })
   }
 

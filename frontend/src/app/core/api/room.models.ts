@@ -87,7 +87,13 @@ export interface ChatMessageResponse {
 }
 
 export interface AnswerDto {
+  answerId: string;
+  playerId: string;
   nickname: string;
   answerText: string;
   cardValue: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+}
+
+export interface AnswerResponseDto {
+  answers: AnswerDto[];
 }
