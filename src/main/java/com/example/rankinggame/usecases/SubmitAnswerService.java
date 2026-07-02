@@ -53,7 +53,7 @@ public class SubmitAnswerService {
         );
 
         try {
-            AnswerEntity savedAnswer = answerRepository.save(answer);
+            AnswerEntity savedAnswer = answerRepository.saveAndFlush(answer);
             AnswerSubmissionProgress progress = roundProgressService.updateAfterAnswerSubmitted(context, domainRound);
             publishAnswerSubmittedEvent(context.room(), context.round(), progress);
             return new SubmitAnswerResult(savedAnswer.getId(), roundId.value(), playerId.value(), true);
@@ -81,7 +81,7 @@ public class SubmitAnswerService {
                 round.getId(),
                 progress.submittedAnswerCount(),
                 progress.requiredAnswerCount(),
-                progress.sortingHasStarted()
+                progress.allAnswersSubmitted()
         ));
         if (progress.sortingHasStarted()) {
             eventPublisher.publishEvent(new SortingStartedEvent(

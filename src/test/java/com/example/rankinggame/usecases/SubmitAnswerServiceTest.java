@@ -5,8 +5,8 @@ import com.example.rankinggame.dto.SubmitAnswerResult;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
+import com.example.rankinggame.events.SortingStartedEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
-import com.example.rankinggame.mapper.PlayerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.*;
@@ -50,9 +50,9 @@ class SubmitAnswerServiceTest {
                 ),
                 new RoundProgressService(
                         roundRepository,
-                        new GameParticipantContextLoader(playerRepository, new PlayerMapper()),
+                        new GameParticipantContextLoader(playerRepository),
                         roundMapper,
-                        mock(AnswerRepository.class)
+                        answerRepository
                 )
         );
         UUID roomId = UUID.randomUUID();
@@ -70,7 +70,11 @@ class SubmitAnswerServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         when(playerRepository.findByGameSessionId(gameSessionId)).thenReturn(java.util.List.of(player));
-        when(answerRepository.save(any(AnswerEntity.class))).thenAnswer(invocation -> {
+        when(roundRepository.findByIdForUpdate(roundId)).thenReturn(Optional.of(round));
+        when(answerRepository.countByRoundId(roundId)).thenReturn(1);
+        when(roundRepository.updateStateIfCurrent(roundId, RoundState.ANSWER_SUBMISSION, RoundState.SORTING))
+                .thenReturn(1);
+        when(answerRepository.saveAndFlush(any(AnswerEntity.class))).thenAnswer(invocation -> {
             AnswerEntity answer = invocation.getArgument(0);
             answer.setId(answerId);
             return answer;
@@ -89,21 +93,22 @@ class SubmitAnswerServiceTest {
         assertThat(result.submitted()).isTrue();
 
         ArgumentCaptor<AnswerEntity> answerCaptor = ArgumentCaptor.forClass(AnswerEntity.class);
-        verify(answerRepository).save(answerCaptor.capture());
+        verify(answerRepository).saveAndFlush(answerCaptor.capture());
         assertThat(answerCaptor.getValue().getText()).isEqualTo("Mit WLAN-Problemen.");
         assertThat(answerCaptor.getValue().getCardValue()).isEqualTo(7);
         assertThat(round.getState()).isEqualTo(RoundState.SORTING);
-        verify(roundRepository).save(round);
+        verify(roundRepository).findByIdForUpdate(roundId);
+        verify(answerRepository).countByRoundId(roundId);
+        verify(roundRepository).updateStateIfCurrent(roundId, RoundState.ANSWER_SUBMISSION, RoundState.SORTING);
 
-        ArgumentCaptor<AnswerSubmittedEvent> eventCaptor = ArgumentCaptor.forClass(AnswerSubmittedEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue()).isEqualTo(new AnswerSubmittedEvent(
+        verify(eventPublisher).publishEvent(new AnswerSubmittedEvent(
                 "ABCD12",
                 roundId,
                 1,
                 1,
                 true
         ));
+        verify(eventPublisher).publishEvent(new SortingStartedEvent("ABCD12", roundId));
     }
 
     @Test

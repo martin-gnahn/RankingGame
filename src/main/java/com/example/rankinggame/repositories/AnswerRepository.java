@@ -8,6 +8,8 @@ import java.util.UUID;
 public interface AnswerRepository {
     AnswerEntity save(AnswerEntity answer);
 
+    AnswerEntity saveAndFlush(AnswerEntity answer);
+
     boolean existsByRoundIdAndPlayerId(UUID roundId, UUID playerId);
 
     int countByRoundId(UUID roundId);
