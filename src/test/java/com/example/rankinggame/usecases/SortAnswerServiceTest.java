@@ -1,6 +1,7 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SortAnswersCommand;
+import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
@@ -34,6 +35,7 @@ class SortAnswerServiceTest {
     private static final UUID ANSWER_ID = UUID.randomUUID();
     private static final UUID GAME_SESSION_ID = UUID.randomUUID();
     private static final String ANSWER_TEXT = "TestAnswer1";
+    private static final String EMPTY_ANSWER = " ";
 
     private SortAnswerService sortAnswerService;
 
@@ -99,7 +101,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false);
+        ArrangeTestParams params = new ArrangeTestParams(false, ANSWER_TEXT);
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
 
         // act
@@ -118,7 +120,7 @@ class SortAnswerServiceTest {
     @Test
     void rankingShouldFailIfAnswerAlreadyRanked() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(true);
+        ArrangeTestParams params = new ArrangeTestParams(true, ANSWER_TEXT);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -127,6 +129,22 @@ class SortAnswerServiceTest {
         // assert
         assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
                 .isInstanceOf(AnswerAlreadyRankedException.class);
+        verify(rankingRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldFailIfAnswerIsEmpty() {
+        // arrange
+        ArrangeTestParams params = new ArrangeTestParams(false, EMPTY_ANSWER);
+        arrangeEntitiesAndStubs(params);
+
+        // act
+        SortAnswersCommand sortAnswersCommand = sortAnswersCommand();
+        sortAnswerService.addRanking(sortAnswersCommand);
+
+        // assert
+        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
+                .isInstanceOf(AnswerTextRequiredException.class);
         verify(rankingRepository, never()).save(any());
     }
 
@@ -163,7 +181,8 @@ class SortAnswerServiceTest {
     }
 
     private record ArrangeTestParams(
-            boolean alreadyRanked
+            boolean alreadyRanked,
+            String answerText
     ) {
     }
 

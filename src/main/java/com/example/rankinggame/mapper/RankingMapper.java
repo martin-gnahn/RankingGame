@@ -8,6 +8,7 @@ import com.example.rankinggame.entities.RankingEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RankingMapper {
@@ -32,7 +33,7 @@ public class RankingMapper {
     }
 
     public List<Ranking> toDomainObjects(List<RankingEntity> rankingEntities) {
-        return rankingEntities.stream().map(this::toDomain).toList();
+        return rankingEntities.stream().map(this::toDomain).collect(Collectors.toList());
     }
 
 //    public Ranking toDomain(RankingEntity ranking) {
