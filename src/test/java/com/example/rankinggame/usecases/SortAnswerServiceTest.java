@@ -3,6 +3,7 @@ package com.example.rankinggame.usecases;
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.repositories.*;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -45,37 +46,53 @@ class SortAnswerServiceTest {
     @Mock
     private JpaAnswerRepository jpaAnswerRepository;
 
-    @Test
-    void shouldAddRankingIfAnswerNotRankedYet() {
-        // arrange
+    private static @NonNull GameSession getGameSessionEntity() {
         GameSession gameSession = new GameSession();
         gameSession.setId(GAME_SESSION_ID);
         gameSession.setCurrentRoundId(ROUND_ID);
         gameSession.setRoomId(ROOM_ID);
+        return gameSession;
+    }
 
-        QuestionEntity questionEntity = new QuestionEntity();
+    private static @NonNull RoundEntity getRoundEntity(QuestionEntity questionEntity) {
         RoundEntity roundEntity =
                 new RoundEntity(
                         ROUND_ID, GAME_SESSION_ID, questionEntity,
                         UUID.randomUUID(), RoundState.SORTING, LocalDateTime.now()
                 );
+        return roundEntity;
+    }
+
+    private static @NonNull AnswerEntity getAnswerEntity() {
+        AnswerEntity answer = new AnswerEntity();
+        answer.setId(ANSWER_ID);
+        answer.setRoundId(ROUND_ID);
+        return answer;
+    }
+
+    private static @NonNull RoomEntity getRoomEntity() {
+        return new RoomEntity(ROOM_ID, ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, Instant.now());
+    }
+
+    private static @NonNull PlayerEntity getPlayerEntity() {
         // TODO: currently some duplicate ids here (player has room id and room has host player id: redundancy)
         PlayerEntity playerEntity = new PlayerEntity();
         playerEntity.setId(HOST_PLAYER_ID);
         playerEntity.setHost(true);
         playerEntity.setRoomId(ROOM_ID);
+        return playerEntity;
+    }
 
-        RoomEntity roomEntity = new RoomEntity(ROOM_ID, ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, Instant.now());
-        when(roomCodeService.normalizeRoomCode(any(SortAnswersCommand.class))).thenReturn(ROOM_CODE);
-        when(roomRepository.findByCode(anyString())).thenReturn(Optional.of(roomEntity));
-        when(playerRepository.findById(any(UUID.class))).thenReturn(Optional.of(playerEntity));
-        when(roundRepository.findById(any(UUID.class))).thenReturn(Optional.of(roundEntity));
-        when(gameSessionRepository.findByRoomId(any(UUID.class))).thenReturn(Optional.of(gameSession));
-        AnswerEntity answer = new AnswerEntity();
-        answer.setId(ANSWER_ID);
-        answer.setRoundId(ROUND_ID);
-        when(jpaAnswerRepository.findById(any(UUID.class))).thenReturn(Optional.of(answer));
-        when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, answer)).thenReturn(Optional.empty());
+    @Test
+    void shouldAddRankingIfAnswerNotRankedYet() {
+        // arrange
+        GameSession gameSession = getGameSessionEntity();
+        QuestionEntity questionEntity = new QuestionEntity();
+        RoundEntity roundEntity = getRoundEntity(questionEntity);
+        PlayerEntity playerEntity = getPlayerEntity();
+        RoomEntity roomEntity = getRoomEntity();
+        AnswerEntity answer = getAnswerEntity();
+        setupRepositoryStubs(roomEntity, playerEntity, roundEntity, gameSession, answer);
 
         // act
         SortAnswersCommand sortAnswersCommand =
@@ -89,6 +106,16 @@ class SortAnswerServiceTest {
         assertThat(addedRanking.getRoundId()).isEqualTo(ROUND_ID);
         assertThat(addedRanking.getAnswer()).isEqualTo(answer);
         assertThat(addedRanking.getPosition()).isEqualTo(1);
+    }
+
+    private void setupRepositoryStubs(RoomEntity roomEntity, PlayerEntity playerEntity, RoundEntity roundEntity, GameSession gameSession, AnswerEntity answer) {
+        when(roomCodeService.normalizeRoomCode(any(SortAnswersCommand.class))).thenReturn(ROOM_CODE);
+        when(roomRepository.findByCode(anyString())).thenReturn(Optional.of(roomEntity));
+        when(playerRepository.findById(any(UUID.class))).thenReturn(Optional.of(playerEntity));
+        when(roundRepository.findById(any(UUID.class))).thenReturn(Optional.of(roundEntity));
+        when(gameSessionRepository.findByRoomId(any(UUID.class))).thenReturn(Optional.of(gameSession));
+        when(jpaAnswerRepository.findById(any(UUID.class))).thenReturn(Optional.of(answer));
+        when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, answer)).thenReturn(Optional.empty());
     }
 
     @Test
