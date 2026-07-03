@@ -63,7 +63,15 @@ public class GlobalExceptionHandler {
                 .body(error(ErrorConstants.ANSWER_ALREADY_SUBMITTED, exception.getMessage()));
     }
 
+    @ExceptionHandler(AnswerNotFoundException.class)
+    public ResponseEntity<ApiError> handleAnswerNotFound(AnswerNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(error(ErrorConstants.RESOURCE_NOT_FOUND, exception.getMessage()));
+    }
+
     @ExceptionHandler({
+            AnswerAlreadyRankedException.class,
+            AnswerNotPartOfRequestedRoundException.class,
             AnswersNotAcceptedException.class,
             CannotUseSameQuestionAgainException.class,
             CaptainNotFoundException.class,
@@ -71,6 +79,7 @@ public class GlobalExceptionHandler {
             NoPlayerInGameException.class,
             NotEnoughPlayersException.class,
             RoundNotPartOfActiveGameException.class,
+            RoundNotInSortingStateException.class,
             RoomHasNoActiveGameException.class,
             RoomNotInLobbyException.class,
             ActiveRoundNotFoundException.class,

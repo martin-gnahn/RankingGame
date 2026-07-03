@@ -1,11 +1,7 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SortAnswersCommand;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.PlayerRepository;
@@ -63,13 +59,13 @@ public class SortAnswersService {
 
     private RoundEntity requireRoundInRoom(RoomEntity room, UUID roundId) {
         RoundEntity round = roundRepository.findById(roundId)
-                .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
+                .orElseThrow(RoundNotPartOfActiveGameException::new);
         GameSession gameSession = gameSessionRepository.findByRoomId(room.getId())
                 .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
-                .orElseThrow(() -> new IllegalArgumentException("Round is not part of the active game"));
+                .orElseThrow(RoundNotPartOfActiveGameException::new);
 
         if (!Objects.equals(gameSession.getRoomId(), room.getId())) {
-            throw new IllegalArgumentException("Round is not part of the active game");
+            throw new RoundNotPartOfActiveGameException();
         }
 
         return round;
@@ -77,7 +73,7 @@ public class SortAnswersService {
 
     private void requireSortingRound(RoundEntity round) {
         if (round.getState() != RoundState.SORTING) {
-            throw new IllegalArgumentException("Answers can only be sorted in sorting mode");
+            throw new RoundNotInSortingStateException();
         }
     }
 }
