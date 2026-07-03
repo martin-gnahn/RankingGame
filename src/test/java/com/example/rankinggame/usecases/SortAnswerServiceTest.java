@@ -5,8 +5,10 @@ import com.example.rankinggame.entities.*;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
@@ -14,11 +16,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SortAnswerServiceTest {
-
 
     private static final String ROOM_CODE = "ROOM";
     private static final UUID ROOM_ID = UUID.randomUUID();
@@ -57,11 +59,13 @@ class SortAnswerServiceTest {
                         ROUND_ID, GAME_SESSION_ID, questionEntity,
                         UUID.randomUUID(), RoundState.SORTING, LocalDateTime.now()
                 );
+        // TODO: currently some duplicate ids here (player has room id and room has host player id: redundancy)
         PlayerEntity playerEntity = new PlayerEntity();
         playerEntity.setId(HOST_PLAYER_ID);
         playerEntity.setHost(true);
+        playerEntity.setRoomId(ROOM_ID);
 
-        RoomEntity roomEntity = new RoomEntity(UUID.randomUUID(), ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, Instant.now());
+        RoomEntity roomEntity = new RoomEntity(ROOM_ID, ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, Instant.now());
         when(roomCodeService.normalizeRoomCode(any(SortAnswersCommand.class))).thenReturn(ROOM_CODE);
         when(roomRepository.findByCode(anyString())).thenReturn(Optional.of(roomEntity));
         when(playerRepository.findById(any(UUID.class))).thenReturn(Optional.of(playerEntity));
@@ -79,7 +83,12 @@ class SortAnswerServiceTest {
         sortAnswerService.addRanking(sortAnswersCommand);
 
         // assert
-        int a = 0;
+        ArgumentCaptor<RankingEntity> rankingCaptor = ArgumentCaptor.forClass(RankingEntity.class);
+        verify(rankingRepository, Mockito.times(1)).save(rankingCaptor.capture());
+        RankingEntity addedRanking = rankingCaptor.getValue();
+        assertThat(addedRanking.getRoundId()).isEqualTo(ROUND_ID);
+        assertThat(addedRanking.getAnswer()).isEqualTo(answer);
+        assertThat(addedRanking.getPosition()).isEqualTo(1);
     }
 
     @Test
