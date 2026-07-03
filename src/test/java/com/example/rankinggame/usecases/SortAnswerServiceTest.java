@@ -97,7 +97,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, true);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, true, true);
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
 
         // act
@@ -116,7 +116,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldFailIfAnswerAlreadyRanked() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(true, RoundState.SORTING, true);
+        ArrangeTestParams params = new ArrangeTestParams(true, RoundState.SORTING, true, true);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -131,7 +131,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldFailIfRoundIsNotInSortingState() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION, true);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION, true, true);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -146,7 +146,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldFailIfInvalidAnswerIsRanked() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, false);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, false, true);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -155,6 +155,21 @@ class SortAnswerServiceTest {
         // assert
         assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
                 .isInstanceOf(AnswerNotPartOfRequestedRoundException.class);
+        verify(rankingRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldFailIfRequestingPlayerIsNotHost() {
+        // arrange
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, true, true);
+        arrangeEntitiesAndStubs(params);
+
+        // act
+        SortAnswersCommand sortAnswersCommand = sortAnswersCommand();
+
+        // assert
+        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
+                .isInstanceOf(OnlyHostCanSortAnswers.class);
         verify(rankingRepository, never()).save(any());
     }
 
@@ -195,7 +210,8 @@ class SortAnswerServiceTest {
     private record ArrangeTestParams(
             boolean alreadyRanked,
             RoundState roundState,
-            boolean answerExists
+            boolean answerExists,
+            boolean requestingPlayerIsCaptain
     ) {
     }
 
