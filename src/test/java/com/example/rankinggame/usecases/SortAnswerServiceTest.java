@@ -2,6 +2,10 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.*;
+import com.example.rankinggame.mapper.AnswerMapper;
+import com.example.rankinggame.mapper.QuestionMapper;
+import com.example.rankinggame.mapper.RankingMapper;
+import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +32,11 @@ class SortAnswerServiceTest {
     private static final UUID HOST_PLAYER_ID = UUID.randomUUID();
     private static final UUID ANSWER_ID = UUID.randomUUID();
     private static final UUID GAME_SESSION_ID = UUID.randomUUID();
+    private QuestionMapper questionMapper;
+    private AnswerMapper answerMapper;
+    private RankingMapper rankingMapper;
+    private RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper);
+
     @InjectMocks
     private SortAnswerService sortAnswerService;
     @Mock
