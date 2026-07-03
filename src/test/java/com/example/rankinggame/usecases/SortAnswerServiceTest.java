@@ -194,9 +194,6 @@ class SortAnswerServiceTest {
         when(roomCodeService.normalizeRoomCode(any(SortAnswerCommand.class))).thenReturn(ROOM_CODE);
         when(roomRepository.findByCode(ROOM_CODE)).thenReturn(Optional.of(fixture.room()));
         when(playerRepository.findById(requestingPlayerId(params))).thenReturn(Optional.of(fixture.player()));
-        if (!params.requestingPlayerIsCaptain()) {
-            return;
-        }
         when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(fixture.round()));
         when(gameSessionRepository.findByRoomId(ROOM_ID)).thenReturn(Optional.of(fixture.gameSession()));
         when(jpaAnswerRepository.findById(ANSWER_ID)).thenReturn(Optional.of(fixture.answer()));

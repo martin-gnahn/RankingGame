@@ -2,8 +2,8 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
-import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.UUID;
 
 @Service
 public class CreateRoomService {
@@ -64,18 +66,19 @@ public class CreateRoomService {
 
     private CreateRoomResult createRoomInTransaction(String playerName) {
         RoomEntity room = new RoomEntity();
+        room.setId(UUID.randomUUID());
+        PlayerEntity hostPlayer = new PlayerEntity();
+
+        hostPlayer.setRoomId(room.getId());
+        hostPlayer.setNickname(playerName);
+        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
+
         room.setCode(roomCodeGenerator.generateUniqueCode());
         room.setStatus(RoomStatus.LOBBY);
-
+        room.setHostPlayerId(savedHostPlayer.getId());
         RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
-        PlayerEntity hostPlayer = new PlayerEntity();
-        hostPlayer.setRoomId(savedRoom.getId());
-        hostPlayer.setNickname(playerName);
-        hostPlayer.setHost(true);
-        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
-
-        PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 

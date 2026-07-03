@@ -27,7 +27,6 @@ class MapperTest {
 
         assertThat(domain.playerId()).isEqualTo(new PlayerId(playerId));
         assertThat(domain.name()).isEqualTo("Marta");
-        assertThat(domain.host()).isTrue();
     }
 
     @Test
@@ -43,7 +42,7 @@ class MapperTest {
 
         assertThat(domain.getRoundStatus()).isEqualTo(RoundStatus.ANSWER_SUBMISSION);
         assertThat(domain.getQuestion()).isEqualTo(new Question(new QuestionId(questionId), "Question", "test"));
-        assertThat(domain.getCaptain()).isEqualTo(new GameParticipant(new PlayerId(captainPlayerId), null, false));
+        assertThat(domain.getCaptain()).isEqualTo(new GameParticipant(new PlayerId(captainPlayerId), null));
         assertThat(domain.getSubmittedAnswers()).isEmpty();
     }
 
@@ -54,7 +53,7 @@ class MapperTest {
         RoundId roundId = new RoundId(UUID.randomUUID());
         Round domain = Round.builder()
                 .roundStatus(RoundStatus.ANSWER_SUBMISSION)
-                .captain(new GameParticipant(new PlayerId(captainPlayerId), "Alex", true))
+                .captain(new GameParticipant(new PlayerId(captainPlayerId), "Alex"))
                 .question(new Question(new QuestionId(questionId), "Question", "test"))
                 .id(roundId)
                 .build();
@@ -96,7 +95,7 @@ class MapperTest {
         return Round.builder()
                 .id(new RoundId(roundId))
                 .roundStatus(RoundStatus.ANSWER_SUBMISSION)
-                .captain(new GameParticipant(new PlayerId(UUID.randomUUID()), "Captain", true))
+                .captain(new GameParticipant(new PlayerId(UUID.randomUUID()), "Captain"))
                 .question(new Question(new QuestionId(UUID.randomUUID()), "Question", "test"))
                 .build();
     }

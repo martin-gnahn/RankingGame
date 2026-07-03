@@ -2,8 +2,8 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
-import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.events.PlayerJoinedRoomEvent;
@@ -46,7 +46,6 @@ public class JoinRoomService {
         PlayerEntity player = new PlayerEntity();
         player.setRoomId(room.getId());
         player.setNickname(playerName);
-        player.setHost(false);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
 
         PlayerEntity savedPlayer = savePlayerAndVerifyUniqueName(player);

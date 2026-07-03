@@ -15,28 +15,9 @@ class RoomHostGuardService {
     private final PlayerRepository playerRepository;
 
     public PlayerEntity requireRoomHostForStart(RoomEntity room, UUID hostPlayerId) {
-        PlayerEntity hostPlayer = playerRepository.findById(hostPlayerId)
+        return playerRepository.findById(hostPlayerId)
                 .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
-                .filter(PlayerEntity::isHost)
+                .filter(player -> Objects.equals(room.getHostPlayerId(), player.getId()))
                 .orElseThrow(OnlyHostCanStartGame::new);
-
-        if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
-            throw new OnlyHostCanStartGame();
-        }
-
-        return hostPlayer;
-    }
-
-    public PlayerEntity requireRoomHostForVote(RoomEntity room, UUID hostPlayerId) {
-        PlayerEntity hostPlayer = playerRepository.findById(hostPlayerId)
-                .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
-                .filter(PlayerEntity::isHost)
-                .orElseThrow(OnlyHostCanStartGame::new);
-
-        if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
-            throw new OnlyHostCanSortAnswers();
-        }
-
-        return hostPlayer;
     }
 }

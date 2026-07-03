@@ -12,8 +12,7 @@ public class PlayerMapper {
     public GameParticipant toParticipant(PlayerEntity playerEntity) {
         return new GameParticipant(
                 new PlayerId(playerEntity.getId()),
-                playerEntity.getNickname(),
-                playerEntity.isHost()
+                playerEntity.getNickname()
         );
     }
 
