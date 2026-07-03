@@ -21,7 +21,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -39,6 +42,7 @@ public class StartRankingGameService {
     private final RoundMapper roundMapper;
     private final QuestionMapper questionMapper;
     private final RoomCodeService roomCodeService;
+    private final RoomHostGuardService roomHostGuardService;
 
     @Transactional
     public StartRankingGameResult startGame(StartRankingGameCommand command) {
@@ -46,7 +50,7 @@ public class StartRankingGameService {
         UUID hostPlayerId = requireHostPlayerId(command);
 
         RoomEntity room = requireLobbyRoom(roomCode);
-        PlayerEntity hostPlayer = requireRoomHost(room, hostPlayerId);
+        PlayerEntity hostPlayer = roomHostGuardService.requireRoomHostForStart(room, hostPlayerId);
 
         List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
         List<GameParticipant> participants = playerMapper.toParticipants(playerEntities);
@@ -77,19 +81,6 @@ public class StartRankingGameService {
         }
 
         return room;
-    }
-
-    private PlayerEntity requireRoomHost(RoomEntity room, UUID hostPlayerId) {
-        PlayerEntity hostPlayer = playerRepository.findById(hostPlayerId)
-                .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
-                .filter(PlayerEntity::isHost)
-                .orElseThrow(OnlyHostCanStartGame::new);
-
-        if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
-            throw new OnlyHostCanStartGame();
-        }
-
-        return hostPlayer;
     }
 
     private QuestionEntity requireRandomActiveQuestion() {

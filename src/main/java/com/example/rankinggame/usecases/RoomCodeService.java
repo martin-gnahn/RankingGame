@@ -1,10 +1,7 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.dto.JoinRoomCommand;
-import com.example.rankinggame.dto.GetSubmittedAnswersCommand;
-import com.example.rankinggame.dto.SortAnswersCommand;
-import com.example.rankinggame.dto.StartRankingGameCommand;
-import com.example.rankinggame.dto.SubmitAnswerCommand;
+import com.example.rankinggame.controllers.GetAnswerOrderCommand;
+import com.example.rankinggame.dto.*;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +26,10 @@ public class RoomCodeService {
     }
 
     public String normalizeRoomCode(SortAnswersCommand command) {
+        return normalize(command == null ? null : command.roomCode());
+    }
+
+    public String normalizeRoomCode(GetAnswerOrderCommand command) {
         return normalize(command == null ? null : command.roomCode());
     }
 

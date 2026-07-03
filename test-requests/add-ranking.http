@@ -1,0 +1,21 @@
+### first answer
+
+POST http://localhost:8080/api/rooms/18SPUR/ranking-game/rounds/243598ad-0011-4a8c-bebe-790b75e2a21d/answer/position/new
+Accept: application/json
+Content-Type: application/json
+
+{
+  "hostId": "c0529da4-9900-4865-b3c6-a0e86b074212",
+  "answerId": "a6948499-27d6-48b7-97df-3dead9288363"
+}
+
+### second answer
+
+POST http://localhost:8080/api/rooms/18SPUR/ranking-game/rounds/243598ad-0011-4a8c-bebe-790b75e2a21d/answer/position/new
+Accept: application/json
+Content-Type: application/json
+
+{
+  "hostId": "c0529da4-9900-4865-b3c6-a0e86b074212",
+  "answerId": "86047645-7156-4df9-9a82-80e475495b91"
+}

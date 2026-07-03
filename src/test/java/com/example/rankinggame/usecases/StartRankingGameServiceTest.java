@@ -325,7 +325,8 @@ class StartRankingGameServiceTest {
                 gameMapper,
                 roundMapper,
                 questionMapper,
-                new RoomCodeService()
+                new RoomCodeService(),
+                new RoomHostGuardService(playerRepository)
         );
     }
 }
