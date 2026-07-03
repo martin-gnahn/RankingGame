@@ -2,14 +2,14 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
+import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
+import com.example.rankinggame.usecases.AnswerNotFoundException;
+import com.example.rankinggame.usecases.RoundNotInSortingStateException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Builder
@@ -19,6 +19,7 @@ public class Round {
     private RoundStatus roundStatus;
     private GameParticipant captain;
     private Question question;
+    private List<Ranking> answerRankings = new ArrayList<>();
     @Builder.Default
     private Map<PlayerId, SubmittedAnswer> submittedAnswers = new HashMap<>();
 
@@ -35,9 +36,35 @@ public class Round {
         }
     }
 
-    public boolean allAnswersSubmitted(List<GameParticipant> requiredPlayers) {
-        return requiredPlayers.stream()
-                .allMatch(pl -> submittedAnswers.containsKey(pl.playerId()));
+    public Ranking rankAnswer(SubmittedAnswer newAnswer) {
+        ensureAnsweringIsAllowed(newAnswer);
+        int oneBasedPosition = answerRankings.size() + 1;
+        RankingId rankingId = new RankingId(UUID.randomUUID());
+        Ranking newRanking = new Ranking(rankingId, newAnswer, oneBasedPosition);
+        answerRankings.add(newRanking);
+        return newRanking;
+    }
+
+    private void ensureAnsweringIsAllowed(SubmittedAnswer newAnswer) {
+        if (newAnswer == null || newAnswer.answerId() == null) {
+            throw new AnswerNotFoundException();
+        }
+        checkIfRoundIsInSortingState();
+        checkIfAnswerAlreadyAddedToRanking(newAnswer);
+    }
+
+    private void checkIfAnswerAlreadyAddedToRanking(SubmittedAnswer newAnswer) {
+        boolean hasAlreadyBeenRanked =
+                answerRankings.stream().anyMatch(existing -> existing.getAnswer().answerId().equals(newAnswer.answerId()));
+        if (hasAlreadyBeenRanked) {
+            throw new AnswerAlreadyRankedException();
+        }
+    }
+
+    private void checkIfRoundIsInSortingState() {
+        if (roundStatus != RoundStatus.SORTING) {
+            throw new RoundNotInSortingStateException();
+        }
     }
 
     public boolean startSortingIfAllAnswersSubmitted(int submittedCount, int requiredCount) {
@@ -63,7 +90,8 @@ public class Round {
             throw new AnswerAlreadySubmittedException();
         }
 
-        SubmittedAnswer answer = new SubmittedAnswer(playerId, new AnswerText(answerText), cardValue);
+        AnswerId answerId = new AnswerId(UUID.randomUUID());
+        SubmittedAnswer answer = new SubmittedAnswer(playerId, answerId, new AnswerText(answerText), cardValue);
         submittedAnswers.put(playerId, answer);
         return answer;
     }

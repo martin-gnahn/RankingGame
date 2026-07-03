@@ -19,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RankingEntity {
     @Id
-    // @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne

@@ -1,9 +1,6 @@
 package com.example.rankinggame.mapper;
 
-import com.example.rankinggame.engine.AnswerText;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.RoundId;
-import com.example.rankinggame.engine.SubmittedAnswer;
+import com.example.rankinggame.engine.*;
 import com.example.rankinggame.entities.AnswerEntity;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +13,7 @@ import java.util.stream.Collectors;
 public class AnswerMapper {
     public AnswerEntity toEntity(RoundId roundId, SubmittedAnswer submittedAnswer) {
         AnswerEntity answer = new AnswerEntity();
+        answer.setId(submittedAnswer.answerId().value());
         answer.setRoundId(roundId.value());
         answer.setPlayerId(submittedAnswer.playerId().value());
         answer.setText(submittedAnswer.answerText().value());
@@ -34,14 +32,11 @@ public class AnswerMapper {
                 );
     }
 
-    private AnswerText toAnswerText(SubmittedAnswer submittedAnswer) {
-        return new AnswerText(submittedAnswer.answerText().value());
-    }
-
-    private SubmittedAnswer toSubmittedAnswer(AnswerEntity entity) {
+    public SubmittedAnswer toSubmittedAnswer(AnswerEntity entity) {
         PlayerId playerId = new PlayerId(entity.getPlayerId());
+        AnswerId answerId = new AnswerId(entity.getId());
         return new SubmittedAnswer(
-                playerId, new AnswerText(entity.getText()), entity.getCardValue()
+                playerId, answerId, new AnswerText(entity.getText()), entity.getCardValue()
         );
     }
 }

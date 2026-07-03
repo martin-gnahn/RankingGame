@@ -21,8 +21,10 @@ class AnswerTest {
     @Test
     void submittedAnswerKeepsPlayerAnswerTextAndCardValue() {
         PlayerId playerId = new PlayerId(UUID.randomUUID());
+        AnswerId answerId = new AnswerId(UUID.randomUUID());
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(
                 playerId,
+                answerId,
                 new AnswerText("  Good answer  "),
                 7
         );
@@ -50,6 +52,7 @@ class AnswerTest {
     void rejectsInvalidCardValueWithDomainException() {
         assertThatThrownBy(() -> new SubmittedAnswer(
                 new PlayerId(UUID.randomUUID()),
+                new AnswerId(UUID.randomUUID()),
                 new AnswerText("Good answer"),
                 11
         ))

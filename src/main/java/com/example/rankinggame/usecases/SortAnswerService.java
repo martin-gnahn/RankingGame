@@ -2,8 +2,14 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetAnswerOrderCommand;
 import com.example.rankinggame.dto.SortAnswersCommand;
+import com.example.rankinggame.engine.Ranking;
+import com.example.rankinggame.engine.Round;
+import com.example.rankinggame.engine.SubmittedAnswer;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.mapper.AnswerMapper;
+import com.example.rankinggame.mapper.RankingMapper;
+import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +32,9 @@ public class SortAnswerService {
     private final GameSessionRepository gameSessionRepository;
     private final JpaRankingRepository rankingRepository;
     private final JpaAnswerRepository jpaAnswerRepository;
+    private final RoundMapper roundMapper;
+    private final AnswerMapper answerMapper;
+    private final RankingMapper rankingMapper;
 
     // TODO: implement domain specific sorting algorithm, which checks the right order of the cards
 
@@ -38,15 +47,18 @@ public class SortAnswerService {
         checkIfPlayerIdIsFromHost(command, room);
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         AnswerEntity answer = requireAnswerInRound(round, command.answerId());
-        checkIfRoundIsInSortingState(round);
-        checkIfAnswerAlreadyAddedToRanking(round, answer);
+        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
+
+        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId());
+        Round domainRound =
+                roundMapper.toDomain(round, allAnswersInRound);
+
+        Ranking newRanking = domainRound.rankAnswer(domainAnswer);
+        RankingEntity newRankingEntity = rankingMapper.toEntity(newRanking, domainRound);
 
         // all validations passed
-        // TODO: use domain/repository mapping here
-        int nextPosition = rankingRepository.findMaxPositionByRoundId(round.getId()) + 1;
-        RankingEntity ranking = new RankingEntity(UUID.randomUUID(), answer, round.getId(), nextPosition);
-        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answer.getText(), nextPosition);
-        return rankingRepository.save(ranking);
+        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answer.getText(), newRanking.getOneBasedPosition());
+        return rankingRepository.save(newRankingEntity);
     }
 
     private void checkIfAnswerAlreadyAddedToRanking(RoundEntity round, AnswerEntity answer) {
