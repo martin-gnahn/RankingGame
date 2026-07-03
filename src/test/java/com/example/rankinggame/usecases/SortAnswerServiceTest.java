@@ -1,7 +1,6 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SortAnswersCommand;
-import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.QuestionMapper;
@@ -67,10 +66,10 @@ class SortAnswerServiceTest {
         return gameSession;
     }
 
-    private RoundEntity getRoundEntity(QuestionEntity questionEntity) {
+    private RoundEntity getRoundEntity(QuestionEntity questionEntity, RoundState roundState) {
         return new RoundEntity(
                 ROUND_ID, GAME_SESSION_ID, questionEntity,
-                UUID.randomUUID(), RoundState.SORTING, LocalDateTime.now()
+                UUID.randomUUID(), roundState, LocalDateTime.now()
         );
     }
 
@@ -101,7 +100,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, ANSWER_TEXT);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION);
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
 
         // act
@@ -118,9 +117,9 @@ class SortAnswerServiceTest {
     }
 
     @Test
-    void rankingShouldFailIfAnswerAlreadyRanked() {
+    void shouldFailIfAnswerAlreadyRanked() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(true, ANSWER_TEXT);
+        ArrangeTestParams params = new ArrangeTestParams(true, RoundState.ANSWER_SUBMISSION);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -133,25 +132,24 @@ class SortAnswerServiceTest {
     }
 
     @Test
-    void shouldFailIfAnswerIsEmpty() {
+    void shouldFailIfRoundIsNotInSortingState() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, EMPTY_ANSWER);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION);
         arrangeEntitiesAndStubs(params);
 
         // act
         SortAnswersCommand sortAnswersCommand = sortAnswersCommand();
-        sortAnswerService.addRanking(sortAnswersCommand);
 
         // assert
         assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
-                .isInstanceOf(AnswerTextRequiredException.class);
+                .isInstanceOf(RoundNotInSortingStateException.class);
         verify(rankingRepository, never()).save(any());
     }
 
     private SortAnswerTestFixture arrangeEntitiesAndStubs(ArrangeTestParams params) {
         GameSession gameSession = getGameSessionEntity();
         QuestionEntity questionEntity = new QuestionEntity();
-        RoundEntity roundEntity = getRoundEntity(questionEntity);
+        RoundEntity roundEntity = getRoundEntity(questionEntity, params.roundState());
         PlayerEntity playerEntity = getPlayerEntity();
         RoomEntity roomEntity = getRoomEntity();
         AnswerEntity answer = getAnswerEntity();
@@ -182,7 +180,7 @@ class SortAnswerServiceTest {
 
     private record ArrangeTestParams(
             boolean alreadyRanked,
-            String answerText
+            RoundState roundState
     ) {
     }
 
