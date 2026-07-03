@@ -2,10 +2,7 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
-import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
-import com.example.rankinggame.usecases.AnswerNotFoundException;
-import com.example.rankinggame.usecases.AnswerNotPartOfRequestedRoundException;
-import com.example.rankinggame.usecases.RoundNotInSortingStateException;
+import com.example.rankinggame.usecases.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,9 +35,9 @@ public class Round {
         }
     }
 
-    public Ranking rankAnswer(AnswerId newAnswerId) {
+    public Ranking rankAnswer(PlayerId playerId, AnswerId newAnswerId) {
         SubmittedAnswer newAnswer = ensureAnswerExistsInRound(newAnswerId);
-        ensureRankingIsAllowed(newAnswerId);
+        ensureRankingIsAllowed(playerId, newAnswerId);
         int oneBasedPosition = answerRankings.size() + 1;
         RankingId rankingId = new RankingId(UUID.randomUUID());
         Ranking newRanking = new Ranking(rankingId, newAnswer, oneBasedPosition);
@@ -64,9 +61,17 @@ public class Round {
         return newAnswer;
     }
 
-    private void ensureRankingIsAllowed(AnswerId newAnswerId) {
+    private void ensureRankingIsAllowed(PlayerId playerId, AnswerId newAnswerId) {
         checkIfRoundIsInSortingState();
         checkIfAnswerAlreadyAddedToRanking(newAnswerId);
+        checkIfPlayerIdIsFromHost(playerId);
+    }
+
+    private void checkIfPlayerIdIsFromHost(PlayerId playerId) {
+        boolean playerIdIsFromHost = captain.playerId().equals(playerId);
+        if (!playerIdIsFromHost) {
+            throw new OnlyHostCanSortAnswers();
+        }
     }
 
     private void checkIfAnswerAlreadyAddedToRanking(AnswerId newAnswerId) {

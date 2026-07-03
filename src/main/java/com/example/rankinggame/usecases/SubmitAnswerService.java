@@ -45,7 +45,7 @@ public class SubmitAnswerService {
         var existingSubmittedAnswers =
                 answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId.value());
 
-        Round domainRound = roundMapper.toDomain(context.round(), existingSubmittedAnswers, List.of());
+        Round domainRound = roundMapper.toDomain(context.round(), context.captainPlayer(), existingSubmittedAnswers, List.of());
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
 

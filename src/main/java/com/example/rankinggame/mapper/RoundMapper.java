@@ -1,13 +1,13 @@
 package com.example.rankinggame.mapper;
 
 import com.example.rankinggame.engine.*;
+import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
 import com.example.rankinggame.entities.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -15,18 +15,16 @@ public class RoundMapper {
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
     private final RankingMapper rankingMapper;
+    // Maybe i dont need dedicated PlayerMapper
+    private final PlayerMapper playerMapper;
 
-    public Round toDomain(RoundEntity roundEntity, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
-        return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()), submittedAnswers, submittedRankings);
-    }
-
-    public Round toDomain(RoundEntity roundEntity, GameParticipant captain, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
+    public Round toDomain(RoundEntity roundEntity, PlayerEntity captain, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
         return Round.builder()
                 .id(new RoundId(roundEntity.getId()))
                 .submittedAnswers(answerMapper.toDomainMap(submittedAnswers))
                 .answerRankings(rankingMapper.toDomainObjects(submittedRankings))
                 .roundStatus(toDomainStatus(roundEntity.getState()))
-                .captain(captain)
+                .captain(playerMapper.toParticipant(captain))
                 .question(toDomainQuestion(roundEntity.getQuestionEntity()))
                 .build();
     }
@@ -38,7 +36,8 @@ public class RoundMapper {
                 Optional.ofNullable(round.getCaptain())
                         .map(GameParticipant::playerId)
                         .map(PlayerId::value)
-                        .orElse(null)
+                        // TODO: is it clean to throw CaptainNotFoundException here?
+                        .orElseThrow(CaptainNotFoundException::new)
         );
         roundEntity.setId(round.getId().value());
         roundEntity.setQuestionEntity(questionMapper.toEntity(round.getQuestion()));
@@ -51,10 +50,6 @@ public class RoundMapper {
 
     public RoundState toEntityState(RoundStatus status) {
         return status == null ? null : RoundState.valueOf(status.name());
-    }
-
-    private GameParticipant toCaptainProjection(UUID captainPlayerId) {
-        return captainPlayerId == null ? null : new GameParticipant(new PlayerId(captainPlayerId), null, false);
     }
 
     private Question toDomainQuestion(QuestionEntity questionEntity) {

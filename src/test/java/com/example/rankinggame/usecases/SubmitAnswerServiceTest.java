@@ -6,10 +6,7 @@ import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerSubmittedEvent;
 import com.example.rankinggame.events.SortingStartedEvent;
-import com.example.rankinggame.mapper.AnswerMapper;
-import com.example.rankinggame.mapper.QuestionMapper;
-import com.example.rankinggame.mapper.RankingMapper;
-import com.example.rankinggame.mapper.RoundMapper;
+import com.example.rankinggame.mapper.*;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -290,7 +287,7 @@ class SubmitAnswerServiceTest {
     }
 
     private RoundMapper roundMapper() {
-        return new RoundMapper(new QuestionMapper(), new AnswerMapper(), new RankingMapper(new AnswerMapper()));
+        return new RoundMapper(new QuestionMapper(), new AnswerMapper(), new RankingMapper(new AnswerMapper()), new PlayerMapper());
     }
 
     private RoomEntity room(UUID roomId) {

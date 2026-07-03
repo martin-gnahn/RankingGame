@@ -1,6 +1,7 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SubmitAnswerCommand;
+import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoundEntity;
@@ -26,7 +27,7 @@ class AnswerSubmissionContextLoader {
         String normalizedRoomCode = roomCodeService.normalizeRoomCode(command);
         RoomEntity room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
-        PlayerEntity player = playerRepository.findById(command.playerId())
+        PlayerEntity currentPlayer = playerRepository.findById(command.playerId())
                 .filter(candidate -> candidate.getRoomId().equals(room.getId()))
                 .orElseThrow(PlayerNotInRoomException::new);
         RoundEntity round = roundRepository.findById(command.roundId())
@@ -34,6 +35,8 @@ class AnswerSubmissionContextLoader {
         var gameSession = gameSessionRepository.findByRoomId(room.getId())
                 .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
                 .orElseThrow(RoundNotPartOfActiveGameException::new);
-        return new AnswerSubmissionContext(room, player, round, gameSession);
+        var captainPlayer = playerRepository.findById(round.getCaptainPlayerId())
+                .orElseThrow(CaptainNotFoundException::new);
+        return new AnswerSubmissionContext(room, currentPlayer, round, gameSession, captainPlayer);
     }
 }

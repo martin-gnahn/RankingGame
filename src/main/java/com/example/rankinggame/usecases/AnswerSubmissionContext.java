@@ -9,7 +9,8 @@ public record AnswerSubmissionContext(
         RoomEntity room,
         PlayerEntity player,
         RoundEntity round,
-        GameSession gameSession
+        GameSession gameSession,
+        PlayerEntity captainPlayer
 ) {
 
 }

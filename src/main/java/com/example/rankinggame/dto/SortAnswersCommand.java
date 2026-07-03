@@ -7,5 +7,5 @@ public record SortAnswersCommand(
         UUID roundId,
         UUID hostPlayerId,
         UUID answerId
-) {
+) implements RoomCommand {
 }

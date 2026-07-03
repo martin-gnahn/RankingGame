@@ -1,10 +1,12 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetAnswerOrderCommand;
+import com.example.rankinggame.dto.RoomCommand;
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.engine.Ranking;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.engine.SubmittedAnswer;
+import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.mapper.AnswerMapper;
@@ -47,14 +49,16 @@ public class SortAnswerService {
         checkIfPlayerIdIsFromHost(command, room);
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         AnswerEntity answer = requireAnswer(command.answerId());
-        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
+        PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
+                .orElseThrow(CaptainNotFoundException::new);
 
+        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
         var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId());
         var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
         Round domainRound =
-                roundMapper.toDomain(round, allAnswersInRound, allRankingsInRound);
+                roundMapper.toDomain(round, captain, allAnswersInRound, allRankingsInRound);
 
-        Ranking newRanking = domainRound.rankAnswer(domainAnswer.answerId());
+        Ranking newRanking = domainRound.rankAnswer(domainRound.getCaptain().playerId(), domainAnswer.answerId());
         RankingEntity newRankingEntity = rankingMapper.toEntity(newRanking, domainRound);
 
         // all validations passed
@@ -62,27 +66,12 @@ public class SortAnswerService {
         return rankingRepository.save(newRankingEntity);
     }
 
-    private void checkIfAnswerAlreadyAddedToRanking(RoundEntity round, AnswerEntity answer) {
-        var existingRanking = rankingRepository.findByRoundIdAndAnswer(round.getId(), answer);
-        if (existingRanking.isPresent()) {
-            throw new AnswerAlreadyRankedException();
-        }
-    }
-
     private AnswerEntity requireAnswer(UUID answerId) {
         return jpaAnswerRepository.findById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
     }
 
-    // TODO: provide common interface for commands to make them reusable or so.
-    private RoomEntity requireRoom(SortAnswersCommand command) {
-        String roomCode = roomCodeService.normalizeRoomCode(command);
-        return roomRepository.findByCode(roomCode)
-                .orElseThrow(() -> new RoomNotFoundException(roomCode));
-    }
-
-    // TODO: provide common interface for commands to make them reusable or so.
-    private RoomEntity requireRoom(GetAnswerOrderCommand command) {
+    private RoomEntity requireRoom(RoomCommand command) {
         String roomCode = roomCodeService.normalizeRoomCode(command);
         return roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));

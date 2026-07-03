@@ -7,5 +7,5 @@ public record SubmitAnswerCommand(
         UUID roundId,
         UUID playerId,
         String answerText
-) {
+) implements RoomCommand {
 }

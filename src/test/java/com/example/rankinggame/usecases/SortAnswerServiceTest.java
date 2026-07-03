@@ -2,10 +2,7 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.*;
-import com.example.rankinggame.mapper.AnswerMapper;
-import com.example.rankinggame.mapper.QuestionMapper;
-import com.example.rankinggame.mapper.RankingMapper;
-import com.example.rankinggame.mapper.RoundMapper;
+import com.example.rankinggame.mapper.*;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +66,7 @@ class SortAnswerServiceTest {
     private RoundEntity getRoundEntity(QuestionEntity questionEntity, RoundState roundState) {
         return new RoundEntity(
                 ROUND_ID, GAME_SESSION_ID, questionEntity,
-                UUID.randomUUID(), roundState, LocalDateTime.now()
+                HOST_PLAYER_ID, roundState, LocalDateTime.now()
         );
     }
 
@@ -215,7 +212,7 @@ class SortAnswerServiceTest {
         AnswerMapper answerMapper = new AnswerMapper();
         QuestionMapper questionMapper = new QuestionMapper();
         RankingMapper rankingMapper = new RankingMapper(answerMapper);
-        RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper, rankingMapper);
+        RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper, rankingMapper, new PlayerMapper());
 
         return new SortAnswerService(
                 roomCodeService,

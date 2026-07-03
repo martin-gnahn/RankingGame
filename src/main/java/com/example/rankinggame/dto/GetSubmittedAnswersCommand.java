@@ -6,5 +6,5 @@ public record GetSubmittedAnswersCommand(
         String roomCode,
         UUID roundId,
         UUID requesterPlayerId
-) {
+) implements RoomCommand {
 }

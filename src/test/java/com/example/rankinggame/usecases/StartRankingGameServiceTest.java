@@ -308,7 +308,7 @@ class StartRankingGameServiceTest {
             ApplicationEventPublisher eventPublisher
     ) {
         QuestionMapper questionMapper = new QuestionMapper();
-        RoundMapper roundMapper = new RoundMapper(questionMapper, new AnswerMapper(), new RankingMapper(new AnswerMapper()));
+        RoundMapper roundMapper = new RoundMapper(questionMapper, new AnswerMapper(), new RankingMapper(new AnswerMapper()), new PlayerMapper());
         PlayerMapper playerMapper = new PlayerMapper();
         GameMapper gameMapper = new GameMapper();
 

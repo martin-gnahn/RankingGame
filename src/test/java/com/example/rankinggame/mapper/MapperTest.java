@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MapperTest {
     private final PlayerMapper playerMapper = new PlayerMapper();
     // TODO: check if this double answermapper injection can be avoided
-    private final RoundMapper roundMapper = new RoundMapper(new QuestionMapper(), new AnswerMapper(), new RankingMapper(new AnswerMapper()));
+    private final RoundMapper roundMapper = new RoundMapper(new QuestionMapper(), new AnswerMapper(), new RankingMapper(new AnswerMapper()), new PlayerMapper());
     private final GameMapper gameMapper = new GameMapper();
 
     @Test
@@ -39,7 +39,7 @@ class MapperTest {
         entity.setCaptainPlayerId(captainPlayerId);
         entity.setState(RoundState.ANSWER_SUBMISSION);
 
-        Round domain = roundMapper.toDomain(entity, List.of(), List.of());
+        Round domain = roundMapper.toDomain(entity, null, List.of(), List.of());
 
         assertThat(domain.getRoundStatus()).isEqualTo(RoundStatus.ANSWER_SUBMISSION);
         assertThat(domain.getQuestion()).isEqualTo(new Question(new QuestionId(questionId), "Question", "test"));
