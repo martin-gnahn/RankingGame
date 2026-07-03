@@ -21,6 +21,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class SubmitAnswerService {
@@ -43,7 +45,7 @@ public class SubmitAnswerService {
         var existingSubmittedAnswers =
                 answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId.value());
 
-        Round domainRound = roundMapper.toDomain(context.round(), existingSubmittedAnswers);
+        Round domainRound = roundMapper.toDomain(context.round(), existingSubmittedAnswers, List.of());
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
 

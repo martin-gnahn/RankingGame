@@ -1,10 +1,7 @@
 package com.example.rankinggame.mapper;
 
 import com.example.rankinggame.engine.*;
-import com.example.rankinggame.entities.AnswerEntity;
-import com.example.rankinggame.entities.QuestionEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,15 +14,17 @@ import java.util.UUID;
 public class RoundMapper {
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
+    private final RankingMapper rankingMapper;
 
-    public Round toDomain(RoundEntity roundEntity, List<AnswerEntity> otherSubmittedAnswers) {
-        return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()), otherSubmittedAnswers);
+    public Round toDomain(RoundEntity roundEntity, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
+        return toDomain(roundEntity, toCaptainProjection(roundEntity.getCaptainPlayerId()), submittedAnswers, submittedRankings);
     }
 
-    public Round toDomain(RoundEntity roundEntity, GameParticipant captain, List<AnswerEntity> otherSubmittedAnswers) {
+    public Round toDomain(RoundEntity roundEntity, GameParticipant captain, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
         return Round.builder()
                 .id(new RoundId(roundEntity.getId()))
-                .submittedAnswers(answerMapper.toDomainMap(otherSubmittedAnswers))
+                .submittedAnswers(answerMapper.toDomainMap(submittedAnswers))
+                .answerRankings(rankingMapper.toDomainObjects(submittedRankings))
                 .roundStatus(toDomainStatus(roundEntity.getState()))
                 .captain(captain)
                 .question(toDomainQuestion(roundEntity.getQuestionEntity()))

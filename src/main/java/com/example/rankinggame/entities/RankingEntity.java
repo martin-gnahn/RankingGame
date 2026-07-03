@@ -20,7 +20,6 @@ import java.util.UUID;
 public class RankingEntity {
     @Id
     private UUID id;
-
     @OneToOne
     private AnswerEntity answer;
 

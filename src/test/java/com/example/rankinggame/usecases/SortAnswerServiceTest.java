@@ -7,15 +7,16 @@ import com.example.rankinggame.mapper.QuestionMapper;
 import com.example.rankinggame.mapper.RankingMapper;
 import com.example.rankinggame.mapper.RoundMapper;
 import com.example.rankinggame.repositories.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,13 +33,10 @@ class SortAnswerServiceTest {
     private static final UUID HOST_PLAYER_ID = UUID.randomUUID();
     private static final UUID ANSWER_ID = UUID.randomUUID();
     private static final UUID GAME_SESSION_ID = UUID.randomUUID();
-    private QuestionMapper questionMapper;
-    private AnswerMapper answerMapper;
-    private RankingMapper rankingMapper;
-    private RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper);
+    private static final String ANSWER_TEXT = "TestAnswer1";
 
-    @InjectMocks
     private SortAnswerService sortAnswerService;
+
     @Mock
     private RoomCodeService roomCodeService;
     @Mock
@@ -54,6 +52,11 @@ class SortAnswerServiceTest {
     @Mock
     private JpaAnswerRepository jpaAnswerRepository;
 
+    @BeforeEach
+    void setUp() {
+        sortAnswerService = service();
+    }
+
     private GameSession getGameSessionEntity() {
         GameSession gameSession = new GameSession();
         gameSession.setId(GAME_SESSION_ID);
@@ -63,18 +66,18 @@ class SortAnswerServiceTest {
     }
 
     private RoundEntity getRoundEntity(QuestionEntity questionEntity) {
-        RoundEntity roundEntity =
-                new RoundEntity(
-                        ROUND_ID, GAME_SESSION_ID, questionEntity,
-                        UUID.randomUUID(), RoundState.SORTING, LocalDateTime.now()
-                );
-        return roundEntity;
+        return new RoundEntity(
+                ROUND_ID, GAME_SESSION_ID, questionEntity,
+                UUID.randomUUID(), RoundState.SORTING, LocalDateTime.now()
+        );
     }
 
     private AnswerEntity getAnswerEntity() {
         AnswerEntity answer = new AnswerEntity();
         answer.setId(ANSWER_ID);
         answer.setRoundId(ROUND_ID);
+        answer.setText(ANSWER_TEXT);
+        answer.setCardValue(10);
         return answer;
     }
 
@@ -90,6 +93,8 @@ class SortAnswerServiceTest {
         playerEntity.setRoomId(ROOM_ID);
         return playerEntity;
     }
+
+    // TODO: add new failing test for empty answers, and failing test for card value outside 1 to 10
 
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
@@ -145,13 +150,11 @@ class SortAnswerServiceTest {
         when(gameSessionRepository.findByRoomId(ROOM_ID)).thenReturn(Optional.of(fixture.gameSession()));
         when(jpaAnswerRepository.findById(ANSWER_ID)).thenReturn(Optional.of(fixture.answer()));
         if (params.alreadyRanked()) {
+            when(jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(ROUND_ID))
+                    .thenReturn(List.of(fixture.answer()));
             RankingEntity rankingEntity = new RankingEntity(UUID.randomUUID(), fixture.answer(), ROUND_ID, 1);
-            when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, fixture.answer()))
-                    .thenReturn(Optional.of(rankingEntity));
-        } else {
-            when(rankingRepository.findMaxPositionByRoundId(ROUND_ID)).thenReturn(0);
-            when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, fixture.answer()))
-                    .thenReturn(Optional.empty());
+            when(rankingRepository.findByRoundIdOrderByPositionAsc(ROUND_ID))
+                    .thenReturn(List.of(rankingEntity));
         }
     }
 
@@ -171,5 +174,25 @@ class SortAnswerServiceTest {
             GameSession gameSession,
             AnswerEntity answer
     ) {
+    }
+
+    private SortAnswerService service() {
+        AnswerMapper answerMapper = new AnswerMapper();
+        QuestionMapper questionMapper = new QuestionMapper();
+        RankingMapper rankingMapper = new RankingMapper(answerMapper);
+        RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper, rankingMapper);
+
+        return new SortAnswerService(
+                roomCodeService,
+                roomRepository,
+                playerRepository,
+                roundRepository,
+                gameSessionRepository,
+                rankingRepository,
+                jpaAnswerRepository,
+                roundMapper,
+                answerMapper,
+                rankingMapper
+        );
     }
 }

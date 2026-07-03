@@ -17,7 +17,7 @@ public interface JpaRankingRepository extends JpaRepository<RankingEntity, UUID>
             """)
     int findMaxPositionByRoundId(UUID roundId);
 
-    List<RankingEntity> findAllByRoundIdOrderByPositionAsc(UUID roundId);
+    List<RankingEntity> findByRoundIdOrderByPositionAsc(UUID roundId);
 
     Optional<RankingEntity> findByRoundIdAndAnswer(UUID roundId, AnswerEntity answer);
 }

@@ -19,6 +19,7 @@ public class Round {
     private RoundStatus roundStatus;
     private GameParticipant captain;
     private Question question;
+    @Builder.Default
     private List<Ranking> answerRankings = new ArrayList<>();
     @Builder.Default
     private Map<PlayerId, SubmittedAnswer> submittedAnswers = new HashMap<>();

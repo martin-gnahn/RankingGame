@@ -50,8 +50,9 @@ public class SortAnswerService {
         SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
 
         var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId());
+        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
         Round domainRound =
-                roundMapper.toDomain(round, allAnswersInRound);
+                roundMapper.toDomain(round, allAnswersInRound, allRankingsInRound);
 
         Ranking newRanking = domainRound.rankAnswer(domainAnswer);
         RankingEntity newRankingEntity = rankingMapper.toEntity(newRanking, domainRound);
@@ -141,6 +142,6 @@ public class SortAnswerService {
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         checkIfRoundIsInSortingState(round);
 
-        return rankingRepository.findAllByRoundIdOrderByPositionAsc(round.getId());
+        return rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
     }
 }
