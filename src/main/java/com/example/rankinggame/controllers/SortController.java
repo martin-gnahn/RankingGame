@@ -3,6 +3,7 @@ package com.example.rankinggame.controllers;
 import com.example.rankinggame.dto.SortAnswerRequest;
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.RankingEntity;
+import com.example.rankinggame.usecases.SortAnswerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;

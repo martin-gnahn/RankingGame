@@ -1,10 +1,10 @@
-package com.example.rankinggame.controllers;
+package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.controllers.GetAnswerOrderCommand;
 import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.*;
-import com.example.rankinggame.usecases.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,12 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-class SortAnswerService {
+public class SortAnswerService {
     private final RoomCodeService roomCodeService;
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
@@ -86,8 +87,12 @@ class SortAnswerService {
             throw new HostPlayerIdRequiredException();
         }
 
-        PlayerEntity hostPlayer = playerRepository.findById(command.hostPlayerId())
-                .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
+        PlayerEntity player = playerRepository.findById(command.hostPlayerId())
+                .filter(p -> Objects.equals(p.getRoomId(), room.getId()))
+                .orElseThrow(PlayerNotInRoomException::new);
+
+        // TODO: maybe duplicate
+        PlayerEntity hostPlayer = Optional.of(player)
                 .filter(PlayerEntity::isHost)
                 .orElseThrow(OnlyHostCanSortAnswers::new);
 
