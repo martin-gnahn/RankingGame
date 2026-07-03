@@ -46,7 +46,7 @@ public class SortAnswerService {
         RoomEntity room = requireRoom(command);
         checkIfPlayerIdIsFromHost(command, room);
         RoundEntity round = requireRoundInRoom(room, command.roundId());
-        AnswerEntity answer = requireAnswerInRound(round, command.answerId());
+        AnswerEntity answer = requireAnswer(command.answerId());
         SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
 
         var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId());
@@ -54,7 +54,7 @@ public class SortAnswerService {
         Round domainRound =
                 roundMapper.toDomain(round, allAnswersInRound, allRankingsInRound);
 
-        Ranking newRanking = domainRound.rankAnswer(domainAnswer);
+        Ranking newRanking = domainRound.rankAnswer(domainAnswer.answerId());
         RankingEntity newRankingEntity = rankingMapper.toEntity(newRanking, domainRound);
 
         // all validations passed
@@ -69,15 +69,9 @@ public class SortAnswerService {
         }
     }
 
-    private AnswerEntity requireAnswerInRound(RoundEntity round, UUID answerId) {
-        AnswerEntity answer = jpaAnswerRepository.findById(answerId)
+    private AnswerEntity requireAnswer(UUID answerId) {
+        return jpaAnswerRepository.findById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
-
-        if (!Objects.equals(answer.getRoundId(), round.getId())) {
-            throw new AnswerNotPartOfRequestedRoundException();
-        }
-
-        return answer;
     }
 
     // TODO: provide common interface for commands to make them reusable or so.

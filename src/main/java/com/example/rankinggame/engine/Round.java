@@ -4,6 +4,7 @@ import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException
 import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
 import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
 import com.example.rankinggame.usecases.AnswerNotFoundException;
+import com.example.rankinggame.usecases.AnswerNotPartOfRequestedRoundException;
 import com.example.rankinggame.usecases.RoundNotInSortingStateException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,8 +38,9 @@ public class Round {
         }
     }
 
-    public Ranking rankAnswer(SubmittedAnswer newAnswer) {
-        ensureAnsweringIsAllowed(newAnswer);
+    public Ranking rankAnswer(AnswerId newAnswerId) {
+        SubmittedAnswer newAnswer = ensureAnswerExistsInRound(newAnswerId);
+        ensureRankingIsAllowed(newAnswerId);
         int oneBasedPosition = answerRankings.size() + 1;
         RankingId rankingId = new RankingId(UUID.randomUUID());
         Ranking newRanking = new Ranking(rankingId, newAnswer, oneBasedPosition);
@@ -46,17 +48,30 @@ public class Round {
         return newRanking;
     }
 
-    private void ensureAnsweringIsAllowed(SubmittedAnswer newAnswer) {
-        if (newAnswer == null || newAnswer.answerId() == null) {
+    private SubmittedAnswer ensureAnswerExistsInRound(AnswerId newAnswerId) {
+        if (newAnswerId == null) {
             throw new AnswerNotFoundException();
         }
-        checkIfRoundIsInSortingState();
-        checkIfAnswerAlreadyAddedToRanking(newAnswer);
+        SubmittedAnswer newAnswer = submittedAnswers.values().stream()
+                .filter(submittedAnswer -> submittedAnswer.answerId().equals(newAnswerId))
+                .findFirst()
+                .orElseThrow(AnswerNotPartOfRequestedRoundException::new);
+        boolean isAnswerInCurrentRound = submittedAnswers.values().stream()
+                .anyMatch(submittedAnswer -> submittedAnswer.answerId().equals(newAnswer.answerId()));
+        if (!isAnswerInCurrentRound) {
+            throw new AnswerNotPartOfRequestedRoundException();
+        }
+        return newAnswer;
     }
 
-    private void checkIfAnswerAlreadyAddedToRanking(SubmittedAnswer newAnswer) {
+    private void ensureRankingIsAllowed(AnswerId newAnswerId) {
+        checkIfRoundIsInSortingState();
+        checkIfAnswerAlreadyAddedToRanking(newAnswerId);
+    }
+
+    private void checkIfAnswerAlreadyAddedToRanking(AnswerId newAnswerId) {
         boolean hasAlreadyBeenRanked =
-                answerRankings.stream().anyMatch(existing -> existing.getAnswer().answerId().equals(newAnswer.answerId()));
+                answerRankings.stream().anyMatch(existing -> existing.getAnswer().answerId().equals(newAnswerId));
         if (hasAlreadyBeenRanked) {
             throw new AnswerAlreadyRankedException();
         }

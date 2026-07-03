@@ -100,7 +100,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, true);
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
 
         // act
@@ -119,7 +119,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldFailIfAnswerAlreadyRanked() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(true, RoundState.ANSWER_SUBMISSION);
+        ArrangeTestParams params = new ArrangeTestParams(true, RoundState.SORTING, true);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -134,7 +134,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldFailIfRoundIsNotInSortingState() {
         // arrange
-        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION);
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.ANSWER_SUBMISSION, true);
         arrangeEntitiesAndStubs(params);
 
         // act
@@ -143,6 +143,21 @@ class SortAnswerServiceTest {
         // assert
         assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
                 .isInstanceOf(RoundNotInSortingStateException.class);
+        verify(rankingRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldFailIfInvalidAnswerIsRanked() {
+        // arrange
+        ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, false);
+        arrangeEntitiesAndStubs(params);
+
+        // act
+        SortAnswersCommand sortAnswersCommand = sortAnswersCommand();
+
+        // assert
+        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswersCommand))
+                .isInstanceOf(AnswerNotPartOfRequestedRoundException.class);
         verify(rankingRepository, never()).save(any());
     }
 
@@ -165,9 +180,11 @@ class SortAnswerServiceTest {
         when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(fixture.round()));
         when(gameSessionRepository.findByRoomId(ROOM_ID)).thenReturn(Optional.of(fixture.gameSession()));
         when(jpaAnswerRepository.findById(ANSWER_ID)).thenReturn(Optional.of(fixture.answer()));
-        if (params.alreadyRanked()) {
+        if (params.answerExists()) {
             when(jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(ROUND_ID))
                     .thenReturn(List.of(fixture.answer()));
+        }
+        if (params.alreadyRanked()) {
             RankingEntity rankingEntity = new RankingEntity(UUID.randomUUID(), fixture.answer(), ROUND_ID, 1);
             when(rankingRepository.findByRoundIdOrderByPositionAsc(ROUND_ID))
                     .thenReturn(List.of(rankingEntity));
@@ -180,7 +197,8 @@ class SortAnswerServiceTest {
 
     private record ArrangeTestParams(
             boolean alreadyRanked,
-            RoundState roundState
+            RoundState roundState,
+            boolean answerExists
     ) {
     }
 
