@@ -1,7 +1,7 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.dto.SortAnswerCommand;
 import com.example.rankinggame.dto.SortAnswerRequest;
-import com.example.rankinggame.dto.SortAnswersCommand;
 import com.example.rankinggame.entities.RankingEntity;
 import com.example.rankinggame.usecases.SortAnswerService;
 import jakarta.validation.Valid;
@@ -25,7 +25,7 @@ public class SortController {
             @PathVariable UUID roundId,
             @Valid @RequestBody SortAnswerRequest request
     ) {
-        RankingEntity rankingEntity = sortAnswerService.addRanking(new SortAnswersCommand(
+        RankingEntity rankingEntity = sortAnswerService.addRanking(new SortAnswerCommand(
                 roomCode,
                 roundId,
                 request.hostId(),
@@ -40,11 +40,12 @@ public class SortController {
             @PathVariable UUID roundId,
             @RequestParam UUID playerId
     ) {
-        return sortAnswerService.getOrderOfAnswers(new GetAnswerOrderCommand(
-                roomCode,
-                roundId,
-                playerId
-        ));
+//        return sortAnswerService.getOrderOfAnswers(new GetAnswerOrderCommand(
+//                roomCode,
+//                roundId,
+//                playerId
+//        ));
+        return List.of();
     }
 
 

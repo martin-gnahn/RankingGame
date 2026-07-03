@@ -27,7 +27,7 @@ class AnswerSubmissionContextLoader {
         String normalizedRoomCode = roomCodeService.normalizeRoomCode(command);
         RoomEntity room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
-        PlayerEntity currentPlayer = playerRepository.findById(command.playerId())
+        PlayerEntity requestingPlayer = playerRepository.findById(command.playerId())
                 .filter(candidate -> candidate.getRoomId().equals(room.getId()))
                 .orElseThrow(PlayerNotInRoomException::new);
         RoundEntity round = roundRepository.findById(command.roundId())
@@ -37,6 +37,6 @@ class AnswerSubmissionContextLoader {
                 .orElseThrow(RoundNotPartOfActiveGameException::new);
         var captainPlayer = playerRepository.findById(round.getCaptainPlayerId())
                 .orElseThrow(CaptainNotFoundException::new);
-        return new AnswerSubmissionContext(room, currentPlayer, round, gameSession, captainPlayer);
+        return new AnswerSubmissionContext(room, requestingPlayer, round, gameSession, captainPlayer);
     }
 }

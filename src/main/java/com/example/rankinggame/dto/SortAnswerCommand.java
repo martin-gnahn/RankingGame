@@ -2,10 +2,10 @@ package com.example.rankinggame.dto;
 
 import java.util.UUID;
 
-public record SortAnswersCommand(
+public record SortAnswerCommand(
         String roomCode,
         UUID roundId,
-        UUID hostPlayerId,
+        UUID playerId,
         UUID answerId
 ) implements RoomCommand {
 }

@@ -1,14 +1,13 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.controllers.GetAnswerOrderCommand;
-import com.example.rankinggame.dto.RoomCommand;
-import com.example.rankinggame.dto.SortAnswersCommand;
+import com.example.rankinggame.dto.SortAnswerCommand;
+import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.Ranking;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.engine.SubmittedAnswer;
-import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
-import com.example.rankinggame.entities.*;
-import com.example.rankinggame.exceptions.RoomNotFoundException;
+import com.example.rankinggame.entities.RankingEntity;
+import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RankingMapper;
 import com.example.rankinggame.mapper.RoundMapper;
@@ -17,11 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,84 +26,37 @@ public class SortAnswerService {
     private final PlayerRepository playerRepository;
     private final RoundRepository roundRepository;
     private final GameSessionRepository gameSessionRepository;
-    private final JpaRankingRepository rankingRepository;
-    private final JpaAnswerRepository jpaAnswerRepository;
+    private final RankingRepository rankingRepository;
+    private final AnswerRepository jpaAnswerRepository;
     private final RoundMapper roundMapper;
     private final AnswerMapper answerMapper;
     private final RankingMapper rankingMapper;
+    private final AnswerRankingContextLoader answerRankingContextLoader;
 
     // TODO: implement domain specific sorting algorithm, which checks the right order of the cards
 
     @Transactional
-    public RankingEntity addRanking(SortAnswersCommand command) {
+    public RankingEntity addRanking(SortAnswerCommand command) {
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
-        RoomEntity room = requireRoom(command);
-        checkIfPlayerIdIsFromHost(command, room);
-        RoundEntity round = requireRoundInRoom(room, command.roundId());
-        AnswerEntity answer = requireAnswer(command.answerId());
-        PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
-                .orElseThrow(CaptainNotFoundException::new);
+        AnswerRankingContext context = answerRankingContextLoader.load(command);
 
-        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answer);
-        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(round.getId());
-        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
+        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(context.answer());
+        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
+        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
         Round domainRound =
-                roundMapper.toDomain(round, captain, allAnswersInRound, allRankingsInRound);
+                roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);
 
-        Ranking newRanking = domainRound.rankAnswer(domainRound.getCaptain().playerId(), domainAnswer.answerId());
+        Ranking newRanking = domainRound.rankAnswer(new PlayerId(command.playerId()), domainAnswer.answerId());
         RankingEntity newRankingEntity = rankingMapper.toEntity(newRanking, domainRound);
 
         // all validations passed
-        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answer.getText(), newRanking.getOneBasedPosition());
+        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", context.answer().getText(), newRanking.getOneBasedPosition());
         return rankingRepository.save(newRankingEntity);
     }
 
-    private AnswerEntity requireAnswer(UUID answerId) {
-        return jpaAnswerRepository.findById(answerId)
-                .orElseThrow(AnswerNotFoundException::new);
-    }
-
-    private RoomEntity requireRoom(RoomCommand command) {
-        String roomCode = roomCodeService.normalizeRoomCode(command);
-        return roomRepository.findByCode(roomCode)
-                .orElseThrow(() -> new RoomNotFoundException(roomCode));
-    }
-
     // TODO: maybe extract to host rule guard
-    private void checkIfPlayerIdIsFromHost(SortAnswersCommand command, RoomEntity room) {
-        if (command == null || command.hostPlayerId() == null) {
-            throw new HostPlayerIdRequiredException();
-        }
-
-        PlayerEntity player = playerRepository.findById(command.hostPlayerId())
-                .filter(p -> Objects.equals(p.getRoomId(), room.getId()))
-                .orElseThrow(PlayerNotInRoomException::new);
-
-        // TODO: maybe duplicate
-        PlayerEntity hostPlayer = Optional.of(player)
-                .filter(PlayerEntity::isHost)
-                .orElseThrow(OnlyHostCanSortAnswers::new);
-
-        if (!Objects.equals(room.getHostPlayerId(), hostPlayer.getId())) {
-            throw new OnlyHostCanSortAnswers();
-        }
-    }
-
-    private RoundEntity requireRoundInRoom(RoomEntity room, UUID roundId) {
-        RoundEntity round = roundRepository.findById(roundId)
-                .orElseThrow(RoundNotPartOfActiveGameException::new);
-        GameSession gameSession = gameSessionRepository.findByRoomId(room.getId())
-                .filter(candidate -> candidate.getId().equals(round.getGameSessionId()))
-                .orElseThrow(RoundNotPartOfActiveGameException::new);
-
-        if (!Objects.equals(gameSession.getRoomId(), room.getId())) {
-            throw new RoundNotPartOfActiveGameException();
-        }
-
-        return round;
-    }
 
     private void checkIfRoundIsInSortingState(RoundEntity round) {
         if (round.getState() != RoundState.SORTING) {
@@ -117,14 +64,14 @@ public class SortAnswerService {
         }
     }
 
-    public List<RankingEntity> getOrderOfAnswers(GetAnswerOrderCommand command) {
-        if (command.roundId() == null) {
-            throw new RoundIdRequiredException();
-        }
-        RoomEntity room = requireRoom(command);
-        RoundEntity round = requireRoundInRoom(room, command.roundId());
-        checkIfRoundIsInSortingState(round);
-
-        return rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
-    }
+//    public List<RankingEntity> getOrderOfAnswers(GetAnswerOrderCommand command) {
+//        if (command.roundId() == null) {
+//            throw new RoundIdRequiredException();
+//        }
+//        RoomEntity room = requireRoom(command);
+//        RoundEntity round = requireRoundInRoom(room, command.roundId());
+//        checkIfRoundIsInSortingState(round);
+//
+//        return rankingRepository.findByRoundIdOrderByPositionAsc(round.getId());
+//    }
 }

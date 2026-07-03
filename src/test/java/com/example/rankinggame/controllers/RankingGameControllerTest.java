@@ -47,7 +47,7 @@ class RankingGameControllerTest {
 
         mockMvc.perform(post("/api/rooms/abcd12/ranking-game/start")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + hostPlayerId + "\"}"))
+                        .content("{\"playerId\":\"" + hostPlayerId + "\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
@@ -86,7 +86,7 @@ class RankingGameControllerTest {
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + playerId + "\"}"))
+                        .content("{\"playerId\":\"" + playerId + "\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can start the game"));
@@ -103,7 +103,7 @@ class RankingGameControllerTest {
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + playerId + "\"}"))
+                        .content("{\"playerId\":\"" + playerId + "\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
                 .andExpect(jsonPath("$.message").value("Room 'ABCD12' is not in lobby."));

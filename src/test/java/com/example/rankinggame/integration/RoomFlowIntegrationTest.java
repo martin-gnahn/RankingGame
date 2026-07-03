@@ -93,7 +93,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
         String startGameResponse = mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start", roomCode)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + hostPlayerId + "\"}"))
+                        .content("{\"playerId\":\"" + hostPlayerId + "\"}"))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -302,7 +302,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             startedGame.roundId()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + createdRoom.hostPlayerId() + "\"}"))
+                        .content("{\"playerId\":\"" + createdRoom.hostPlayerId() + "\"}"))
                 .andExpect(status().isNoContent());
     }
 
@@ -316,7 +316,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             startedGame.roundId()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + guestPlayerId + "\"}"))
+                        .content("{\"playerId\":\"" + guestPlayerId + "\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
@@ -427,7 +427,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             createdRoom.roomCode()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hostPlayerId\":\"" + createdRoom.hostPlayerId() + "\"}")
+                        .content("{\"playerId\":\"" + createdRoom.hostPlayerId() + "\"}")
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").value(createdRoom.roomCode()))
