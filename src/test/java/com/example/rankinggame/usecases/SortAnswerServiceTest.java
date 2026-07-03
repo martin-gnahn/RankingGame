@@ -46,7 +46,7 @@ class SortAnswerServiceTest {
     @Mock
     private JpaAnswerRepository jpaAnswerRepository;
 
-    private static @NonNull GameSession getGameSessionEntity() {
+    private GameSession getGameSessionEntity() {
         GameSession gameSession = new GameSession();
         gameSession.setId(GAME_SESSION_ID);
         gameSession.setCurrentRoundId(ROUND_ID);
@@ -54,7 +54,7 @@ class SortAnswerServiceTest {
         return gameSession;
     }
 
-    private static @NonNull RoundEntity getRoundEntity(QuestionEntity questionEntity) {
+    private RoundEntity getRoundEntity(QuestionEntity questionEntity) {
         RoundEntity roundEntity =
                 new RoundEntity(
                         ROUND_ID, GAME_SESSION_ID, questionEntity,
@@ -63,18 +63,18 @@ class SortAnswerServiceTest {
         return roundEntity;
     }
 
-    private static @NonNull AnswerEntity getAnswerEntity() {
+    private AnswerEntity getAnswerEntity() {
         AnswerEntity answer = new AnswerEntity();
         answer.setId(ANSWER_ID);
         answer.setRoundId(ROUND_ID);
         return answer;
     }
 
-    private static @NonNull RoomEntity getRoomEntity() {
+    private RoomEntity getRoomEntity() {
         return new RoomEntity(ROOM_ID, ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, Instant.now());
     }
 
-    private static @NonNull PlayerEntity getPlayerEntity() {
+    private PlayerEntity getPlayerEntity() {
         // TODO: currently some duplicate ids here (player has room id and room has host player id: redundancy)
         PlayerEntity playerEntity = new PlayerEntity();
         playerEntity.setId(HOST_PLAYER_ID);
@@ -86,13 +86,7 @@ class SortAnswerServiceTest {
     @Test
     void shouldAddRankingIfAnswerNotRankedYet() {
         // arrange
-        GameSession gameSession = getGameSessionEntity();
-        QuestionEntity questionEntity = new QuestionEntity();
-        RoundEntity roundEntity = getRoundEntity(questionEntity);
-        PlayerEntity playerEntity = getPlayerEntity();
-        RoomEntity roomEntity = getRoomEntity();
-        AnswerEntity answer = getAnswerEntity();
-        setupRepositoryStubs(roomEntity, playerEntity, roundEntity, gameSession, answer);
+        AnswerEntity answer = arrangeEntitiesAndStubs();
 
         // act
         SortAnswersCommand sortAnswersCommand =
@@ -108,17 +102,25 @@ class SortAnswerServiceTest {
         assertThat(addedRanking.getPosition()).isEqualTo(1);
     }
 
-    private void setupRepositoryStubs(RoomEntity roomEntity, PlayerEntity playerEntity, RoundEntity roundEntity, GameSession gameSession, AnswerEntity answer) {
-        when(roomCodeService.normalizeRoomCode(any(SortAnswersCommand.class))).thenReturn(ROOM_CODE);
-        when(roomRepository.findByCode(anyString())).thenReturn(Optional.of(roomEntity));
-        when(playerRepository.findById(any(UUID.class))).thenReturn(Optional.of(playerEntity));
-        when(roundRepository.findById(any(UUID.class))).thenReturn(Optional.of(roundEntity));
-        when(gameSessionRepository.findByRoomId(any(UUID.class))).thenReturn(Optional.of(gameSession));
-        when(jpaAnswerRepository.findById(any(UUID.class))).thenReturn(Optional.of(answer));
-        when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, answer)).thenReturn(Optional.empty());
+    private @NonNull AnswerEntity arrangeEntitiesAndStubs() {
+        GameSession gameSession = getGameSessionEntity();
+        QuestionEntity questionEntity = new QuestionEntity();
+        RoundEntity roundEntity = getRoundEntity(questionEntity);
+        PlayerEntity playerEntity = getPlayerEntity();
+        RoomEntity roomEntity = getRoomEntity();
+        AnswerEntity answer = getAnswerEntity();
+        setupRepositoryStubs(roomEntity, playerEntity, roundEntity, gameSession, answer);
+        return answer;
     }
 
-    @Test
-    void getOrderOfAnswers() {
+    private void setupRepositoryStubs(RoomEntity roomEntity, PlayerEntity playerEntity, RoundEntity roundEntity, GameSession gameSession, AnswerEntity answer) {
+        when(roomCodeService.normalizeRoomCode(any(SortAnswersCommand.class))).thenReturn(ROOM_CODE);
+        when(roomRepository.findByCode(ROOM_CODE)).thenReturn(Optional.of(roomEntity));
+        when(playerRepository.findById(HOST_PLAYER_ID)).thenReturn(Optional.of(playerEntity));
+        when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(roundEntity));
+        when(gameSessionRepository.findByRoomId(GAME_SESSION_ID)).thenReturn(Optional.of(gameSession));
+        when(jpaAnswerRepository.findById(ANSWER_ID)).thenReturn(Optional.of(answer));
+        when(rankingRepository.findByRoundIdAndAnswer(ROUND_ID, answer)).thenReturn(Optional.empty());
+        when(rankingRepository.findMaxPositionByRoundId(ROUND_ID)).thenReturn(0);
     }
 }

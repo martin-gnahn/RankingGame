@@ -15,7 +15,7 @@ public interface JpaRankingRepository extends JpaRepository<RankingEntity, UUID>
                 from RankingEntity r
                 where r.roundId = :roundId
             """)
-    int findMaxPosition(UUID roundId);
+    int findMaxPositionByRoundId(UUID roundId);
 
     List<RankingEntity> findAllByRoundIdOrderByPositionAsc(UUID roundId);
 

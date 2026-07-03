@@ -43,7 +43,7 @@ public class SortAnswerService {
 
         // all validations passed
         // TODO: use domain/repository mapping here
-        int nextPosition = rankingRepository.findMaxPosition(round.getId()) + 1;
+        int nextPosition = rankingRepository.findMaxPositionByRoundId(round.getId()) + 1;
         RankingEntity ranking = new RankingEntity(UUID.randomUUID(), answer, round.getId(), nextPosition);
         log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answer.getText(), nextPosition);
         return rankingRepository.save(ranking);
