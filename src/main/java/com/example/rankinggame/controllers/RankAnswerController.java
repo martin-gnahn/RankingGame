@@ -45,7 +45,6 @@ public class RankAnswerController {
                 roundId,
                 playerId
         ));
-        return List.of();
     }
 
 
