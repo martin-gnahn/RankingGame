@@ -18,7 +18,7 @@ public class Round {
     private GameParticipant captain;
     private Question question;
     @Builder.Default
-    private List<Ranking> answerRankings = new ArrayList<>();
+    private List<RankedAnswer> rankedAnswers = new ArrayList<>();
     @Builder.Default
     private Map<PlayerId, SubmittedAnswer> submittedAnswers = new HashMap<>();
 
@@ -35,14 +35,14 @@ public class Round {
         }
     }
 
-    public Ranking rankAnswer(PlayerId playerId, AnswerId newAnswerId) {
+    public RankedAnswer rankAnswer(PlayerId playerId, AnswerId newAnswerId) {
         SubmittedAnswer newAnswer = ensureAnswerExistsInRound(newAnswerId);
         ensureRankingIsAllowed(playerId, newAnswerId);
-        int oneBasedPosition = answerRankings.size() + 1;
+        int oneBasedPosition = rankedAnswers.size() + 1;
         RankingId rankingId = new RankingId(UUID.randomUUID());
-        Ranking newRanking = new Ranking(rankingId, newAnswer, oneBasedPosition);
-        answerRankings.add(newRanking);
-        return newRanking;
+        RankedAnswer newRankedAnswer = new RankedAnswer(rankingId, newAnswer, oneBasedPosition);
+        rankedAnswers.add(newRankedAnswer);
+        return newRankedAnswer;
     }
 
     private SubmittedAnswer ensureAnswerExistsInRound(AnswerId newAnswerId) {
@@ -76,7 +76,7 @@ public class Round {
 
     private void checkIfAnswerAlreadyAddedToRanking(AnswerId newAnswerId) {
         boolean hasAlreadyBeenRanked =
-                answerRankings.stream().anyMatch(existing -> existing.getAnswer().answerId().equals(newAnswerId));
+                rankedAnswers.stream().anyMatch(existing -> existing.getAnswer().answerId().equals(newAnswerId));
         if (hasAlreadyBeenRanked) {
             throw new AnswerAlreadyRankedException();
         }

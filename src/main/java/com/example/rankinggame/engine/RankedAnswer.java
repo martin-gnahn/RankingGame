@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class Ranking {
+public class RankedAnswer {
     private RankingId id;
     private SubmittedAnswer answer;
     private int oneBasedPosition;

@@ -18,11 +18,11 @@ public class RoundMapper {
     // Maybe i dont need dedicated PlayerMapper
     private final PlayerMapper playerMapper;
 
-    public Round toDomain(RoundEntity roundEntity, PlayerEntity captain, List<AnswerEntity> submittedAnswers, List<RankingEntity> submittedRankings) {
+    public Round toDomain(RoundEntity roundEntity, PlayerEntity captain, List<AnswerEntity> submittedAnswers, List<RankedAnswerEntity> submittedRankings) {
         return Round.builder()
                 .id(new RoundId(roundEntity.getId()))
                 .submittedAnswers(answerMapper.toDomainMap(submittedAnswers))
-                .answerRankings(rankingMapper.toDomainObjects(submittedRankings))
+                .rankedAnswers(rankingMapper.toDomainObjects(submittedRankings))
                 .roundStatus(toDomainStatus(roundEntity.getState()))
                 .captain(playerMapper.toParticipant(captain))
                 .question(toDomainQuestion(roundEntity.getQuestionEntity()))

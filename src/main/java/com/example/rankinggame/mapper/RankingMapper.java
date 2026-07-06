@@ -1,10 +1,10 @@
 package com.example.rankinggame.mapper;
 
-import com.example.rankinggame.engine.Ranking;
+import com.example.rankinggame.engine.RankedAnswer;
 import com.example.rankinggame.engine.RankingId;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.entities.AnswerEntity;
-import com.example.rankinggame.entities.RankingEntity;
+import com.example.rankinggame.entities.RankedAnswerEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,20 +19,20 @@ public class RankingMapper {
         this.answerMapper = answerMapper;
     }
 
-    public RankingEntity toEntity(Ranking ranking, Round round) {
-        AnswerEntity answerEntity = answerMapper.toEntity(round.getId(), ranking.getAnswer());
-        return new RankingEntity(ranking.getId().value(), answerEntity, round.getId().value(), ranking.getOneBasedPosition());
+    public RankedAnswerEntity toEntity(RankedAnswer rankedAnswer, Round round) {
+        AnswerEntity answerEntity = answerMapper.toEntity(round.getId(), rankedAnswer.getAnswer());
+        return new RankedAnswerEntity(rankedAnswer.getId().value(), answerEntity, round.getId().value(), rankedAnswer.getOneBasedPosition());
     }
 
-    public Ranking toDomain(RankingEntity rankingEntity) {
-        return Ranking.builder()
-                .id(new RankingId(rankingEntity.getId()))
-                .answer(answerMapper.toSubmittedAnswer(rankingEntity.getAnswer()))
-                .oneBasedPosition(rankingEntity.getPosition())
+    public RankedAnswer toDomain(RankedAnswerEntity rankedAnswerEntity) {
+        return RankedAnswer.builder()
+                .id(new RankingId(rankedAnswerEntity.getId()))
+                .answer(answerMapper.toSubmittedAnswer(rankedAnswerEntity.getAnswer()))
+                .oneBasedPosition(rankedAnswerEntity.getPosition())
                 .build();
     }
 
-    public List<Ranking> toDomainObjects(List<RankingEntity> rankingEntities) {
+    public List<RankedAnswer> toDomainObjects(List<RankedAnswerEntity> rankingEntities) {
         return rankingEntities.stream().map(this::toDomain).collect(Collectors.toList());
     }
 

@@ -1,12 +1,12 @@
 package com.example.rankinggame.repositories;
 
-import com.example.rankinggame.entities.RankingEntity;
+import com.example.rankinggame.entities.RankedAnswerEntity;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface RankingRepository {
-    RankingEntity save(RankingEntity rankingEntity);
+    RankedAnswerEntity save(RankedAnswerEntity rankedAnswerEntity);
 
-    List<RankingEntity> findByRoundIdOrderByPositionAsc(UUID roundId);
+    List<RankedAnswerEntity> findByRoundIdOrderByPositionAsc(UUID roundId);
 }

@@ -1,17 +1,21 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.controllers.GetRankingPositionsCommand;
+import com.example.rankinggame.controllers.RankingPositionCommand;
+import com.example.rankinggame.dto.AddRankingPositionCommand;
 import com.example.rankinggame.dto.RoomCommand;
-import com.example.rankinggame.dto.SortAnswerCommand;
 import com.example.rankinggame.engine.exceptions.CaptainNotFoundException;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
 import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 class AnswerRankingContextLoader {
@@ -25,14 +29,29 @@ class AnswerRankingContextLoader {
     private final RoomCodeService roomCodeService;
     private final AnswerRepository answerRepository;
 
-    public AnswerRankingContext load(SortAnswerCommand command) {
+    public AnswerRankingContext load(GetRankingPositionsCommand command) {
         RoomEntity room = requireRoom(command);
         PlayerEntity requestingPlayer = requirePlayerInRoom(command, room);
+        logNameOfPlayer(requestingPlayer);
+        RoundEntity round = requireRoundInRoom(room, command.roundId());
+        PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
+                .orElseThrow(CaptainNotFoundException::new);
+        return new AnswerRankingContext(round, null, captain);
+    }
+
+    public AnswerRankingContext load(AddRankingPositionCommand command) {
+        RoomEntity room = requireRoom(command);
+        PlayerEntity requestingPlayer = requirePlayerInRoom(command, room);
+        logNameOfPlayer(requestingPlayer);
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         AnswerEntity answer = requireAnswer(command.answerId());
         PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
                 .orElseThrow(CaptainNotFoundException::new);
         return new AnswerRankingContext(round, answer, captain);
+    }
+
+    private void logNameOfPlayer(PlayerEntity requestingPlayer) {
+        log.info("Name of requesting player: {}", requestingPlayer.getNickname());
     }
 
     private AnswerEntity requireAnswer(UUID answerId) {
@@ -46,7 +65,7 @@ class AnswerRankingContextLoader {
                 .orElseThrow(() -> new RoomNotFoundException(roomCode));
     }
 
-    private PlayerEntity requirePlayerInRoom(SortAnswerCommand command, RoomEntity room) {
+    private PlayerEntity requirePlayerInRoom(RankingPositionCommand command, RoomEntity room) {
         if (command == null || command.playerId() == null) {
             throw new HostPlayerIdRequiredException();
         }

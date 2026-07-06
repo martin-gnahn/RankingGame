@@ -17,7 +17,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RankingEntity {
+public class RankedAnswerEntity {
     @Id
     private UUID id;
     @OneToOne

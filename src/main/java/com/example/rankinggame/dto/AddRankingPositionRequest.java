@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public record SortAnswerRequest(
+public record AddRankingPositionRequest(
         @NotNull(message = "Player id is required")
         UUID hostId,
 

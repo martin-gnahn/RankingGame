@@ -1,6 +1,6 @@
 package com.example.rankinggame.usecases;
 
-import com.example.rankinggame.dto.SortAnswerCommand;
+import com.example.rankinggame.dto.AddRankingPositionCommand;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.mapper.*;
 import com.example.rankinggame.repositories.*;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SortAnswerServiceTest {
+class RankAnswerServiceTest {
 
     private static final String ROOM_CODE = "ROOM";
     private static final UUID ROOM_ID = UUID.randomUUID();
@@ -35,7 +35,7 @@ class SortAnswerServiceTest {
     private static final String ANSWER_TEXT = "TestAnswer1";
     private static final String EMPTY_ANSWER = " ";
 
-    private SortAnswerService sortAnswerService;
+    private RankAnswerService rankAnswerService;
 
     @Mock
     private RoomCodeService roomCodeService;
@@ -57,7 +57,7 @@ class SortAnswerServiceTest {
 
     @BeforeEach
     void setUp() {
-        sortAnswerService = service();
+        rankAnswerService = service();
     }
 
     private GameSession getGameSessionEntity() {
@@ -98,19 +98,19 @@ class SortAnswerServiceTest {
     // TODO: add new failing test for empty answers, and failing test for card value outside 1 to 10
 
     @Test
-    void shouldAddRankingIfAnswerNotRankedYet() {
+    void shouldAddRankingPositionIfAnswerNotRankedYet() {
         // arrange
         ArrangeTestParams params = new ArrangeTestParams(false, RoundState.SORTING, true, true);
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
 
         // act
-        SortAnswerCommand sortAnswerCommand = sortAnswersCommand(params);
-        sortAnswerService.addRanking(sortAnswerCommand);
+        AddRankingPositionCommand addRankingPositionCommand = sortAnswersCommand(params);
+        rankAnswerService.addRankingPosition(addRankingPositionCommand);
 
         // assert
-        ArgumentCaptor<RankingEntity> rankingCaptor = ArgumentCaptor.forClass(RankingEntity.class);
+        ArgumentCaptor<RankedAnswerEntity> rankingCaptor = ArgumentCaptor.forClass(RankedAnswerEntity.class);
         verify(rankingRepository).save(rankingCaptor.capture());
-        RankingEntity addedRanking = rankingCaptor.getValue();
+        RankedAnswerEntity addedRanking = rankingCaptor.getValue();
         assertThat(addedRanking.getRoundId()).isEqualTo(ROUND_ID);
         assertThat(addedRanking.getAnswer()).isEqualTo(fixture.answer());
         assertThat(addedRanking.getPosition()).isEqualTo(1);
@@ -123,10 +123,10 @@ class SortAnswerServiceTest {
         arrangeEntitiesAndStubs(params);
 
         // act
-        SortAnswerCommand sortAnswerCommand = sortAnswersCommand(params);
+        AddRankingPositionCommand addRankingPositionCommand = sortAnswersCommand(params);
 
         // assert
-        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswerCommand))
+        assertThatThrownBy(() -> rankAnswerService.addRankingPosition(addRankingPositionCommand))
                 .isInstanceOf(AnswerAlreadyRankedException.class);
         verify(rankingRepository, never()).save(any());
     }
@@ -138,10 +138,10 @@ class SortAnswerServiceTest {
         arrangeEntitiesAndStubs(params);
 
         // act
-        SortAnswerCommand sortAnswerCommand = sortAnswersCommand(params);
+        AddRankingPositionCommand addRankingPositionCommand = sortAnswersCommand(params);
 
         // assert
-        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswerCommand))
+        assertThatThrownBy(() -> rankAnswerService.addRankingPosition(addRankingPositionCommand))
                 .isInstanceOf(RoundNotInSortingStateException.class);
         verify(rankingRepository, never()).save(any());
     }
@@ -153,10 +153,10 @@ class SortAnswerServiceTest {
         arrangeEntitiesAndStubs(params);
 
         // act
-        SortAnswerCommand sortAnswerCommand = sortAnswersCommand(params);
+        AddRankingPositionCommand addRankingPositionCommand = sortAnswersCommand(params);
 
         // assert
-        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswerCommand))
+        assertThatThrownBy(() -> rankAnswerService.addRankingPosition(addRankingPositionCommand))
                 .isInstanceOf(AnswerNotPartOfRequestedRoundException.class);
         verify(rankingRepository, never()).save(any());
     }
@@ -168,10 +168,10 @@ class SortAnswerServiceTest {
         arrangeEntitiesAndStubs(params);
 
         // act
-        SortAnswerCommand sortAnswerCommand = sortAnswersCommand(params);
+        AddRankingPositionCommand addRankingPositionCommand = sortAnswersCommand(params);
 
         // assert
-        assertThatThrownBy(() -> sortAnswerService.addRanking(sortAnswerCommand))
+        assertThatThrownBy(() -> rankAnswerService.addRankingPosition(addRankingPositionCommand))
                 .isInstanceOf(OnlyHostCanSortAnswers.class);
         verify(rankingRepository, never()).save(any());
     }
@@ -189,7 +189,7 @@ class SortAnswerServiceTest {
     }
 
     private void setupRepositoryStubs(SortAnswerTestFixture fixture, ArrangeTestParams params) {
-        when(roomCodeService.normalizeRoomCode(any(SortAnswerCommand.class))).thenReturn(ROOM_CODE);
+        when(roomCodeService.normalizeRoomCode(any(AddRankingPositionCommand.class))).thenReturn(ROOM_CODE);
         when(roomRepository.findByCode(ROOM_CODE)).thenReturn(Optional.of(fixture.room()));
         when(playerRepository.findById(requestingPlayerId(params))).thenReturn(Optional.of(fixture.player()));
         if (!params.requestingPlayerIsCaptain()) {
@@ -206,14 +206,14 @@ class SortAnswerServiceTest {
                     .thenReturn(List.of(fixture.answer()));
         }
         if (params.alreadyRanked()) {
-            RankingEntity rankingEntity = new RankingEntity(UUID.randomUUID(), fixture.answer(), ROUND_ID, 1);
+            RankedAnswerEntity rankedAnswerEntity = new RankedAnswerEntity(UUID.randomUUID(), fixture.answer(), ROUND_ID, 1);
             when(rankingRepository.findByRoundIdOrderByPositionAsc(ROUND_ID))
-                    .thenReturn(List.of(rankingEntity));
+                    .thenReturn(List.of(rankedAnswerEntity));
         }
     }
 
-    private SortAnswerCommand sortAnswersCommand(ArrangeTestParams params) {
-        return new SortAnswerCommand(ROOM_CODE, ROUND_ID, requestingPlayerId(params), ANSWER_ID);
+    private AddRankingPositionCommand sortAnswersCommand(ArrangeTestParams params) {
+        return new AddRankingPositionCommand(ROOM_CODE, ROUND_ID, requestingPlayerId(params), ANSWER_ID);
     }
 
     private UUID requestingPlayerId(ArrangeTestParams params) {
@@ -237,13 +237,13 @@ class SortAnswerServiceTest {
     ) {
     }
 
-    private SortAnswerService service() {
+    private RankAnswerService service() {
         AnswerMapper answerMapper = new AnswerMapper();
         QuestionMapper questionMapper = new QuestionMapper();
         RankingMapper rankingMapper = new RankingMapper(answerMapper);
         RoundMapper roundMapper = new RoundMapper(questionMapper, answerMapper, rankingMapper, new PlayerMapper());
 
-        return new SortAnswerService(
+        return new RankAnswerService(
                 roomCodeService,
                 roomRepository,
                 playerRepository,
