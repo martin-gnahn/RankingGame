@@ -26,7 +26,7 @@ public class RoundProgressService {
         int submittedAnswersCount = answerRepository.countByRoundId(roundEntity.getId());
         int requiredAnswersCount = gameParticipantContextLoader.getPlayersCount(gameSession);
         boolean allAnswersSubmitted = requiredAnswersCount > 0 && submittedAnswersCount >= requiredAnswersCount;
-        boolean shouldStartSorting = domainRound.startSortingIfAllAnswersSubmitted(submittedAnswersCount, requiredAnswersCount);
+        boolean shouldStartSorting = domainRound.startRankingIfAllowed(submittedAnswersCount, requiredAnswersCount);
         boolean sortingHasStarted = false;
 
         if (shouldStartSorting) {

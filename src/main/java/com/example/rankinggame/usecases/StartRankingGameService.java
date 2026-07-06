@@ -90,7 +90,7 @@ public class StartRankingGameService {
 
     private void startDomainGame(Game game, GameParticipant firstCaptain, QuestionEntity questionEntity) {
         Question firstQuestion = questionMapper.toDomain(questionEntity);
-        game.start(firstQuestion, firstCaptain);
+        game.start(firstCaptain, firstQuestion);
     }
 
     private GameSession saveGameSession(Game game, RoomEntity room) {

@@ -22,8 +22,13 @@ public class Round {
     @Builder.Default
     private Map<PlayerId, SubmittedAnswer> submittedAnswers = new HashMap<>();
 
-    public static Round start(GameParticipant captain, Question question) {
-        return new Round(captain, question);
+    private Round(GameParticipant captain, Question question) {
+        this.id = new RoundId(UUID.randomUUID());
+        this.roundStatus = RoundStatus.ANSWER_SUBMISSION;
+        this.captain = captain;
+        this.question = question;
+        this.submittedAnswers = new HashMap<>();
+        this.rankedAnswers = new ArrayList<>();
     }
 
     // TODO: later static Round finish(...), and setModeToSorting(...)
@@ -88,21 +93,8 @@ public class Round {
         }
     }
 
-    public boolean startSortingIfAllAnswersSubmitted(int submittedCount, int requiredCount) {
-        if (requiredCount <= 0) {
-            return false;
-        }
-
-        if (roundStatus != RoundStatus.ANSWER_SUBMISSION) {
-            return false;
-        }
-
-        if (submittedCount < requiredCount) {
-            return false;
-        }
-
-        roundStatus = RoundStatus.SORTING;
-        return true;
+    static Round start(GameParticipant captain, Question question) {
+        return new Round(captain, question);
     }
 
     public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
@@ -117,12 +109,21 @@ public class Round {
         return answer;
     }
 
-    private Round(GameParticipant captain, Question question) {
-        this.id = new RoundId(UUID.randomUUID());
-        this.roundStatus = RoundStatus.ANSWER_SUBMISSION;
-        this.captain = captain;
-        this.question = question;
-        this.submittedAnswers = new HashMap<>();
+    public boolean startRankingIfAllowed(int submittedAnswerCount, int requiredAnswerCount) {
+        if (requiredAnswerCount <= 0) {
+            return false;
+        }
+
+        if (roundStatus != RoundStatus.ANSWER_SUBMISSION) {
+            return false;
+        }
+
+        if (submittedAnswerCount < requiredAnswerCount) {
+            return false;
+        }
+
+        roundStatus = RoundStatus.SORTING;
+        return true;
     }
 
 

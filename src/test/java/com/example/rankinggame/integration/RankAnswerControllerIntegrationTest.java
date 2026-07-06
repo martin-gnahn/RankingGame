@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class SortAnswerControllerIntegrationTest extends BackendIntegrationTest {
+class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
     private static final String HOST_NAME = "Marta";
     private static final String GUEST_NAME = "Alex";
 

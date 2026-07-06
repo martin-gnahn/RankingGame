@@ -42,7 +42,7 @@ public class Game {
         return participants.size() >= REQUIRED_NUMBER_OF_PARTICIPANTS;
     }
 
-    public void start(Question firstQuestion, GameParticipant firstCaptain) {
+    public void start(GameParticipant firstCaptain, Question firstQuestion) {
         requireCanStart(firstCaptain);
         status = GameStatus.IN_PROGRESS;
         Round firstRound = Round.start(firstCaptain, firstQuestion);
