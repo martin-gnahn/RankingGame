@@ -2,6 +2,7 @@ package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.AddRankingPositionCommand;
 import com.example.rankinggame.dto.AddRankingPositionRequest;
+import com.example.rankinggame.engine.RankedAnswer;
 import com.example.rankinggame.entities.RankedAnswerEntity;
 import com.example.rankinggame.usecases.RankAnswerService;
 import jakarta.validation.Valid;
@@ -35,7 +36,7 @@ public class RankAnswerController {
     }
 
     @GetMapping("/all")
-    public List<RankedAnswerEntity> getOrderOfAnswers(
+    public List<RankedAnswer> getOrderOfAnswers(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
             @RequestParam UUID playerId

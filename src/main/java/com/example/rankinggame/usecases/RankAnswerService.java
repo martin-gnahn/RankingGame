@@ -6,9 +6,8 @@ import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.RankedAnswer;
 import com.example.rankinggame.engine.Round;
 import com.example.rankinggame.engine.SubmittedAnswer;
+import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RankedAnswerEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RankingMapper;
 import com.example.rankinggame.mapper.RoundMapper;
@@ -45,35 +44,35 @@ public class RankAnswerService {
         }
         AnswerRankingContext context = answerRankingContextLoader.load(command);
 
-        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(context.answer());
-        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
-        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
-        Round domainRound =
-                roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);
+        AnswerEntity answerEntity = context.answer().orElseThrow(AnswerNotFoundException::new);
+        SubmittedAnswer domainAnswer = answerMapper.toSubmittedAnswer(answerEntity);
+        Round domainRound = getDomainRound(context);
 
         RankedAnswer newRankedAnswer = domainRound.rankAnswer(new PlayerId(command.playerId()), domainAnswer.answerId());
         RankedAnswerEntity newRankedAnswerEntity = rankingMapper.toEntity(newRankedAnswer, domainRound);
 
         // all validations passed
-        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", context.answer().getText(), newRankedAnswer.getOneBasedPosition());
+        log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answerEntity.getText(), newRankedAnswer.getOneBasedPosition());
         return rankingRepository.save(newRankedAnswerEntity);
     }
 
-    // TODO: maybe extract to host rule guard
-
-    private void checkIfRoundIsInSortingState(RoundEntity round) {
-        if (round.getState() != RoundState.SORTING) {
-            throw new RoundNotInSortingStateException();
-        }
-    }
-
-    public List<RankedAnswerEntity> getRankingPositions(GetRankingPositionsCommand command) {
+    public List<RankedAnswer> getRankingPositions(GetRankingPositionsCommand command) {
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
         AnswerRankingContext context = answerRankingContextLoader.load(command);
-        checkIfRoundIsInSortingState(context.round());
+        Round domainRound = getDomainRound(context);
+        domainRound.checkIfRoundIsInSortingState();
 
-        return rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
+        List<RankedAnswer> rankedAnswers = domainRound.getRankedAnswers();
+        log.info("Fetched {} RankedAnswer objects with text: [{}]", rankedAnswers.size(), rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).toList());
+        return rankedAnswers;
+    }
+
+    private Round getDomainRound(AnswerRankingContext context) {
+        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
+        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
+        log.info("Constructing domain round from round entity with id '{}'...", context.round().getId());
+        return roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);
     }
 }

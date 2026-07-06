@@ -82,7 +82,7 @@ public class Round {
         }
     }
 
-    private void checkIfRoundIsInSortingState() {
+    public void checkIfRoundIsInSortingState() {
         if (roundStatus != RoundStatus.SORTING) {
             throw new RoundNotInSortingStateException();
         }
