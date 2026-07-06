@@ -2,6 +2,7 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
+import com.example.rankinggame.usecases.AnswerNotPartOfRequestedRoundException;
 import com.example.rankinggame.usecases.OnlyHostCanSortAnswers;
 import com.example.rankinggame.usecases.RoundNotInSortingStateException;
 import org.junit.jupiter.api.Test;
@@ -114,6 +115,18 @@ class RoundTest {
 
         assertThatExceptionOfType(AnswerAlreadyRankedException.class)
                 .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), firstAnswer.answerId()));
+    }
+
+    @Test
+    void unknownAnswerCannotBeRanked() {
+        RoundTestContext context = newRoundContext(true);
+        PlayerId playerId = new PlayerId(UUID.randomUUID());
+        AnswerId answerId = new AnswerId(UUID.randomUUID());
+        AnswerText unknownAnswerText = new AnswerText("UnknownAnswer");
+        SubmittedAnswer unknownAnswer = new SubmittedAnswer(playerId, answerId, unknownAnswerText, 1);
+
+        assertThatExceptionOfType(AnswerNotPartOfRequestedRoundException.class)
+                .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), unknownAnswer.answerId()));
     }
 
     private void startRanking(RoundTestContext context) {

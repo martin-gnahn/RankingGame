@@ -1,6 +1,6 @@
 # PG-016 Frontend Rereview
 
-Reviewed workspace: `C:\Users\marti\IdeaProjects\MiniAmazon`
+Reviewed workspace: `C:\Users\marti\IdeaProjects\RankingGame`
 
 Review date: 2026-06-15
 
