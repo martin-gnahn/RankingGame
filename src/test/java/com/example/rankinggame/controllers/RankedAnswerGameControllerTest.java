@@ -163,7 +163,7 @@ class RankedAnswerGameControllerTest {
             StartRankingGameService startRankingGameService,
             GetActiveRoundService getActiveRoundService
     ) {
-        return MockMvcBuilders.standaloneSetup(new RankingGameController(
+        return MockMvcBuilders.standaloneSetup(new GameController(
                         new ObjectMapper(),
                         startRankingGameService,
                         getActiveRoundService

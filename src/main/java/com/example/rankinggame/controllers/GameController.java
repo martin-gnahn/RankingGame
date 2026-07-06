@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/rooms/{roomCode}/ranking-game")
-public class RankingGameController {
+public class GameController {
     private final ObjectMapper objectMapper;
     private final StartRankingGameService startRankingGameService;
     private final GetActiveRoundService getActiveRoundService;
