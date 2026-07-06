@@ -1,10 +1,20 @@
 package com.example.rankinggame.integration;
 
+import com.example.rankinggame.entities.AnswerEntity;
+import com.example.rankinggame.entities.RankedAnswerEntity;
+import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.repositories.JpaRankingRepository;
+import com.example.rankinggame.repositories.RoundRepository;
 import com.jayway.jsonpath.JsonPath;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,73 +25,117 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
     private static final String HOST_NAME = "Marta";
     private static final String GUEST_NAME = "Alex";
+    private static final String ANSWER_POSITION_NEW = "/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new";
+    private static final String ACCESS_DENIED = "ACCESS_DENIED";
+    private static final String GAME_STATE_CONFLICT = "GAME_STATE_CONFLICT";
+    private static final String HOST_ANSWER = "Host answer";
+    private static final String GUEST_ANSWER = "Guest answer";
+
+    @Autowired
+    private JpaRankingRepository rankingRepository;
+    @Autowired
+    private RoundRepository roundRepository;
 
     @Test
     void hostCanRankSubmittedAnswerAndRankingIsPersisted() throws Exception {
         SortingRound round = prepareRoundInSortingState();
 
-        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new",
-                        round.roomCode(),
-                        round.roundId()
-                )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(sortAnswerRequest(round.hostPlayerId(), round.hostAnswerId())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isString())
-                .andExpect(jsonPath("$.answer.id").value(round.hostAnswerId().toString()))
-                .andExpect(jsonPath("$.roundId").value(round.roundId().toString()))
-                .andExpect(jsonPath("$.position").value(1));
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 1);
 
-        RankingEntry persistedRanking = findOnlyRankingEntry(round.roundId());
-        assertThat(persistedRanking.answerId()).isEqualTo(round.hostAnswerId());
-        assertThat(persistedRanking.position()).isEqualTo(1);
+        List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
+        assertThat(allRankings).hasSize(1);
+        RankedAnswerEntity persistedRanking = allRankings.getFirst();
+        assertThat(persistedRanking.getAnswer().getId()).isEqualTo(round.hostAnswerId());
+        assertThat(persistedRanking.getPosition()).isEqualTo(1);
     }
 
     @Test
     void guestCannotRankSubmittedAnswer() throws Exception {
         SortingRound round = prepareRoundInSortingState();
 
-        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new",
+        mockMvc.perform(post(ANSWER_POSITION_NEW,
                         round.roomCode(),
                         round.roundId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(round.guestPlayerId(), round.hostAnswerId())))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.code").value(ACCESS_DENIED))
                 .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
 
-        Integer rankingCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM ranking_entries WHERE round_id = ?",
-                Integer.class,
-                round.roundId()
-        );
-        assertThat(rankingCount).isZero();
+        List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
+        assertThat(allRankings).isEmpty();
     }
 
-    @Disabled("Your exercise: rank host answer, then guest answer, and assert positions 1 and 2 in the database.")
     @Test
-    void rankingMultipleAnswersAssignsConsecutivePositions() {
-        // Reuse prepareRoundInSortingState(), call the same POST twice with different answer ids,
+    void rankingMultipleAnswersAssignsConsecutivePositions() throws Exception {
+        SortingRound round = prepareRoundInSortingState();
+
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.guestAnswerId(), 1);
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 2);
+
         // then query ranking_entries ORDER BY position.
+        List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
+        assertThat(allRankings).hasSize(2)
+                .extracting(RankedAnswerEntity::getAnswer)
+                .extracting(AnswerEntity::getPlayerId, AnswerEntity::getText)
+                .containsExactly(
+                        Tuple.tuple(round.guestPlayerId(), GUEST_ANSWER),
+                        Tuple.tuple(round.hostPlayerId(), HOST_ANSWER)
+                );
     }
 
-    @Disabled("Your exercise: rank one answer once, repeat the same request, expect 409 GAME_STATE_CONFLICT.")
     @Test
-    void rankingTheSameAnswerTwiceIsRejected() {
-        // After the second request, also assert that only one row exists for that answer.
+    void rankingTheSameAnswerTwiceIsRejected() throws Exception {
+        SortingRound round = prepareRoundInSortingState();
+
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 1);
+        UUID answerId = round.hostAnswerId();
+        mockMvc.perform(post(ANSWER_POSITION_NEW,
+                        round.roomCode(),
+                        round.roundId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sortAnswerRequest(round.hostPlayerId(), answerId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.message").value("Answer already has been ranked"));
     }
 
-    @Disabled("Your exercise: create two rooms/rounds, then try to rank answer A through round B's URL.")
     @Test
-    void answerFromAnotherRoundCannotBeRanked() {
-        // This protects the important URL/body consistency rule.
+    void answerFromAnotherRoundCannotBeRanked() throws Exception {
+        SortingRound thisRound = prepareRoundInSortingState();
+        SortingRound otherRound = prepareRoundInSortingState();
+
+        mockMvc.perform(post(ANSWER_POSITION_NEW,
+                        thisRound.roomCode(),
+                        thisRound.roundId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sortAnswerRequest(thisRound.hostPlayerId(), otherRound.hostAnswerId())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.message").value("Answer is not part of the requested round"));
     }
 
     @Disabled("Your exercise: start a game, submit only one answer, then try sorting before all players answered.")
     @Test
-    void answersCannotBeRankedBeforeRoundIsInSortingState() {
-        // Expected status is 409 because the round is still ANSWER_SUBMISSION.
+    void answersCannotBeRankedBeforeRoundIsInSortingState() throws Exception {
+        CreatedRoom room = createRoom(HOST_NAME);
+        joinRoom(room.roomCode(), GUEST_NAME);
+        StartedRound startedRound = startRankingGame(room.roomCode(), room.hostPlayerId());
+
+        UUID hostAnswerId = submitAnswer(room.roomCode(), startedRound.roundId(), room.hostPlayerId(), HOST_ANSWER);
+
+        mockMvc.perform(post(ANSWER_POSITION_NEW,
+                        room.roomCode(),
+                        startedRound.roundId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sortAnswerRequest(room.hostPlayerId(), hostAnswerId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.message").value("Answers can only be sorted in sorting mode"));
     }
 
     @Disabled("Future controller work: /position/all currently returns List.of(), so this should drive that endpoint.")
@@ -95,10 +149,10 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
         UUID guestPlayerId = joinRoom(room.roomCode(), GUEST_NAME);
         StartedRound startedRound = startRankingGame(room.roomCode(), room.hostPlayerId());
 
-        UUID hostAnswerId = submitAnswer(room.roomCode(), startedRound.roundId(), room.hostPlayerId(), "Host answer");
-        UUID guestAnswerId = submitAnswer(room.roomCode(), startedRound.roundId(), guestPlayerId, "Guest answer");
+        UUID hostAnswerId = submitAnswer(room.roomCode(), startedRound.roundId(), room.hostPlayerId(), HOST_ANSWER);
+        UUID guestAnswerId = submitAnswer(room.roomCode(), startedRound.roundId(), guestPlayerId, GUEST_ANSWER);
 
-        assertRoundState(startedRound.roundId(), "SORTING");
+        assertRoundState(startedRound.roundId(), RoundState.SORTING);
         return new SortingRound(
                 room.roomCode(),
                 room.hostPlayerId(),
@@ -179,34 +233,29 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
         return readUuid(responseBody, "$.answerId");
     }
 
+    private void callAndAssertRankAnswerRequest(SortingRound round, UUID playerId, UUID answerId, int expectedPosition) throws Exception {
+        mockMvc.perform(post(ANSWER_POSITION_NEW,
+                        round.roomCode(),
+                        round.roundId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sortAnswerRequest(playerId, answerId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isString())
+                .andExpect(jsonPath("$.answer.id").value(answerId.toString()))
+                .andExpect(jsonPath("$.roundId").value(round.roundId().toString()))
+                .andExpect(jsonPath("$.position").value(expectedPosition));
+    }
+
     private String sortAnswerRequest(UUID hostPlayerId, UUID answerId) {
         return """
                 {"hostId":"%s","answerId":"%s"}
                 """.formatted(hostPlayerId, answerId);
     }
 
-    private void assertRoundState(UUID roundId, String expectedState) {
-        String actualState = jdbcTemplate.queryForObject(
-                "SELECT state FROM rounds WHERE id = ?",
-                String.class,
-                roundId
-        );
-        assertThat(actualState).isEqualTo(expectedState);
-    }
-
-    private RankingEntry findOnlyRankingEntry(UUID roundId) {
-        return jdbcTemplate.queryForObject(
-                """
-                        SELECT answer_id, position
-                        FROM ranking_entries
-                        WHERE round_id = ?
-                        """,
-                (rs, rowNum) -> new RankingEntry(
-                        rs.getObject("answer_id", UUID.class),
-                        rs.getInt("position")
-                ),
-                roundId
-        );
+    private void assertRoundState(UUID roundId, RoundState expectedState) {
+        Optional<RoundEntity> round = roundRepository.findById(roundId);
+        assertThat(round).isPresent().get().extracting(RoundEntity::getState).isEqualTo(expectedState);
     }
 
     private UUID readUuid(String json, String path) {
@@ -227,8 +276,5 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
             UUID hostAnswerId,
             UUID guestAnswerId
     ) {
-    }
-
-    private record RankingEntry(UUID answerId, int position) {
     }
 }
