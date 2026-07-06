@@ -8,10 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -173,8 +170,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 secondGuestPlayerId
         );
         queriedSubmittedAnswers.assertAllPlayersSeeSameAnswers();
-        sortSubmittedAnswersAsHost(createdRoom, startedGame);
-        rejectSortSubmittedAnswersAsGuest(createdRoom, startedGame, firstGuestPlayerId);
+        sortSubmittedAnswersAsHost(createdRoom, startedGame, submittedAnswers.hostAnswer().answerId());
+        rejectSortSubmittedAnswersAsGuest(createdRoom, startedGame, firstGuestPlayerId, submittedAnswers.firstGuestAnswer().answerId());
 
         int a = 0;
 
@@ -295,31 +292,42 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private void sortSubmittedAnswersAsHost(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame
+            StartGameResponse startedGame,
+            UUID answerId
     ) throws Exception {
-        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/sort",
+        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new",
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + createdRoom.hostPlayerId() + "\"}"))
-                .andExpect(status().isNoContent());
+                        .content(sortAnswerRequest(createdRoom.hostPlayerId(), answerId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.answer.id").value(answerId.toString()))
+                .andExpect(jsonPath("$.position").value(1));
     }
 
     private void rejectSortSubmittedAnswersAsGuest(
             CreatedRoom createdRoom,
             StartGameResponse startedGame,
-            String guestPlayerId
+            String guestPlayerId,
+            UUID answerId
     ) throws Exception {
-        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/sort",
+        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new",
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + guestPlayerId + "\"}"))
+                        .content(sortAnswerRequest(guestPlayerId, answerId)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
+    }
+
+    private String sortAnswerRequest(String playerId, UUID answerId) throws Exception {
+        return objectMapper.writeValueAsString(Map.of(
+                "hostId", UUID.fromString(playerId),
+                "answerId", answerId
+        ));
     }
 
     private SubmittedAnswers submitAnswersForAllPlayers(

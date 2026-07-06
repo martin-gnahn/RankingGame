@@ -67,17 +67,15 @@ public class CreateRoomService {
     private CreateRoomResult createRoomInTransaction(String playerName) {
         RoomEntity room = new RoomEntity();
         room.setId(UUID.randomUUID());
-        PlayerEntity hostPlayer = new PlayerEntity();
+        room.setCode(roomCodeGenerator.generateUniqueCode());
+        room.setStatus(RoomStatus.LOBBY);
+        RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
-        hostPlayer.setRoomId(room.getId());
+        PlayerEntity hostPlayer = new PlayerEntity();
+        hostPlayer.setRoomId(savedRoom.getId());
         hostPlayer.setNickname(playerName);
         hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
-
-        room.setCode(roomCodeGenerator.generateUniqueCode());
-        room.setStatus(RoomStatus.LOBBY);
-        room.setHostPlayerId(savedHostPlayer.getId());
-        RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);

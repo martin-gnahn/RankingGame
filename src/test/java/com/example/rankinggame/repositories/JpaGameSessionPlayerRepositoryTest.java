@@ -48,12 +48,13 @@ class JpaGameSessionPlayerRepositoryTest {
     @Test
     void savesParticipantSnapshotAndLoadsPlayersByGameSessionId() {
         RoomEntity room = new RoomEntity();
+        room.setId(UUID.randomUUID());
         room.setCode("GSP1");
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
-        PlayerEntity host = player(savedRoom, "Host", true);
-        PlayerEntity guest = player(savedRoom, "Guest", false);
+        PlayerEntity host = player(savedRoom, "Host");
+        PlayerEntity guest = player(savedRoom, "Guest");
         PlayerEntity savedHost = playerRepository.saveAndFlush(host);
         PlayerEntity savedGuest = playerRepository.saveAndFlush(guest);
 
@@ -81,11 +82,10 @@ class JpaGameSessionPlayerRepositoryTest {
                 .containsExactly(savedHost.getId(), savedGuest.getId());
     }
 
-    private PlayerEntity player(RoomEntity room, String nickname, boolean host) {
+    private PlayerEntity player(RoomEntity room, String nickname) {
         PlayerEntity player = new PlayerEntity();
         player.setRoomId(room.getId());
         player.setNickname(nickname);
-        player.setHost(host);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         return player;
     }

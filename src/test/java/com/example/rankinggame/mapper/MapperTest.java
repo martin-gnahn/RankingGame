@@ -21,7 +21,6 @@ class MapperTest {
         PlayerEntity entity = new PlayerEntity();
         entity.setId(playerId);
         entity.setNickname("Marta");
-        entity.setHost(true);
 
         GameParticipant domain = playerMapper.toParticipant(entity);
 
@@ -37,8 +36,10 @@ class MapperTest {
         entity.setQuestionEntity(question(questionId));
         entity.setCaptainPlayerId(captainPlayerId);
         entity.setState(RoundState.ANSWER_SUBMISSION);
+        PlayerEntity captain = new PlayerEntity();
+        captain.setId(captainPlayerId);
 
-        Round domain = roundMapper.toDomain(entity, null, List.of(), List.of());
+        Round domain = roundMapper.toDomain(entity, captain, List.of(), List.of());
 
         assertThat(domain.getRoundStatus()).isEqualTo(RoundStatus.ANSWER_SUBMISSION);
         assertThat(domain.getQuestion()).isEqualTo(new Question(new QuestionId(questionId), "Question", "test"));

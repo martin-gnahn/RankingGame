@@ -2,8 +2,8 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.PlayerDetailsResult;
 import com.example.rankinggame.dto.RoomDetailsResult;
-import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
+import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
@@ -33,8 +33,8 @@ class GetRoomServiceTest {
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
         room.setHostPlayerId(hostId);
-        PlayerEntity host = player(hostId, roomId, "Marta", false);
-        PlayerEntity guest = player(playerId, roomId, "Alex", true);
+        PlayerEntity host = player(hostId, roomId, "Marta");
+        PlayerEntity guest = player(playerId, roomId, "Alex");
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(guest, host));
@@ -67,8 +67,8 @@ class GetRoomServiceTest {
         room.setCode("ABCD12");
         room.setStatus(RoomStatus.LOBBY);
         room.setHostPlayerId(hostId);
-        PlayerEntity host = player(hostId, roomId, "Marta", true);
-        PlayerEntity guest = player(playerId, roomId, "Alex", false);
+        PlayerEntity host = player(hostId, roomId, "Marta");
+        PlayerEntity guest = player(playerId, roomId, "Alex");
         guest.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
@@ -94,7 +94,7 @@ class GetRoomServiceTest {
         room.setHostPlayerId(hostId);
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
-        when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(player(hostId, roomId, "Marta", true)));
+        when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(player(hostId, roomId, "Marta")));
         GetRoomService service = new GetRoomService(roomRepository, playerRepository);
 
         RoomDetailsResult result = service.getRoom("ABCD12");
@@ -115,12 +115,11 @@ class GetRoomServiceTest {
                 .hasMessage("Room not found: MISS1");
     }
 
-    private PlayerEntity player(UUID playerId, UUID roomId, String nickname, boolean host) {
+    private PlayerEntity player(UUID playerId, UUID roomId, String nickname) {
         PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
         player.setNickname(nickname);
-        player.setHost(host);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         return player;
     }

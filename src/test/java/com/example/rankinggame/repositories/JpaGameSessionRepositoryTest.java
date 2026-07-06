@@ -51,6 +51,7 @@ class JpaGameSessionRepositoryTest {
     @Test
     void savesAndLoadsGameSessionByRoomId() {
         RoomEntity room = new RoomEntity();
+        room.setId(UUID.randomUUID());
         room.setCode("GMS1");
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = roomRepository.saveAndFlush(room);
@@ -58,7 +59,6 @@ class JpaGameSessionRepositoryTest {
         PlayerEntity player = new PlayerEntity();
         player.setRoomId(savedRoom.getId());
         player.setNickname("Marta");
-        player.setHost(true);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         PlayerEntity savedPlayer = playerRepository.saveAndFlush(player);
 

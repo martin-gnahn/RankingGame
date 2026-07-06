@@ -89,10 +89,8 @@ class SortAnswerServiceTest {
     }
 
     private PlayerEntity getPlayerEntity(ArrangeTestParams params) {
-        // TODO: currently some duplicate ids here (player has room id and room has host player id: redundancy)
         PlayerEntity playerEntity = new PlayerEntity();
         playerEntity.setId(requestingPlayerId(params));
-        playerEntity.setHost(params.requestingPlayerIsCaptain());
         playerEntity.setRoomId(ROOM_ID);
         return playerEntity;
     }
@@ -194,6 +192,12 @@ class SortAnswerServiceTest {
         when(roomCodeService.normalizeRoomCode(any(SortAnswerCommand.class))).thenReturn(ROOM_CODE);
         when(roomRepository.findByCode(ROOM_CODE)).thenReturn(Optional.of(fixture.room()));
         when(playerRepository.findById(requestingPlayerId(params))).thenReturn(Optional.of(fixture.player()));
+        if (!params.requestingPlayerIsCaptain()) {
+            PlayerEntity captain = new PlayerEntity();
+            captain.setId(HOST_PLAYER_ID);
+            captain.setRoomId(ROOM_ID);
+            when(playerRepository.findById(HOST_PLAYER_ID)).thenReturn(Optional.of(captain));
+        }
         when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(fixture.round()));
         when(gameSessionRepository.findByRoomId(ROOM_ID)).thenReturn(Optional.of(fixture.gameSession()));
         when(jpaAnswerRepository.findById(ANSWER_ID)).thenReturn(Optional.of(fixture.answer()));

@@ -62,6 +62,7 @@ class SubmitAnswerServiceTest {
         PlayerEntity player = player(playerId, roomId);
         GameSession gameSession = gameSession(gameSessionId, roomId);
         RoundEntity round = round(roundId, gameSessionId);
+        round.setCaptainPlayerId(playerId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
@@ -138,9 +139,11 @@ class SubmitAnswerServiceTest {
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
         GameSession gameSession = gameSession(gameSessionId, roomId);
+        RoundEntity round = round(roundId, gameSessionId);
+        round.setCaptainPlayerId(playerId);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId)));
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player(playerId, roomId)));
-        when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, gameSessionId)));
+        when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         AnswerEntity answerEntity =

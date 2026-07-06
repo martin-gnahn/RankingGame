@@ -35,6 +35,9 @@ build/
 /PROJECT_PLAN__OLD.md
 *.md
 
+### Codex local artifacts ###
+.codex*.json
+
 ### Playwright ###
 /frontend/playwright-report/
 /frontend/test-results/

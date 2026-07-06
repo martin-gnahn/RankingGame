@@ -48,8 +48,8 @@ class StartRankingGameServiceTest {
         UUID gameSessionId = UUID.randomUUID();
         UUID roundId = UUID.randomUUID();
         RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
-        PlayerEntity guestPlayer = player(guestPlayerId, roomId, false);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, "Host");
+        PlayerEntity guestPlayer = player(guestPlayerId, roomId, "Guest");
         QuestionEntity question = question(questionId);
         GameSession savedGameSession = gameSession(gameSessionId, roomId);
         RoundEntity savedRound = round(roundId, gameSessionId, questionId);
@@ -123,7 +123,7 @@ class StartRankingGameServiceTest {
         UUID hostPlayerId = UUID.randomUUID();
         UUID guestPlayerId = UUID.randomUUID();
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY)));
-        when(playerRepository.findById(guestPlayerId)).thenReturn(Optional.of(player(guestPlayerId, roomId, false)));
+        when(playerRepository.findById(guestPlayerId)).thenReturn(Optional.of(player(guestPlayerId, roomId, "Guest")));
 
         assertThatThrownBy(() -> service.startGame(new StartRankingGameCommand("ABCD12", guestPlayerId)))
                 .isInstanceOf(OnlyHostCanStartGame.class)
@@ -191,7 +191,7 @@ class StartRankingGameServiceTest {
         UUID roomId = UUID.randomUUID();
         UUID hostPlayerId = UUID.randomUUID();
         RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, "Host");
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
         when(playerRepository.findByRoomId(roomId)).thenReturn(java.util.List.of(hostPlayer));
@@ -231,8 +231,8 @@ class StartRankingGameServiceTest {
         UUID hostPlayerId = UUID.randomUUID();
         UUID guestPlayerId = UUID.randomUUID();
         RoomEntity room = room(roomId, "ABCD12", hostPlayerId, RoomStatus.LOBBY);
-        PlayerEntity hostPlayer = player(hostPlayerId, roomId, true);
-        PlayerEntity guestPlayer = player(guestPlayerId, roomId, false);
+        PlayerEntity hostPlayer = player(hostPlayerId, roomId, "Host");
+        PlayerEntity guestPlayer = player(guestPlayerId, roomId, "Guest");
         guestPlayer.setConnectionStatus(PlayerConnectionStatus.DISCONNECTED);
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findById(hostPlayerId)).thenReturn(Optional.of(hostPlayer));
@@ -258,12 +258,11 @@ class StartRankingGameServiceTest {
         return room;
     }
 
-    private PlayerEntity player(UUID playerId, UUID roomId, boolean host) {
+    private PlayerEntity player(UUID playerId, UUID roomId, String nickname) {
         PlayerEntity player = new PlayerEntity();
         player.setId(playerId);
         player.setRoomId(roomId);
-        player.setNickname(host ? "Host" : "Guest");
-        player.setHost(host);
+        player.setNickname(nickname);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         player.setJoinedAt(Instant.now());
         return player;

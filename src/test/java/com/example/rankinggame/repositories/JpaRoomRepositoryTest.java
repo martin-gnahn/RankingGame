@@ -12,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -34,6 +36,7 @@ class JpaRoomRepositoryTest {
     @Test
     void savesAndLoadsRoomByCode() {
         RoomEntity room = new RoomEntity();
+        room.setId(UUID.randomUUID());
         room.setCode("ABCD");
         room.setStatus(RoomStatus.LOBBY);
 

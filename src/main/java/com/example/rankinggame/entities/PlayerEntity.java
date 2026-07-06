@@ -1,13 +1,6 @@
 package com.example.rankinggame.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,9 +24,6 @@ public class PlayerEntity {
 
     @Column(nullable = false, length = 80)
     private String nickname;
-
-    @Column(name = "is_host", nullable = false)
-    private boolean host;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "connection_status", nullable = false, length = 32)
