@@ -1,6 +1,9 @@
 package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
+import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
+import com.example.rankinggame.usecases.OnlyHostCanSortAnswers;
+import com.example.rankinggame.usecases.RoundNotInSortingStateException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -23,49 +26,49 @@ class RoundTest {
     private static final String ANSWER2 = "Answer2";
 
     @Test
-    void checkIfGameCanBeStarted() {
-        GameTestContext context = setupGameAndGetContext(false);
+    void newRoundStartsInAnswerSubmissionStateWithCaptain() {
+        RoundTestContext context = newRoundContext(false);
 
-        RoundStatus roundStatus = context.firstRound().getRoundStatus();
+        RoundStatus roundStatus = context.round().getRoundStatus();
         assertThat(roundStatus).isEqualTo(RoundStatus.ANSWER_SUBMISSION);
-        assertThat(context.firstRound().getCaptain().name()).isEqualTo(CAPTAIN_PLAYER_NAME);
+        assertThat(context.round().getCaptain().name()).isEqualTo(CAPTAIN_PLAYER_NAME);
     }
 
     @Test
-    void checkIfPlayersCanSubmitAnswers() {
-        GameTestContext context = setupGameAndGetContext(true);
+    void playersCanSubmitAnswersDuringAnswerSubmission() {
+        RoundTestContext context = newRoundContext(true);
 
         AnswerTestContext answerTestContext = context.answerTestContext();
         SubmittedAnswer firstAnswer = answerTestContext.submittedAnswers().getFirst();
         SubmittedAnswer secondAnswer = answerTestContext.submittedAnswers().get(1);
 
-        Map<PlayerId, SubmittedAnswer> submittedAnswers = context.firstRound().getSubmittedAnswers();
+        Map<PlayerId, SubmittedAnswer> submittedAnswers = context.round().getSubmittedAnswers();
         assertThat(submittedAnswers)
                 .contains(
-                        entry(context.captainPlayer().playerId(), firstAnswer),
-                        entry(context.guestPlayer().playerId(), secondAnswer)
+                        entry(context.captain().playerId(), firstAnswer),
+                        entry(context.guest().playerId(), secondAnswer)
                 );
     }
 
     @Test
-    void checkIfHostCanRankAnswersCorrectly() {
-        GameTestContext context = setupGameAndGetContext(true);
+    void captainCanRankSubmittedAnswersInChosenOrder() {
+        RoundTestContext context = newRoundContext(true);
         AnswerTestContext answerTestContext = context.answerTestContext();
 
         int submittedAnswerCount = answerTestContext.submittedAnswers().size();
-        GameParticipant captainPlayer = context.captainPlayer();
-        int requiredAnswerCount = List.of(captainPlayer, context.guestPlayer()).size();
+        GameParticipant captain = context.captain();
+        int requiredAnswerCount = List.of(captain, context.guest()).size();
 
-        context.firstRound().startRankingIfAllowed(submittedAnswerCount, requiredAnswerCount);
+        context.round().startRankingIfAllowed(submittedAnswerCount, requiredAnswerCount);
 
 
         SubmittedAnswer firstAnswer = answerTestContext.submittedAnswers().getFirst();
         SubmittedAnswer secondAnswer = answerTestContext.submittedAnswers().get(1);
 
-        context.firstRound().rankAnswer(captainPlayer.playerId(), secondAnswer.answerId());
-        context.firstRound().rankAnswer(captainPlayer.playerId(), firstAnswer.answerId());
+        context.round().rankAnswer(captain.playerId(), secondAnswer.answerId());
+        context.round().rankAnswer(captain.playerId(), firstAnswer.answerId());
 
-        List<RankedAnswer> rankedAnswers = context.firstRound().getRankedAnswers();
+        List<RankedAnswer> rankedAnswers = context.round().getRankedAnswers();
         assertThat(rankedAnswers).extracting(RankedAnswer::getAnswer)
                 .extracting(SubmittedAnswer::answerText)
                 .extracting(AnswerText::value)
@@ -73,32 +76,69 @@ class RoundTest {
     }
 
     @Test
-    void shouldThrowAnswerAlreadySubmittedErrorIfPlayerSentTwoAnswers() {
-        GameTestContext context = setupGameAndGetContext(true);
+    void samePlayerCannotSubmitTwoAnswers() {
+        RoundTestContext context = newRoundContext(true);
         assertThatExceptionOfType(AnswerAlreadySubmittedException.class)
-                .isThrownBy(() -> context.firstRound().submitAnswer(new PlayerId(CAPTAIN_PLAYER_ID), "Answer3", 3));
+                .isThrownBy(() -> context.round().submitAnswer(new PlayerId(CAPTAIN_PLAYER_ID), "Answer3", 3));
     }
 
-    private GameTestContext setupGameAndGetContext(boolean submitAnswers) {
-        GameParticipant captainPlayer = new GameParticipant(new PlayerId(CAPTAIN_PLAYER_ID), CAPTAIN_PLAYER_NAME);
-        GameParticipant guestPlayer = new GameParticipant(new PlayerId(GUEST_PLAYER_ID), GUEST_PLAYER_NAME);
-        List<GameParticipant> players = List.of(captainPlayer, guestPlayer);
-        Game game = new Game(players);
+    @Test
+    void guestCannotRankAnswer() {
+        RoundTestContext context = newRoundContext(true);
+        AnswerTestContext answerTestContext = context.answerTestContext();
+        startRanking(context);
+
+        SubmittedAnswer firstAnswer = answerTestContext.submittedAnswers().getFirst();
+
+        assertThatExceptionOfType(OnlyHostCanSortAnswers.class)
+                .isThrownBy(() -> context.round().rankAnswer(context.guest().playerId(), firstAnswer.answerId()));
+    }
+
+    @Test
+    void cannotRankAnswerBeforeSorting() {
+        RoundTestContext context = newRoundContext(true);
+        SubmittedAnswer firstAnswer = context.answerTestContext().submittedAnswers().getFirst();
+
+        assertThatExceptionOfType(RoundNotInSortingStateException.class)
+                .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), firstAnswer.answerId()));
+    }
+
+    @Test
+    void sameAnswerCannotBeRankedTwice() {
+        RoundTestContext context = newRoundContext(true);
+        AnswerTestContext answerTestContext = context.answerTestContext();
+        startRanking(context);
+
+        SubmittedAnswer firstAnswer = answerTestContext.submittedAnswers().getFirst();
+        context.round().rankAnswer(context.captain().playerId(), firstAnswer.answerId());
+
+        assertThatExceptionOfType(AnswerAlreadyRankedException.class)
+                .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), firstAnswer.answerId()));
+    }
+
+    private void startRanking(RoundTestContext context) {
+        int submittedAnswerCount = context.answerTestContext().submittedAnswers().size();
+        int requiredAnswerCount = List.of(context.captain(), context.guest()).size();
+        context.round().startRankingIfAllowed(submittedAnswerCount, requiredAnswerCount);
+    }
+
+    private RoundTestContext newRoundContext(boolean submitAnswers) {
+        GameParticipant captain = new GameParticipant(new PlayerId(CAPTAIN_PLAYER_ID), CAPTAIN_PLAYER_NAME);
+        GameParticipant guest = new GameParticipant(new PlayerId(GUEST_PLAYER_ID), GUEST_PLAYER_NAME);
         Question firstQuestion = new Question(new QuestionId(QUESTION_ID), QUESTION_TEXT, QUESTION_CATEGORY);
-        game.start(captainPlayer, firstQuestion);
-        Round firstRound = game.getCurrentRound();
+        Round round = Round.start(captain, firstQuestion);
 
         final AnswerTestContext answerTestContext = new AnswerTestContext();
         if (submitAnswers) {
-            var submittedAnswer1 = firstRound.submitAnswer(captainPlayer.playerId(), ANSWER1, 1);
-            var submittedAnswer2 = firstRound.submitAnswer(guestPlayer.playerId(), ANSWER2, 2);
+            var submittedAnswer1 = round.submitAnswer(captain.playerId(), ANSWER1, 1);
+            var submittedAnswer2 = round.submitAnswer(guest.playerId(), ANSWER2, 2);
             answerTestContext.submittedAnswers().addAll(List.of(submittedAnswer1, submittedAnswer2));
         }
-        return new GameTestContext(captainPlayer, guestPlayer, firstRound, answerTestContext);
+        return new RoundTestContext(captain, guest, round, answerTestContext);
     }
 
-    private record GameTestContext(GameParticipant captainPlayer, GameParticipant guestPlayer, Round firstRound,
-                                   AnswerTestContext answerTestContext) {
+    private record RoundTestContext(GameParticipant captain, GameParticipant guest, Round round,
+                                    AnswerTestContext answerTestContext) {
     }
 
     private record AnswerTestContext(List<SubmittedAnswer> submittedAnswers) {
