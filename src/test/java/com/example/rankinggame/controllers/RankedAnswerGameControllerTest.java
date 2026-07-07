@@ -118,7 +118,7 @@ class RankedAnswerGameControllerTest {
         UUID roundId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
-        when(getActiveRoundService.getActiveRound("ABCD12", playerId)).thenReturn(new ActiveRoundResult(
+        when(getActiveRoundService.loadActiveRoundForPlayer("ABCD12", playerId)).thenReturn(new ActiveRoundResult(
                 roomId,
                 "ABCD12",
                 gameSessionId,
@@ -126,7 +126,8 @@ class RankedAnswerGameControllerTest {
                 1,
                 questionId,
                 "Welche Ausrede funktioniert immer?",
-                7
+                7,
+                false
         ));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
 
@@ -148,7 +149,7 @@ class RankedAnswerGameControllerTest {
         StartRankingGameService startRankingGameService = mock(StartRankingGameService.class);
         GetActiveRoundService getActiveRoundService = mock(GetActiveRoundService.class);
         UUID playerId = UUID.randomUUID();
-        when(getActiveRoundService.getActiveRound("ABCD12", playerId))
+        when(getActiveRoundService.loadActiveRoundForPlayer("ABCD12", playerId))
                 .thenThrow(new RoomHasNoActiveGameException("ABCD12"));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
 

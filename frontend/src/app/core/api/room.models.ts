@@ -64,6 +64,7 @@ export interface ActiveRoundResponse {
   questionId: string;
   questionText: string;
   assignedCardValue: number;
+  currentPlayerSubmitted: boolean;
 }
 
 export interface SubmitAnswerRequest {

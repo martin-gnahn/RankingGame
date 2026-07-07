@@ -2,7 +2,6 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
 import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
-import com.example.rankinggame.engine.exceptions.InvalidCardValueException;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -44,16 +43,5 @@ class AnswerTest {
         assertThatThrownBy(() -> new AnswerText("a".repeat(501)))
                 .isInstanceOf(AnswerTextTooLongException.class)
                 .hasMessage("Answer text must be 500 characters or fewer");
-    }
-
-    @Test
-    void rejectsInvalidCardValueWithDomainException() {
-        assertThatThrownBy(() -> new SubmittedAnswer(
-                new PlayerId(UUID.randomUUID()),
-                new AnswerId(UUID.randomUUID()),
-                new AnswerText("Good answer")
-        ))
-                .isInstanceOf(InvalidCardValueException.class)
-                .hasMessage("Card value must be between 1 and 10");
     }
 }

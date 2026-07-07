@@ -6,7 +6,6 @@ import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
 import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -24,11 +24,10 @@ public class GetActiveRoundService {
     private final RoundRepository roundRepository;
     private final QuestionRepository questionRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
-    private final JpaPlayerRepository playerRepository;
-    private final GameMapper gameMapper;
+    private final JpaAnswerRepository answerRepository;
 
     @Transactional
-    public ActiveRoundResult getActiveRound(String roomCode, java.util.UUID playerId) {
+    public ActiveRoundResult loadActiveRoundForPlayer(String roomCode, UUID playerId) {
         String normalizedRoomCode = normalizeRoomCode(roomCode);
         RoomEntity room = roomRepository.findByCode(normalizedRoomCode)
                 .orElseThrow(() -> new RoomNotFoundException(normalizedRoomCode));
@@ -50,7 +49,9 @@ public class GetActiveRoundService {
         log.info("Retrieved Question entity with id '{}'", question.getId());
         int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
-        log.info("Retrieved active round result for room '{}'", room.getId());
+        boolean currentPlayerSubmitted = answerRepository.existsByRoundIdAndPlayerId(round.getId(), playerId);
+
+        log.info("Retrieved active round result for room '{}' and player '{}'", room.getId(), playerId);
         return new ActiveRoundResult(
                 room.getId(),
                 room.getCode(),
@@ -59,7 +60,8 @@ public class GetActiveRoundService {
                 gameSession.getCurrentRoundIndex(),
                 question.getId(),
                 question.getText(),
-                assignedCardValue
+                assignedCardValue,
+                currentPlayerSubmitted
         );
     }
 

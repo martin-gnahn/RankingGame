@@ -219,6 +219,11 @@ export class Game {
         this.activeRound.set(activeRound);
         this.sortingStarted.set(false);
         this.loading.set(false);
+        const alreadyHasSubmitted = activeRound.currentPlayerSubmitted;
+        this.submitted.set(alreadyHasSubmitted);
+        if (alreadyHasSubmitted) {
+          this.form.disable();
+        }
       },
       error: (error: unknown) => {
         this.loading.set(false);
@@ -330,7 +335,6 @@ export class Game {
   }
 
   private toErrorMessage(error: unknown): string {
-    debugger;
     if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
       return error.error.message;
     }

@@ -151,8 +151,7 @@ class AnswerControllerTest {
                 .andExpect(jsonPath("$.answers[0].answerId").value(answerId.toString()))
                 .andExpect(jsonPath("$.answers[0].playerId").value(playerId.toString()))
                 .andExpect(jsonPath("$.answers[0].nickname").value("Alex"))
-                .andExpect(jsonPath("$.answers[0].answerText").value("Mit WLAN-Problemen."))
-                .andExpect(jsonPath("$.answers[0].cardValue").value(7));
+                .andExpect(jsonPath("$.answers[0].answerText").value("Mit WLAN-Problemen."));
 
         ArgumentCaptor<GetSubmittedAnswersCommand> commandCaptor = ArgumentCaptor.forClass(GetSubmittedAnswersCommand.class);
         org.mockito.Mockito.verify(getSubmittedAnswersService).getSubmittedAnswers(commandCaptor.capture());

@@ -34,6 +34,9 @@ class GetActiveRoundServiceTest {
     private RoundRepository roundRepository;
 
     @Mock
+    private AnswerRepository answerRepository;
+
+    @Mock
     private QuestionRepository questionRepository;
 
     @Mock
@@ -65,7 +68,7 @@ class GetActiveRoundServiceTest {
         when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
 
-        ActiveRoundResult result = service.getActiveRound(" abcd12 ", playerId);
+        ActiveRoundResult result = service.loadActiveRoundForPlayer(" abcd12 ", playerId);
 
         assertThat(result.roomId()).isEqualTo(roomId);
         assertThat(result.roomCode()).isEqualTo("ABCD12");
@@ -81,7 +84,7 @@ class GetActiveRoundServiceTest {
     void rejectsLobbyRoomsWithoutActiveGame() {
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(UUID.randomUUID(), "ABCD12", RoomStatus.LOBBY)));
 
-        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+        assertThatThrownBy(() -> service.loadActiveRoundForPlayer("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(RoomHasNoActiveGameException.class)
                 .hasMessage("Room 'ABCD12' has no active game.");
     }
@@ -92,7 +95,7 @@ class GetActiveRoundServiceTest {
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room(roomId, "ABCD12", RoomStatus.IN_GAME)));
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+        assertThatThrownBy(() -> service.loadActiveRoundForPlayer("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(RoomHasNoActiveGameException.class)
                 .hasMessage("Room 'ABCD12' has no active game.");
     }
@@ -106,7 +109,7 @@ class GetActiveRoundServiceTest {
         when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession(gameSessionId, roomId, missingRoundId, 0)));
         when(roundRepository.findById(missingRoundId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+        assertThatThrownBy(() -> service.loadActiveRoundForPlayer("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(ActiveRoundNotFoundException.class)
                 .hasMessage("Room 'ABCD12' has no active round.");
     }
@@ -122,14 +125,14 @@ class GetActiveRoundServiceTest {
         when(roundRepository.findById(roundId)).thenReturn(Optional.of(round(roundId, gameSessionId, questionId)));
         when(questionRepository.findById(questionId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getActiveRound("ABCD12", UUID.randomUUID()))
+        assertThatThrownBy(() -> service.loadActiveRoundForPlayer("ABCD12", UUID.randomUUID()))
                 .isInstanceOf(ActiveRoundQuestionNotFoundException.class)
                 .hasMessage("Question '%s' for active round '%s' was not found.", questionId, roundId);
     }
 
     @Test
     void activeRoundLookupAllowsCardAssignmentWrites() throws NoSuchMethodException {
-        Method method = GetActiveRoundService.class.getMethod("getActiveRound", String.class, UUID.class);
+        Method method = GetActiveRoundService.class.getMethod("loadActiveRoundForPlayer", String.class, UUID.class);
         Transactional transactional = method.getAnnotation(Transactional.class);
 
         assertThat(transactional).isNotNull();

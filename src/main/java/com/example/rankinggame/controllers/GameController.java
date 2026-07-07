@@ -50,7 +50,7 @@ public class GameController {
             @RequestParam UUID playerId
     ) {
         // TODO: rework that. dirty.
-        ActiveRoundResult result = getActiveRoundService.getActiveRound(roomCode, playerId);
+        ActiveRoundResult result = getActiveRoundService.loadActiveRoundForPlayer(roomCode, playerId);
         log.info("ActiveRoundResult {}", objectMapper.writeValueAsString(result));
         return new ActiveRoundResponse(
                 result.roomId(),
@@ -60,7 +60,8 @@ public class GameController {
                 result.roundIndex(),
                 result.questionId(),
                 result.questionText(),
-                result.assignedCardValue()
+                result.assignedCardValue(),
+                result.currentPlayerSubmitted()
         );
     }
 

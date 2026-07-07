@@ -33,7 +33,6 @@ public class GlobalExceptionHandler {
             PlayerNameTooLongException.class,
             AnswerTextRequiredException.class,
             AnswerTextTooLongException.class,
-            InvalidCardValueException.class,
             InvalidPlayerException.class
     })
     public ResponseEntity<ApiError> handleRequiredRequestValue(RuntimeException exception) {

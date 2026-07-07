@@ -10,6 +10,7 @@ public record ActiveRoundResult(
         int roundIndex,
         UUID questionId,
         String questionText,
-        int assignedCardValue
+        int assignedCardValue,
+        boolean currentPlayerSubmitted
 ) {
 }
