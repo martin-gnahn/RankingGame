@@ -44,6 +44,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
         SortingRound round = prepareRoundInSortingState();
 
         callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 1);
+        assertRoundState(round.roundId(), RoundState.SORTING);
 
         List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
         assertThat(allRankings).hasSize(1);
@@ -76,6 +77,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
 
         callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.guestAnswerId(), 1);
         callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 2);
+        assertRoundState(round.roundId(), RoundState.RESULT);
 
         // then query ranking_entries ORDER BY position.
         List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
@@ -147,6 +149,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
 
         callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.guestAnswerId(), 1);
         callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 2);
+        assertRoundState(round.roundId(), RoundState.RESULT);
 
         mockMvc.perform(get(ALL_ANSWER_POSITIONS,
                         round.roomCode(),

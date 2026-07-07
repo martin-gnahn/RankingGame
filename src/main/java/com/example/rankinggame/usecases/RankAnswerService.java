@@ -33,6 +33,7 @@ public class RankAnswerService {
     private final RankingMapper rankingMapper;
     private final AnswerRankingContextLoader answerRankingContextLoader;
     private final ApplicationEventPublisher eventPublisher;
+    private final RoundProgressService roundProgressService;
 
     // TODO: implement domain specific sorting algorithm, which checks the right order of the cards
 
@@ -54,8 +55,10 @@ public class RankAnswerService {
         log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answerEntity.getText(), newRankedAnswer.getOneBasedPosition());
 
         try {
+            RankedAnswerEntity savedRanking = rankingRepository.saveAndFlush(newRankedAnswerEntity);
+            roundProgressService.updateAfterAnswerRanked(context);
             publishAnswerRankedEvent(context.round(), newRankedAnswer.getAnswer().answerId(), newRankedAnswer.getOneBasedPosition());
-            return rankingRepository.save(newRankedAnswerEntity);
+            return savedRanking;
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
         }
@@ -67,7 +70,10 @@ public class RankAnswerService {
         }
         AnswerRankingContext context = answerRankingContextLoader.load(command);
         Round domainRound = getDomainRound(context);
-        domainRound.checkIfRoundIsInSortingState();
+        if (domainRound.getRoundStatus() != RoundStatus.SORTING
+                && domainRound.getRoundStatus() != RoundStatus.RESULT) {
+            throw new RoundNotInSortingStateException();
+        }
 
         List<RankedAnswer> rankedAnswers = domainRound.getRankedAnswers();
         log.info("Fetched {} RankedAnswer objects with text: {}", rankedAnswers.size(), rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).toList());

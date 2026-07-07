@@ -8,5 +8,9 @@ import java.util.UUID;
 public interface RankingRepository {
     RankedAnswerEntity save(RankedAnswerEntity rankedAnswerEntity);
 
+    RankedAnswerEntity saveAndFlush(RankedAnswerEntity rankedAnswerEntity);
+
+    int countByRoundId(UUID roundId);
+
     List<RankedAnswerEntity> findByRoundIdOrderByPositionAsc(UUID roundId);
 }

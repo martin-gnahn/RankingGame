@@ -50,7 +50,8 @@ class SubmitAnswerServiceTest {
                         roundRepository,
                         new GameParticipantContextLoader(playerRepository),
                         roundMapper,
-                        answerRepository
+                        answerRepository,
+                        mock(RankingRepository.class)
                 )
         );
         UUID roomId = UUID.randomUUID();
