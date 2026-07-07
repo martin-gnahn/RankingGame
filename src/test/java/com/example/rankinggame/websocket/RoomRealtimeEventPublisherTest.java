@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.engine.AnswerId;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.events.*;
 import org.junit.jupiter.api.Test;
@@ -122,5 +123,29 @@ class RoomRealtimeEventPublisherTest {
         verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
         assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.SORTING_STARTED);
         assertThat(eventCaptor.getValue().payload()).isEqualTo(new SortingStartedPayload(roundId));
+    }
+
+    @Test
+    void publishesAnswerRankedToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID roundId = UUID.randomUUID();
+        UUID answerId = UUID.randomUUID();
+
+        publisher.publishAnswerRanked(new AnswerRankedEvent(
+                "ABCD12",
+                roundId,
+                new AnswerId(answerId),
+                2
+        ));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.ANSWER_RANKED);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new AnswerRankedPayload(
+                roundId,
+                answerId,
+                2
+        ));
     }
 }

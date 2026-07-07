@@ -15,6 +15,7 @@ public class RoomRealtimeEventPublisher {
     public static final String GAME_STARTED = "GAME_STARTED";
     public static final String ANSWER_SUBMITTED = "ANSWER_SUBMITTED";
     public static final String SORTING_STARTED = "SORTING_STARTED";
+    public static final String ANSWER_RANKED = "ANSWER_RANKED";
     public static final String CHAT_MESSAGE_SENT = "CHAT_MESSAGE_SENT";
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -62,6 +63,18 @@ public class RoomRealtimeEventPublisher {
                 SORTING_STARTED,
                 new SortingStartedPayload(
                         event.roundId()
+                )
+        ));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishAnswerRanked(AnswerRankedEvent event) {
+        publish(event.roomCode(), new RoomRealtimeEvent(
+                ANSWER_RANKED,
+                new AnswerRankedPayload(
+                        event.roundId(),
+                        event.answerId().value(),
+                        event.oneBasedPosition()
                 )
         ));
     }

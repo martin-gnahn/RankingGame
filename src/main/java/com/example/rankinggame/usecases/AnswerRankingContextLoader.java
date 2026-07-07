@@ -37,7 +37,7 @@ class AnswerRankingContextLoader {
         RoundEntity round = requireRoundInRoom(room, command.roundId());
         PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
                 .orElseThrow(CaptainNotFoundException::new);
-        return new AnswerRankingContext(round, Optional.empty(), captain);
+        return new AnswerRankingContext(room, round, Optional.empty(), captain);
     }
 
     public AnswerRankingContext load(AddRankingPositionCommand command) {
@@ -48,7 +48,7 @@ class AnswerRankingContextLoader {
         AnswerEntity answer = requireAnswer(command.answerId());
         PlayerEntity captain = playerRepository.findById(round.getCaptainPlayerId())
                 .orElseThrow(CaptainNotFoundException::new);
-        return new AnswerRankingContext(round, Optional.of(answer), captain);
+        return new AnswerRankingContext(room, round, Optional.of(answer), captain);
     }
 
     private void logNameOfPlayer(PlayerEntity requestingPlayer) {

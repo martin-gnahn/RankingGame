@@ -2,8 +2,8 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetRankingPositionsCommand;
 import com.example.rankinggame.dto.AddRankingPositionCommand;
+import com.example.rankinggame.dto.RankedAnswerDto;
 import com.example.rankinggame.engine.AnswerId;
-import com.example.rankinggame.engine.RankedAnswer;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.AnswerRankedEvent;
 import com.example.rankinggame.mapper.*;
@@ -32,6 +32,7 @@ import static org.mockito.Mockito.*;
 class RankAnswerServiceTest {
 
     private static final String ROOM_CODE = "ROOM";
+    private static final UUID ROOM_ID = UUID.randomUUID();
     private static final UUID ROUND_ID = UUID.randomUUID();
     private static final UUID HOST_PLAYER_ID = UUID.randomUUID();
     private static final UUID GUEST_PLAYER_ID = UUID.randomUUID();
@@ -80,7 +81,7 @@ class RankAnswerServiceTest {
         assertThat(fixture.round().getState()).isEqualTo(RoundState.RESULT);
         verify(roundRepository).findByIdForUpdate(ROUND_ID);
         verify(roundRepository).updateStateIfCurrent(ROUND_ID, RoundState.SORTING, RoundState.RESULT);
-        verify(eventPublisher).publishEvent(new AnswerRankedEvent(ROUND_ID, new AnswerId(ANSWER_ID), 1));
+        verify(eventPublisher).publishEvent(new AnswerRankedEvent(ROOM_CODE, ROUND_ID, new AnswerId(ANSWER_ID), 1));
     }
 
     @Test
@@ -133,17 +134,18 @@ class RankAnswerServiceTest {
         SortAnswerTestFixture fixture = arrangeEntitiesAndStubs(params);
         when(answerRankingContextLoader.load(any(GetRankingPositionsCommand.class)))
                 .thenReturn(new AnswerRankingContext(
+                        fixture.room(),
                         fixture.round(),
                         Optional.empty(),
                         fixture.captainPlayer()
                 ));
 
-        List<RankedAnswer> rankingPositions = rankAnswerService.getRankingPositions(
+        List<RankedAnswerDto> rankingPositions = rankAnswerService.getRankingPositions(
                 new GetRankingPositionsCommand(ROOM_CODE, ROUND_ID, HOST_PLAYER_ID)
         );
 
         assertThat(rankingPositions).hasSize(1);
-        assertThat(rankingPositions.getFirst().getOneBasedPosition()).isEqualTo(1);
+        assertThat(rankingPositions.getFirst().oneBasedPosition()).isEqualTo(1);
     }
 
     private SortAnswerTestFixture arrangeEntitiesAndStubs(ArrangeTestParams params) {
@@ -151,7 +153,7 @@ class RankAnswerServiceTest {
         PlayerEntity captainPlayer = new PlayerEntity();
         captainPlayer.setId(HOST_PLAYER_ID);
         RoundEntity round = getRoundEntity(params.roundState());
-        SortAnswerTestFixture fixture = new SortAnswerTestFixture(round, answer, captainPlayer);
+        SortAnswerTestFixture fixture = new SortAnswerTestFixture(getRoomEntity(), round, answer, captainPlayer);
         setupRepositoryStubs(fixture, params);
         return fixture;
     }
@@ -171,6 +173,7 @@ class RankAnswerServiceTest {
     private void stubAddRankingContext(SortAnswerTestFixture fixture) {
         when(answerRankingContextLoader.load(any(AddRankingPositionCommand.class)))
                 .thenReturn(new AnswerRankingContext(
+                        fixture.room(),
                         fixture.round(),
                         Optional.of(fixture.answer()),
                         fixture.captainPlayer()
@@ -203,6 +206,10 @@ class RankAnswerServiceTest {
                 roundState,
                 LocalDateTime.now()
         );
+    }
+
+    private RoomEntity getRoomEntity() {
+        return new RoomEntity(ROOM_ID, ROOM_CODE, HOST_PLAYER_ID, RoomStatus.IN_GAME, null);
     }
 
     private record ArrangeTestParams(
@@ -243,6 +250,7 @@ class RankAnswerServiceTest {
     }
 
     private record SortAnswerTestFixture(
+            RoomEntity room,
             RoundEntity round,
             AnswerEntity answer,
             PlayerEntity captainPlayer

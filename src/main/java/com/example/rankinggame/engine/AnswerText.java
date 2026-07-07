@@ -2,8 +2,9 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerTextRequiredException;
 import com.example.rankinggame.engine.exceptions.AnswerTextTooLongException;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-public record AnswerText(String value) {
+public record AnswerText(@JsonValue String value) {
     private static final int MAX_ANSWER_LENGTH = 500;
     private static final int MIN_CARD_VALUE = 1;
     private static final int MAX_CARD_VALUE = 10;

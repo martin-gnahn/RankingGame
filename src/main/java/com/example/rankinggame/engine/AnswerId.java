@@ -1,6 +1,8 @@
 package com.example.rankinggame.engine;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.UUID;
 
-public record AnswerId(UUID value) {
+public record AnswerId(@JsonValue UUID value) {
 }

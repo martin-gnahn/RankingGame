@@ -2,11 +2,11 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetRankingPositionsCommand;
 import com.example.rankinggame.dto.AddRankingPositionCommand;
+import com.example.rankinggame.dto.RankedAnswerDto;
 import com.example.rankinggame.engine.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RankedAnswerEntity;
-import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.events.AnswerRankedEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RankingMapper;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -57,14 +58,14 @@ public class RankAnswerService {
         try {
             RankedAnswerEntity savedRanking = rankingRepository.saveAndFlush(newRankedAnswerEntity);
             roundProgressService.updateAfterAnswerRanked(context);
-            publishAnswerRankedEvent(context.round(), newRankedAnswer.getAnswer().answerId(), newRankedAnswer.getOneBasedPosition());
+            publishAnswerRankedEvent(context, newRankedAnswer.getAnswer().answerId(), newRankedAnswer.getOneBasedPosition());
             return savedRanking;
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
         }
     }
 
-    public List<RankedAnswer> getRankingPositions(GetRankingPositionsCommand command) {
+    public List<RankedAnswerDto> getRankingPositions(GetRankingPositionsCommand command) {
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
@@ -76,8 +77,13 @@ public class RankAnswerService {
         }
 
         List<RankedAnswer> rankedAnswers = domainRound.getRankedAnswers();
-        log.info("Fetched {} RankedAnswer objects with text: {}", rankedAnswers.size(), rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).toList());
-        return rankedAnswers;
+        String rankedAnswerText = rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).collect(Collectors.joining(","));
+        log.info("Fetched {} RankedAnswer objects with text: [{}]", rankedAnswers.size(), rankedAnswerText);
+        return rankedAnswers.stream().map(this::mapToDto).toList();
+    }
+
+    private RankedAnswerDto mapToDto(RankedAnswer ranking) {
+        return new RankedAnswerDto(ranking.getId(), ranking.getAnswer().answerId(), ranking.getAnswer().playerId(), ranking.getAnswer().answerText(), ranking.getOneBasedPosition());
     }
 
     private Round getDomainRound(AnswerRankingContext context) {
@@ -88,10 +94,11 @@ public class RankAnswerService {
     }
 
     private void publishAnswerRankedEvent(
-            RoundEntity round, AnswerId answerId, int oneBasedPosition
+            AnswerRankingContext context, AnswerId answerId, int oneBasedPosition
     ) {
         eventPublisher.publishEvent(new AnswerRankedEvent(
-                round.getId(),
+                context.room().getCode(),
+                context.round().getId(),
                 answerId,
                 oneBasedPosition
         ));
