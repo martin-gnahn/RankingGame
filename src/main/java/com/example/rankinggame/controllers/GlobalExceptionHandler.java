@@ -74,6 +74,7 @@ public class GlobalExceptionHandler {
             AnswerNotPartOfRequestedRoundException.class,
             AnswersNotAcceptedException.class,
             CannotUseSameQuestionAgainException.class,
+            CannotDecreaseInactivePointsException.class,
             CaptainNotFoundException.class,
             GameCannotBeStartedException.class,
             NoPlayerInGameException.class,

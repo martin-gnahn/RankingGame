@@ -23,14 +23,14 @@ public class Game {
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private GamePoints currentPoints;
+    private GamePoints gamePoints;
 
     public Game(List<GameParticipant> participants) {
         // this.gameId = new GameId(UUID.randomUUID());
         this.participants = participants;
         this.allRounds = new ArrayList<>();
         this.status = GameStatus.WAITING;
-        this.currentPoints = new GamePoints();
+        this.gamePoints = GamePoints.inactive();
     }
 
     /**
@@ -43,8 +43,8 @@ public class Game {
     }
 
     public Optional<Integer> getScore() {
-        return Optional.ofNullable(currentPoints)
-                .map(gamePoints -> gamePoints.points);
+        return Optional.ofNullable(gamePoints)
+                .flatMap(GamePoints::value);
     }
 
     public boolean hasEnoughPlayers() {
@@ -57,7 +57,7 @@ public class Game {
         Round firstRound = Round.start(firstCaptain, firstQuestion);
         allRounds.add(firstRound);
         currentRoundIndex = 0;
-        currentPoints.setStartingPoints(GameConstants.DEFAULT_STARTING_POINTS);
+        gamePoints = GamePoints.starting(GameConstants.DEFAULT_STARTING_POINTS);
     }
 
     public void requireCanStart(GameParticipant firstCaptain) {

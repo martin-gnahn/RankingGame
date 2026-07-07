@@ -1,6 +1,5 @@
 package com.example.rankinggame.engine;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,10 +15,6 @@ class GameTest {
     private static final String QUESTION_TEXT = "Question";
     private static final String QUESTION_CATEGORY = "default";
 
-    @BeforeEach
-    void setUp() {
-    }
-
     @Test
     void canStartGame() {
         Game game = startGameWith2Players();
@@ -28,10 +23,20 @@ class GameTest {
     }
 
     @Test
-    void gameHasStartingPoints() {
+    void inactiveGameHasNoPoints() {
+        GameParticipant player1 = new GameParticipant(new PlayerId(PLAYER1_ID), PLAYER1_NAME);
+        GameParticipant player2 = new GameParticipant(new PlayerId(PLAYER2_ID), PLAYER2_NAME);
+        List<GameParticipant> players = List.of(player1, player2);
+        Game inactiveGame = new Game(players);
+
+        assertThat(inactiveGame.getScore()).isEmpty();
+    }
+
+    @Test
+    void activeGameHasCorrectStartingPoints() {
         Game game = startGameWith2Players();
 
-        assertThat(game.getScore().get()).isEqualTo(GameStatus.IN_PROGRESS);
+        assertThat(game.getScore()).contains(GameConstants.DEFAULT_STARTING_POINTS);
     }
 
     private Game startGameWith2Players() {
