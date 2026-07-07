@@ -2,18 +2,21 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetRankingPositionsCommand;
 import com.example.rankinggame.dto.AddRankingPositionCommand;
-import com.example.rankinggame.engine.PlayerId;
-import com.example.rankinggame.engine.RankedAnswer;
-import com.example.rankinggame.engine.Round;
-import com.example.rankinggame.engine.SubmittedAnswer;
+import com.example.rankinggame.engine.*;
+import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RankedAnswerEntity;
+import com.example.rankinggame.entities.RoundEntity;
+import com.example.rankinggame.events.AnswerRankedEvent;
 import com.example.rankinggame.mapper.AnswerMapper;
 import com.example.rankinggame.mapper.RankingMapper;
 import com.example.rankinggame.mapper.RoundMapper;
-import com.example.rankinggame.repositories.*;
+import com.example.rankinggame.repositories.AnswerRepository;
+import com.example.rankinggame.repositories.RankingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +26,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class RankAnswerService {
-    private final RoomCodeService roomCodeService;
-    private final RoomRepository roomRepository;
-    private final PlayerRepository playerRepository;
-    private final RoundRepository roundRepository;
-    private final GameSessionRepository gameSessionRepository;
     private final RankingRepository rankingRepository;
     private final AnswerRepository jpaAnswerRepository;
     private final RoundMapper roundMapper;
     private final AnswerMapper answerMapper;
     private final RankingMapper rankingMapper;
     private final AnswerRankingContextLoader answerRankingContextLoader;
+    private final ApplicationEventPublisher eventPublisher;
 
     // TODO: implement domain specific sorting algorithm, which checks the right order of the cards
 
@@ -53,7 +52,13 @@ public class RankAnswerService {
 
         // all validations passed
         log.info("Added sorting for answer '{}' to new position {} (starting at position 1).", answerEntity.getText(), newRankedAnswer.getOneBasedPosition());
-        return rankingRepository.save(newRankedAnswerEntity);
+
+        try {
+            publishAnswerRankedEvent(context.round(), newRankedAnswer.getAnswer().answerId(), newRankedAnswer.getOneBasedPosition());
+            return rankingRepository.save(newRankedAnswerEntity);
+        } catch (DataIntegrityViolationException exception) {
+            throw new AnswerAlreadySubmittedException(exception);
+        }
     }
 
     public List<RankedAnswer> getRankingPositions(GetRankingPositionsCommand command) {
@@ -74,5 +79,15 @@ public class RankAnswerService {
         var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
         log.info("Constructing domain round from round entity with id '{}'...", context.round().getId());
         return roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);
+    }
+
+    private void publishAnswerRankedEvent(
+            RoundEntity round, AnswerId answerId, int oneBasedPosition
+    ) {
+        eventPublisher.publishEvent(new AnswerRankedEvent(
+                round.getId(),
+                answerId,
+                oneBasedPosition
+        ));
     }
 }
