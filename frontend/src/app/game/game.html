@@ -19,7 +19,7 @@
           <p id="game-title">{{ round.questionText }}</p>
         </section>
 
-        <form class="answerText-form" [formGroup]="form" (ngSubmit)="submitAnswer()" novalidate>
+        <form (ngSubmit)="submitAnswer()" [formGroup]="form" class="answer-form" novalidate>
           <label for="answerText">Antwort</label>
           <textarea
             id="answerText"
@@ -75,15 +75,109 @@
         </form>
 
         @if (sortingStarted()) {
-          <section aria-live="polite" class="waiting-state sorting-state" role="status">
-            <p>{{ sortingHintMessage() }}</p>
-          </section>
-          <section aria-live="assertive" class="waiting-state sorting-state" role="status">
-            <ul>
-              @for (answer of allSubmittedAnswers(); track answer.answerId) {
-                <li>{{ answer.answerText }} von '{{ answer.nickname }}'</li>
-              }
-            </ul>
+          <section aria-labelledby="ranking-title" class="ranking-workspace">
+            <div class="ranking-header">
+              <div>
+                <p class="eyebrow">Ranking</p>
+                <h2 id="ranking-title">{{ sortingHintMessage() }}</h2>
+              </div>
+              <span class="ranking-counter">
+                {{ rankedAnswers().length }} / {{ allSubmittedAnswers().length }} einsortiert
+              </span>
+            </div>
+
+            @if (rankingErrorMessage()) {
+              <p class="submit-error" role="alert">{{ rankingErrorMessage() }}</p>
+            }
+
+            @if (isCurrentPlayerCaptain()) {
+              <div class="host-ranking-board">
+                <section aria-labelledby="answer-pool-title" class="answer-pool">
+                  <h3 id="answer-pool-title">Antworten</h3>
+                  <div
+                    [cdkDropListConnectedTo]="['ranking-drop-zone']"
+                    [cdkDropListData]="availableAnswers()"
+                    cdkDropList
+                    class="answer-card-list"
+                    id="answer-pool"
+                  >
+                    @for (answer of availableAnswers(); track answer.answerId) {
+                      <article
+                        [cdkDragData]="answer"
+                        [cdkDragDisabled]="rankingDropDisabled() || rankingSubmittingAnswerId() === answer.answerId"
+                        cdkDrag
+                        class="answer-card"
+                      >
+                        <div>
+                          <span class="answer-author">{{ answer.nickname }}</span>
+                          <p>{{ answer.answerText }}</p>
+                        </div>
+                        <button
+                          (click)="rankAnswer(answer)"
+                          [disabled]="rankingDropDisabled() || rankingSubmittingAnswerId() === answer.answerId"
+                          class="rank-button"
+                          type="button"
+                        >
+                          @if (rankingSubmittingAnswerId() === answer.answerId) {
+                            Wird einsortiert
+                          } @else {
+                            Einordnen
+                          }
+                        </button>
+                      </article>
+                    } @empty {
+                      <p class="empty-state">Alle Antworten liegen im Ranking.</p>
+                    }
+                  </div>
+                </section>
+
+                <section
+                  (cdkDropListDropped)="rankDroppedAnswer($event)"
+                  [cdkDropListConnectedTo]="['answer-pool']"
+                  [cdkDropListData]="rankedAnswers()"
+                  [cdkDropListDisabled]="rankingDropDisabled()"
+                  aria-labelledby="ranking-drop-title"
+                  cdkDropList
+                  class="ranking-drop-zone"
+                  id="ranking-drop-zone"
+                >
+                  <h3 id="ranking-drop-title">Hier ablegen</h3>
+                  <p class="drop-hint">Ziehe eine Antwort hierher. Sie wird als naechste Position gespeichert.</p>
+                  @if (rankingIsComplete()) {
+                    <p class="complete-state">Ranking komplett.</p>
+                  }
+                </section>
+              </div>
+            }
+
+            <section aria-labelledby="ranked-results-title" aria-live="polite" class="ranked-results">
+              <div class="ranked-results-header">
+                <h3 id="ranked-results-title">Aktuelles Ranking</h3>
+                @if (rankingLoading()) {
+                  <span aria-label="Ranking wird aktualisiert" class="small-loader"></span>
+                }
+              </div>
+
+              <ol class="ranked-list">
+                @for (answer of rankedAnswers(); track answer.answerId) {
+                  <li class="ranked-item">
+                    <span class="rank-number">{{ answer.oneBasedPosition }}</span>
+                    <div>
+                      <span class="answer-author">{{ answer.nickname }}</span>
+                      <p>{{ answer.answerText }}</p>
+                    </div>
+                  </li>
+                } @empty {
+                  <li class="ranked-empty">
+                    @if (isCurrentPlayerCaptain()) {
+                      Lege die erste Antwort in das Ranking-Feld.
+                    } @else {
+                      Noch keine Antwort wurde einsortiert.
+                    }
+                  </li>
+                }
+              </ol>
+            </section>
           </section>
         } @else if (submitted()) {
           <section class="waiting-state" role="status">

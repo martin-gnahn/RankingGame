@@ -43,6 +43,7 @@
 
 .question-section,
 .answer-form,
+.ranking-workspace,
 .waiting-state,
 .state-message {
   border: 1px solid rgba(23, 35, 58, 0.12);
@@ -74,7 +75,8 @@
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
   color: #17233a;
 }
@@ -89,6 +91,10 @@ h1 {
 h2 {
   font-size: 1.05rem;
   line-height: 1.25;
+}
+
+h3 {
+  font-size: 0.95rem;
 }
 
 .answer-form {
@@ -272,6 +278,198 @@ textarea:disabled {
   color: #0c3d43;
 }
 
+.ranking-workspace {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.ranking-header,
+.ranked-results-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ranking-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(23, 35, 58, 0.1);
+}
+
+.ranking-counter {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #e9f8ee;
+  color: #0c3d43;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.host-ranking-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
+  gap: 16px;
+}
+
+.answer-pool,
+.ranking-drop-zone,
+.ranked-results {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.answer-card-list {
+  display: grid;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.answer-card,
+.ranked-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(23, 35, 58, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(28, 40, 64, 0.08);
+}
+
+.answer-card {
+  cursor: grab;
+}
+
+.answer-card.cdk-drag-disabled {
+  cursor: default;
+}
+
+.answer-card.cdk-drag-preview {
+  box-sizing: border-box;
+  box-shadow: 0 18px 34px rgba(28, 40, 64, 0.18);
+}
+
+.answer-card.cdk-drag-placeholder {
+  opacity: 0.36;
+}
+
+.answer-card p,
+.ranked-item p,
+.drop-hint,
+.empty-state,
+.complete-state,
+.ranked-empty {
+  margin: 0;
+}
+
+.answer-card p,
+.ranked-item p {
+  color: #17233a;
+  overflow-wrap: anywhere;
+}
+
+.answer-author {
+  display: block;
+  margin-bottom: 4px;
+  color: #16756f;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rank-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(18, 109, 116, 0.22);
+  border-radius: 8px;
+  background: #eef9fb;
+  color: #0c3d43;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rank-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.ranking-drop-zone {
+  align-content: start;
+  min-height: 220px;
+  padding: 18px;
+  border: 2px dashed rgba(18, 109, 116, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(18, 109, 116, 0.08), rgba(31, 107, 56, 0.08)),
+  #f8fcfd;
+}
+
+.ranking-drop-zone.cdk-drop-list-dragging {
+  border-color: #126d74;
+  background: #eef9fb;
+}
+
+.drop-hint,
+.empty-state,
+.ranked-empty {
+  color: #41506a;
+  font-weight: 700;
+}
+
+.complete-state {
+  width: fit-content;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #e9f8ee;
+  color: #1f6b38;
+  font-weight: 900;
+}
+
+.ranked-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ranked-item {
+  grid-template-columns: auto 1fr;
+}
+
+.rank-number {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #0c3d43;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.ranked-empty {
+  padding: 14px;
+  border: 1px dashed rgba(23, 35, 58, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.small-loader {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(18, 109, 116, 0.18);
+  border-top-color: #126d74;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
 .state-message {
   display: flex;
   align-items: center;
@@ -314,11 +512,23 @@ textarea:disabled {
   }
 
   .question-section,
-  .answer-form {
+  .answer-form,
+  .ranking-workspace {
     padding: 22px;
   }
 
   .score-grid {
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  .host-ranking-board,
+  .answer-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-header,
+  .ranked-results-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

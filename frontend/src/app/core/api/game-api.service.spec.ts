@@ -1,14 +1,13 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
+import {TestBed} from '@angular/core/testing';
 
-import { environment } from '../../../environments/environment';
-import { GameApiService } from './game-api.service';
+import {environment} from '../../../environments/environment';
+import {GameApiService} from './game-api.service';
 
 describe('GameApiService', () => {
   let service: GameApiService;
   let httpTesting: HttpTestingController;
-  let consoleLogSpy: jasmine.Spy;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -17,14 +16,13 @@ describe('GameApiService', () => {
 
     service = TestBed.inject(GameApiService);
     httpTesting = TestBed.inject(HttpTestingController);
-    consoleLogSpy = spyOn(console, 'log');
   });
 
   afterEach(() => {
     httpTesting.verify();
   });
 
-  it('should load active game players with an encoded room code and log the DTO response', () => {
+  it('should load active game players with an encoded room code', () => {
     const response = [
       {
         gameSessionId: 'session-1',
@@ -46,7 +44,83 @@ describe('GameApiService', () => {
     expect(request.request.method).toBe('GET');
 
     request.flush(response);
+  });
 
-    expect(consoleLogSpy).toHaveBeenCalledOnceWith('Active game players DTO response', response);
+  it('should load submitted answers for the current round and player', () => {
+    const response = {
+      answers: [
+        {
+          answerId: 'answer-1',
+          playerId: 'player-1',
+          nickname: 'Marta',
+          answerText: 'Mit WLAN-Problemen.',
+          cardValue: 7 as const,
+        },
+      ],
+    };
+
+    service.getSubmittedAnswers('A/B1', 'round-1', 'player-1').subscribe((result) => {
+      expect(result).toEqual(response);
+    });
+
+    const request = httpTesting.expectOne(
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answers?playerId=player-1`,
+    );
+    expect(request.request.method).toBe('GET');
+
+    request.flush(response);
+  });
+
+  it('should add a ranking position with the host and answer ids', () => {
+    service
+      .addRankingPosition('A/B1', 'round-1', {
+        hostId: 'host-1',
+        answerId: 'answer-1',
+      })
+      .subscribe((result) => {
+        expect(result).toEqual({id: 'ranking-1'});
+      });
+
+    const request = httpTesting.expectOne(
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answer/position/new`,
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      hostId: 'host-1',
+      answerId: 'answer-1',
+    });
+
+    request.flush({id: 'ranking-1'});
+  });
+
+  it('should normalize ranking readback value objects', () => {
+    service.getRankingPositions('A/B1', 'round-1', 'player-1').subscribe((result) => {
+      expect(result).toEqual([
+        {
+          rankingId: 'ranking-1',
+          answerId: 'answer-1',
+          playerId: 'player-2',
+          answerText: 'Im Aufzug stecken geblieben.',
+          oneBasedPosition: 1,
+        },
+      ]);
+    });
+
+    const request = httpTesting.expectOne(
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answer/position/all?playerId=player-1`,
+    );
+    expect(request.request.method).toBe('GET');
+
+    request.flush([
+      {
+        id: {value: 'ranking-1'},
+        answer: {
+          answerId: {value: 'answer-1'},
+          playerId: {value: 'player-2'},
+          answerText: {value: 'Im Aufzug stecken geblieben.'},
+        },
+        oneBasedPosition: 1,
+      },
+    ]);
   });
 });

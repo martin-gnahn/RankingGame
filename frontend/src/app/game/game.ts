@@ -1,4 +1,5 @@
 import {HttpErrorResponse} from '@angular/common/http';
+import {CdkDragDrop, DragDropModule} from '@angular/cdk/drag-drop';
 import {Component, computed, effect, inject, signal, WritableSignal} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {toSignal} from '@angular/core/rxjs-interop';
@@ -7,6 +8,7 @@ import {map} from 'rxjs';
 
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {GameApiService} from '../core/api/game-api.service';
+import {RankedAnswerDto} from '../core/api/game.models';
 import {RoomApiService} from '../core/api/room-api.service';
 import {ActiveRoundResponse, AnswerDto, ChatMessageResponse} from '../core/api/room.models';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
@@ -18,10 +20,14 @@ interface ScoreCard {
   tone: 'low' | 'middle' | 'high';
 }
 
+interface RankedAnswerView extends RankedAnswerDto {
+  nickname: string;
+  cardValue?: AnswerDto['cardValue'];
+}
 
 @Component({
   selector: 'app-game',
-  imports: [ReactiveFormsModule, RouterLink, ChatSidebar],
+  imports: [ReactiveFormsModule, RouterLink, ChatSidebar, DragDropModule],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
@@ -45,6 +51,9 @@ export class Game {
   protected readonly sortingStarted = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly submitErrorMessage = signal('');
+  protected readonly rankingErrorMessage = signal('');
+  protected readonly rankingLoading = signal(false);
+  protected readonly rankingSubmittingAnswerId = signal<string | null>(null);
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
   protected readonly isCurrentPlayerCaptain = computed(() => this.queryParamMap()?.get('role') === 'host');
   protected readonly sortingHintMessage = computed(() =>
@@ -53,6 +62,40 @@ export class Game {
       : 'Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...',
   );
   protected readonly allSubmittedAnswers: WritableSignal<AnswerDto[]> = signal([]);
+  protected readonly rankingPositions = signal<RankedAnswerDto[]>([]);
+  protected readonly rankedAnswerIds = computed(() =>
+    new Set(this.rankingPositions().map((answer) => answer.answerId)),
+  );
+  protected readonly availableAnswers = computed(() =>
+    this.allSubmittedAnswers().filter((answer) => !this.rankedAnswerIds().has(answer.answerId)),
+  );
+  protected readonly rankedAnswers = computed<RankedAnswerView[]>(() => {
+    const submittedAnswersById = new Map(
+      this.allSubmittedAnswers().map((answer) => [answer.answerId, answer]),
+    );
+
+    return [...this.rankingPositions()]
+      .sort((left, right) => left.oneBasedPosition - right.oneBasedPosition)
+      .map((ranking) => {
+        const submittedAnswer = submittedAnswersById.get(ranking.answerId);
+
+        return {
+          ...ranking,
+          answerText: submittedAnswer?.answerText ?? ranking.answerText,
+          nickname: submittedAnswer?.nickname ?? 'Unbekannter Spieler',
+          cardValue: submittedAnswer?.cardValue,
+        };
+      });
+  });
+  protected readonly rankingIsComplete = computed(() =>
+    this.allSubmittedAnswers().length > 0
+    && this.rankedAnswers().length >= this.allSubmittedAnswers().length,
+  );
+  protected readonly rankingDropDisabled = computed(() =>
+    !this.isCurrentPlayerCaptain()
+    || this.rankingIsComplete()
+    || this.rankingSubmittingAnswerId() !== null,
+  );
 
   protected readonly scoreCards: ScoreCard[] = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
@@ -195,18 +238,94 @@ export class Game {
     onCleanup?.(() => subscription.unsubscribe());
   }
 
-  protected displayAllSubmittedAnswers() {
+  protected displayAllSubmittedAnswers(): void {
+    this.loadSubmittedAnswers();
+  }
+
+  protected rankDroppedAnswer(event: CdkDragDrop<RankedAnswerView[], AnswerDto[], AnswerDto>): void {
+    const answer = event.item.data as AnswerDto | undefined;
+    const droppedIntoSameContainer =
+      (event.previousContainer as unknown) === (event.container as unknown);
+    if (!answer || droppedIntoSameContainer) {
+      return;
+    }
+
+    this.rankAnswer(answer);
+  }
+
+  protected rankAnswer(answer: AnswerDto): void {
+    const roomCode = this.roomCode();
+    const activeRound = this.activeRound();
+    const hostId = this.currentPlayerId();
+
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !hostId) {
+      this.rankingErrorMessage.set('Nur der Host kann Antworten sortieren.');
+      return;
+    }
+
+    if (this.rankedAnswerIds().has(answer.answerId) || this.rankingSubmittingAnswerId()) {
+      return;
+    }
+
+    this.rankingErrorMessage.set('');
+    this.rankingSubmittingAnswerId.set(answer.answerId);
+
+    this.gameApi
+      .addRankingPosition(roomCode, activeRound.roundId, {
+        hostId,
+        answerId: answer.answerId,
+      })
+      .subscribe({
+        next: () => {
+          this.rankingSubmittingAnswerId.set(null);
+          this.refreshRankingPositions();
+        },
+        error: (error: unknown) => {
+          this.rankingSubmittingAnswerId.set(null);
+          this.rankingErrorMessage.set(this.toErrorMessage(error));
+        },
+      });
+  }
+
+  private loadSubmittedAnswers(): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
     const currentPlayerId = this.currentPlayerId();
-    if (!this.sortingStarted() || !activeRound) {
+    if (!this.sortingStarted() || !roomCode || !activeRound || !currentPlayerId) {
       return;
     }
+
     this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId, currentPlayerId)
-    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId, currentPlayerId)
-      .subscribe(answerResponse => {
-        this.allSubmittedAnswers.set(answerResponse.answers);
-      })
+      .subscribe({
+        next: (answerResponse) => {
+          this.allSubmittedAnswers.set(answerResponse.answers);
+        },
+        error: (error: unknown) => {
+          this.rankingErrorMessage.set(this.toErrorMessage(error));
+        },
+      });
+  }
+
+  private refreshRankingPositions(): void {
+    const roomCode = this.roomCode();
+    const activeRound = this.activeRound();
+    const currentPlayerId = this.currentPlayerId();
+    if (!this.sortingStarted() || !roomCode || !activeRound || !currentPlayerId) {
+      return;
+    }
+
+    this.rankingLoading.set(true);
+    this.gameApi.getRankingPositions(roomCode, activeRound.roundId, currentPlayerId)
+      .subscribe({
+        next: (rankedAnswers) => {
+          this.rankingPositions.set(rankedAnswers);
+          this.rankingLoading.set(false);
+        },
+        error: (error: unknown) => {
+          this.rankingLoading.set(false);
+          this.rankingErrorMessage.set(this.toErrorMessage(error));
+        },
+      });
   }
 
   private toErrorMessage(error: unknown): string {
@@ -242,6 +361,22 @@ export class Game {
     return typeof (payload as { roundId?: unknown }).roundId === 'string';
   }
 
+  private isEventForActiveRound(payload: unknown): boolean {
+    if (!this.isSortingStartedPayload(payload)) {
+      return true;
+    }
+
+    return this.activeRound()?.roundId === payload.roundId;
+  }
+
+  private enterSortingMode(): void {
+    this.sortingStarted.set(true);
+    this.submitted.set(true);
+    this.loadSubmittedAnswers();
+    this.refreshRankingPositions();
+    this.form.disable();
+  }
+
   private handleRealtimeEvent(event: RealtimeEvent): void {
     const payload = event.payload;
     if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
@@ -252,15 +387,16 @@ export class Game {
     // TODO: extract to dedicated method and maybe dedicated service. The realtime event handling.
     // To make this service here thinner.
     if (event.type === 'SORTING_STARTED' && this.isSortingStartedPayload(payload)) {
-      const activeRound = this.activeRound();
-      if (!activeRound || payload.roundId !== activeRound.roundId) {
+      if (!this.isEventForActiveRound(payload)) {
         return;
       }
 
-      this.sortingStarted.set(true);
-      this.submitted.set(true);
-      this.displayAllSubmittedAnswers();
-      this.form.disable();
+      this.enterSortingMode();
+      return;
+    }
+
+    if (event.type === 'ANSWER_RANKED' && this.isEventForActiveRound(payload)) {
+      this.refreshRankingPositions();
     }
   }
 }

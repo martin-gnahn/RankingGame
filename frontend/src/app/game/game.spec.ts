@@ -29,6 +29,22 @@ describe('Game', () => {
     questionText: 'Welche Ausrede funktioniert immer?',
     assignedCardValue: 7,
   };
+  const submittedAnswers = [
+    {
+      answerId: 'answer-1',
+      playerId: 'player-1',
+      nickname: 'Marta',
+      answerText: 'Mit WLAN-Problemen.',
+      cardValue: 7 as const,
+    },
+    {
+      answerId: 'answer-2',
+      playerId: 'player-2',
+      nickname: 'Alex',
+      answerText: 'Im Aufzug stecken geblieben.',
+      cardValue: 4 as const,
+    },
+  ];
 
   beforeEach(async () => {
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
@@ -36,7 +52,12 @@ describe('Game', () => {
       'getRecentChatMessages',
       'submitAnswer',
     ]);
-    gameApi = jasmine.createSpyObj<GameApiService>('GameApiService', ['getActivePlayers']);
+    gameApi = jasmine.createSpyObj<GameApiService>('GameApiService', [
+      'addRankingPosition',
+      'getActivePlayers',
+      'getRankingPositions',
+      'getSubmittedAnswers',
+    ]);
     webSocket = jasmine.createSpyObj<WebSocketService>('WebSocketService', [
       'disconnect',
       'joinLive',
@@ -46,7 +67,10 @@ describe('Game', () => {
     realtimeEvents = new Subject<RealtimeEvent>();
     webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
     roomApi.getRecentChatMessages.and.returnValue(of([]));
+    gameApi.addRankingPosition.and.returnValue(of({}));
     gameApi.getActivePlayers.and.returnValue(of([]));
+    gameApi.getRankingPositions.and.returnValue(of([]));
+    gameApi.getSubmittedAnswers.and.returnValue(of({answers: []}));
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'player-1' }));
 
@@ -153,6 +177,93 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(textContent()).toContain('Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.');
+  });
+
+  it('should render submitted answers as host ranking cards', () => {
+    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-1'},
+    });
+    fixture.detectChanges();
+
+    expect(gameApi.getSubmittedAnswers).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
+    expect(gameApi.getRankingPositions).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
+    expect(textContent()).toContain('Mit WLAN-Problemen.');
+    expect(textContent()).toContain('Im Aufzug stecken geblieben.');
+    expect(textContent()).toContain('Hier ablegen');
+    expect(textContent()).toContain('Einordnen');
+  });
+
+  it('should add a ranking position when the host chooses an answer', () => {
+    queryParamMap.next(convertToParamMap({playerId: 'host-1', role: 'host'}));
+    gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
+    gameApi.getRankingPositions.and.returnValues(
+      of([]),
+      of([
+        {
+          rankingId: 'ranking-1',
+          answerId: 'answer-1',
+          playerId: 'player-1',
+          answerText: 'Mit WLAN-Problemen.',
+          oneBasedPosition: 1,
+        },
+      ]),
+    );
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-1'},
+    });
+    fixture.detectChanges();
+
+    const firstRankButton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.rank-button')!;
+    firstRankButton.click();
+    fixture.detectChanges();
+
+    expect(gameApi.addRankingPosition).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
+      hostId: 'host-1',
+      answerId: 'answer-1',
+    });
+    expect(gameApi.getRankingPositions).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('Aktuelles Ranking');
+    expect(textContent()).toContain('Marta');
+  });
+
+  it('should refresh ranking positions for all players after an answer ranked event', () => {
+    gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
+    gameApi.getRankingPositions.and.returnValues(
+      of([]),
+      of([
+        {
+          rankingId: 'ranking-1',
+          answerId: 'answer-2',
+          playerId: 'player-2',
+          answerText: 'Im Aufzug stecken geblieben.',
+          oneBasedPosition: 1,
+        },
+      ]),
+    );
+    createComponent();
+
+    realtimeEvents.next({
+      type: 'SORTING_STARTED',
+      payload: {roundId: 'round-1'},
+    });
+    realtimeEvents.next({
+      type: 'ANSWER_RANKED',
+      payload: {roundId: 'round-1', answerId: 'answer-2', oneBasedPosition: 1},
+    });
+    fixture.detectChanges();
+
+    expect(gameApi.getRankingPositions).toHaveBeenCalledTimes(2);
+    expect(textContent()).toContain('Aktuelles Ranking');
+    expect(textContent()).toContain('Alex');
+    expect(textContent()).toContain('Im Aufzug stecken geblieben.');
   });
 
   it('should ignore sorting started events for a different round', () => {
