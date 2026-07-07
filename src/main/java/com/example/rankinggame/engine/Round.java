@@ -97,14 +97,14 @@ public class Round {
         return new Round(captain, question);
     }
 
-    public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText, int cardValue) {
+    public SubmittedAnswer submitAnswer(PlayerId playerId, String answerText) {
         checkIfSubmittingAnswerAllowed();
         if (submittedAnswers.containsKey(playerId)) {
             throw new AnswerAlreadySubmittedException();
         }
 
         AnswerId answerId = new AnswerId(UUID.randomUUID());
-        SubmittedAnswer answer = new SubmittedAnswer(playerId, answerId, new AnswerText(answerText), cardValue);
+        SubmittedAnswer answer = new SubmittedAnswer(playerId, answerId, new AnswerText(answerText));
         submittedAnswers.put(playerId, answer);
         return answer;
     }

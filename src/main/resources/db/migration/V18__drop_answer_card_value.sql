@@ -1,0 +1,3 @@
+ALTER TABLE answers
+DROP
+COLUMN IF EXISTS card_value;

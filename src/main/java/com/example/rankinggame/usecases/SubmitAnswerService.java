@@ -47,7 +47,7 @@ public class SubmitAnswerService {
 
         Round domainRound = roundMapper.toDomain(context.round(), context.captainPlayer(), existingSubmittedAnswers, List.of());
         int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
-        SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText(), cardValue);
+        SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText());
 
         AnswerEntity answer = answerMapper.toEntity(
                 roundId,

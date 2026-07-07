@@ -80,7 +80,7 @@ class RoundTest {
     void samePlayerCannotSubmitTwoAnswers() {
         RoundTestContext context = newRoundContext(true);
         assertThatExceptionOfType(AnswerAlreadySubmittedException.class)
-                .isThrownBy(() -> context.round().submitAnswer(new PlayerId(CAPTAIN_PLAYER_ID), "Answer3", 3));
+                .isThrownBy(() -> context.round().submitAnswer(new PlayerId(CAPTAIN_PLAYER_ID), "Answer3"));
     }
 
     @Test
@@ -123,7 +123,7 @@ class RoundTest {
         PlayerId playerId = new PlayerId(UUID.randomUUID());
         AnswerId answerId = new AnswerId(UUID.randomUUID());
         AnswerText unknownAnswerText = new AnswerText("UnknownAnswer");
-        SubmittedAnswer unknownAnswer = new SubmittedAnswer(playerId, answerId, unknownAnswerText, 1);
+        SubmittedAnswer unknownAnswer = new SubmittedAnswer(playerId, answerId, unknownAnswerText);
 
         assertThatExceptionOfType(AnswerNotPartOfRequestedRoundException.class)
                 .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), unknownAnswer.answerId()));
@@ -143,8 +143,8 @@ class RoundTest {
 
         final AnswerTestContext answerTestContext = new AnswerTestContext();
         if (submitAnswers) {
-            var submittedAnswer1 = round.submitAnswer(captain.playerId(), ANSWER1, 1);
-            var submittedAnswer2 = round.submitAnswer(guest.playerId(), ANSWER2, 2);
+            var submittedAnswer1 = round.submitAnswer(captain.playerId(), ANSWER1);
+            var submittedAnswer2 = round.submitAnswer(guest.playerId(), ANSWER2);
             answerTestContext.submittedAnswers().addAll(List.of(submittedAnswer1, submittedAnswer2));
         }
         return new RoundTestContext(captain, guest, round, answerTestContext);

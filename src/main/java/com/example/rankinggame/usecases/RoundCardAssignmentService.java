@@ -14,6 +14,7 @@ import java.util.random.RandomGenerator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// TODO: dirty. optimize.
 @Service
 @RequiredArgsConstructor
 public class RoundCardAssignmentService {
@@ -40,6 +41,7 @@ public class RoundCardAssignmentService {
         this.randomGenerator = randomGenerator;
     }
 
+    // TODO: Overly complex. Reduce complexity.
     private int assignMissingCards(UUID roomId, UUID roundId, UUID requestedPlayerId) {
         List<PlayerEntity> players = playerRepository.findByRoomId(roomId).stream()
                 .sorted(Comparator.comparing(PlayerEntity::getJoinedAt, Comparator.nullsLast(Comparator.naturalOrder()))

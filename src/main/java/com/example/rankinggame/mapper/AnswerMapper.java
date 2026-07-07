@@ -17,7 +17,6 @@ public class AnswerMapper {
         answer.setRoundId(roundId.value());
         answer.setPlayerId(submittedAnswer.playerId().value());
         answer.setText(submittedAnswer.answerText().value());
-        answer.setCardValue(submittedAnswer.cardValue());
         return answer;
     }
 
@@ -36,7 +35,7 @@ public class AnswerMapper {
         PlayerId playerId = new PlayerId(entity.getPlayerId());
         AnswerId answerId = new AnswerId(entity.getId());
         return new SubmittedAnswer(
-                playerId, answerId, new AnswerText(entity.getText()), entity.getCardValue()
+                playerId, answerId, new AnswerText(entity.getText())
         );
     }
 }

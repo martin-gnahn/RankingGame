@@ -25,13 +25,11 @@ class AnswerTest {
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(
                 playerId,
                 answerId,
-                new AnswerText("  Good answer  "),
-                7
+                new AnswerText("  Good answer  ")
         );
 
         assertThat(submittedAnswer.playerId()).isEqualTo(playerId);
         assertThat(submittedAnswer.answerText().value()).isEqualTo("Good answer");
-        assertThat(submittedAnswer.cardValue()).isEqualTo(7);
     }
 
     @Test
@@ -53,8 +51,7 @@ class AnswerTest {
         assertThatThrownBy(() -> new SubmittedAnswer(
                 new PlayerId(UUID.randomUUID()),
                 new AnswerId(UUID.randomUUID()),
-                new AnswerText("Good answer"),
-                11
+                new AnswerText("Good answer")
         ))
                 .isInstanceOf(InvalidCardValueException.class)
                 .hasMessage("Card value must be between 1 and 10");

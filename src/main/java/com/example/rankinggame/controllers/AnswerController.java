@@ -61,8 +61,7 @@ public class AnswerController {
                 answer.answerId(),
                 answer.playerId(),
                 answer.nickname(),
-                answer.answerText(),
-                answer.cardValue()
+                answer.answerText()
         );
     }
 }

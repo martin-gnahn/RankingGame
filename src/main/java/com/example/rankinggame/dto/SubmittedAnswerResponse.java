@@ -6,7 +6,6 @@ public record SubmittedAnswerResponse(
         UUID answerId,
         UUID playerId,
         String nickname,
-        String answerText,
-        int cardValue
+        String answerText
 ) {
 }

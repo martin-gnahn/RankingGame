@@ -3,18 +3,9 @@ package com.example.rankinggame.usecases;
 import com.example.rankinggame.dto.GetSubmittedAnswersCommand;
 import com.example.rankinggame.dto.SubmittedAnswerResult;
 import com.example.rankinggame.dto.SubmittedAnswersResult;
-import com.example.rankinggame.entities.AnswerEntity;
-import com.example.rankinggame.entities.GameSession;
-import com.example.rankinggame.entities.PlayerEntity;
-import com.example.rankinggame.entities.RoomEntity;
-import com.example.rankinggame.entities.RoundEntity;
-import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.repositories.AnswerRepository;
-import com.example.rankinggame.repositories.GameSessionRepository;
-import com.example.rankinggame.repositories.PlayerRepository;
-import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.repositories.RoundRepository;
+import com.example.rankinggame.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,8 +82,7 @@ public class GetSubmittedAnswersService {
                 answer.getId(),
                 answer.getPlayerId(),
                 nickname,
-                answer.getText(),
-                answer.getCardValue()
+                answer.getText()
         );
     }
 }

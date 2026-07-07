@@ -30,9 +30,6 @@ public class AnswerEntity {
     @Column(nullable = false, length = 500)
     private String text;
 
-    @Column(name = "card_value", nullable = false)
-    private int cardValue;
-
     @CreationTimestamp
     @Column(name = "submitted_at", nullable = false, updatable = false)
     private Instant submittedAt;
