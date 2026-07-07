@@ -1,13 +1,12 @@
 package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 // TODO: this is a POJO for Game
 @Data
@@ -22,6 +21,18 @@ public class Game {
     private List<Round> allRounds = new ArrayList<>();
     private GameStatus status;
 
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private GamePoints currentPoints;
+
+    public Game(List<GameParticipant> participants) {
+        // this.gameId = new GameId(UUID.randomUUID());
+        this.participants = participants;
+        this.allRounds = new ArrayList<>();
+        this.status = GameStatus.WAITING;
+        this.currentPoints = new GamePoints();
+    }
+
     /**
      * this is a 0-based roundIndex
      */
@@ -31,11 +42,9 @@ public class Game {
         return allRounds.get(currentRoundIndex);
     }
 
-    public Game(List<GameParticipant> participants) {
-        // this.gameId = new GameId(UUID.randomUUID());
-        this.participants = participants;
-        this.allRounds = new ArrayList<>();
-        this.status = GameStatus.WAITING;
+    public Optional<Integer> getScore() {
+        return Optional.ofNullable(currentPoints)
+                .map(gamePoints -> gamePoints.points);
     }
 
     public boolean hasEnoughPlayers() {
@@ -48,6 +57,7 @@ public class Game {
         Round firstRound = Round.start(firstCaptain, firstQuestion);
         allRounds.add(firstRound);
         currentRoundIndex = 0;
+        currentPoints.setStartingPoints(GameConstants.DEFAULT_STARTING_POINTS);
     }
 
     public void requireCanStart(GameParticipant firstCaptain) {
