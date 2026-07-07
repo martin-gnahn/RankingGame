@@ -499,8 +499,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                     UUID.fromString(answerIds.get(i)),
                     UUID.fromString(playerIds.get(i)),
                     nicknames.get(i),
-                    answerTexts.get(i),
-                    cardValues.get(i)
+                    answerTexts.get(i)
             ));
         }
 
@@ -598,16 +597,14 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
             UUID answerId,
             UUID playerId,
             String nickname,
-            String answerText,
-            int cardValue
+            String answerText
     ) {
         private static ComparableSubmittedAnswer from(SubmittedAnswerResponse answer) {
             return new ComparableSubmittedAnswer(
                     answer.answerId(),
                     answer.playerId(),
                     answer.nickname(),
-                    answer.answerText(),
-                    answer.cardValue()
+                    answer.answerText()
             );
         }
     }

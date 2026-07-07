@@ -65,7 +65,7 @@ public class RankAnswerService {
         domainRound.checkIfRoundIsInSortingState();
 
         List<RankedAnswer> rankedAnswers = domainRound.getRankedAnswers();
-        log.info("Fetched {} RankedAnswer objects with text: [{}]", rankedAnswers.size(), rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).toList());
+        log.info("Fetched {} RankedAnswer objects with text: {}", rankedAnswers.size(), rankedAnswers.stream().map(r -> r.getAnswer().answerText().value()).toList());
         return rankedAnswers;
     }
 

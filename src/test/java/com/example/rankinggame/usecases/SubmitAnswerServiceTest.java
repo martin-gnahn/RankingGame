@@ -94,7 +94,6 @@ class SubmitAnswerServiceTest {
         ArgumentCaptor<AnswerEntity> answerCaptor = ArgumentCaptor.forClass(AnswerEntity.class);
         verify(answerRepository).saveAndFlush(answerCaptor.capture());
         assertThat(answerCaptor.getValue().getText()).isEqualTo("Mit WLAN-Problemen.");
-        assertThat(answerCaptor.getValue().getCardValue()).isEqualTo(7);
         assertThat(round.getState()).isEqualTo(RoundState.SORTING);
         verify(roundRepository).findByIdForUpdate(roundId);
         verify(answerRepository).countByRoundId(roundId);
@@ -148,7 +147,7 @@ class SubmitAnswerServiceTest {
         when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
         AnswerEntity answerEntity =
                 new AnswerEntity(
-                        UUID.randomUUID(), roundId, playerId, "Mit WLAN-Problemen.", 10, Instant.now()
+                        UUID.randomUUID(), roundId, playerId, "Mit WLAN-Problemen.", Instant.now()
                 );
         when(answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId))
                 .thenReturn(List.of(answerEntity));

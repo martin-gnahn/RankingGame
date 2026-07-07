@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,7 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
     private static final String HOST_NAME = "Marta";
     private static final String GUEST_NAME = "Alex";
-    private static final String ANSWER_POSITION_NEW = "/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new";
+    private static final String REQUEST_MAPPING_SUB_PATH = "/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position";
+    private static final String ANSWER_POSITION_NEW = "%s/new".formatted(REQUEST_MAPPING_SUB_PATH);
+    private static final String ALL_ANSWER_POSITIONS = "%s/all".formatted(REQUEST_MAPPING_SUB_PATH);
     private static final String ACCESS_DENIED = "ACCESS_DENIED";
     private static final String GAME_STATE_CONFLICT = "GAME_STATE_CONFLICT";
     private static final String HOST_ANSWER = "Host answer";
@@ -138,10 +141,26 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Answers can only be sorted in sorting mode"));
     }
 
-    @Disabled("Future controller work: /position/all currently returns List.of(), so this should drive that endpoint.")
     @Test
-    void hostCanReadRankedAnswersBackInRankingOrder() {
-        // First implement the read use case, then assert answer ids in exact ranking order.
+    void hostCanReadRankedAnswersBackInRankingOrder() throws Exception {
+        SortingRound round = prepareRoundInSortingState();
+
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.guestAnswerId(), 1);
+        callAndAssertRankAnswerRequest(round, round.hostPlayerId(), round.hostAnswerId(), 2);
+
+        mockMvc.perform(get(ALL_ANSWER_POSITIONS,
+                        round.roomCode(),
+                        round.roundId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", String.valueOf(round.guestPlayerId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].oneBasedPosition").value(1))
+                .andExpect(jsonPath("$[1].oneBasedPosition").value(2))
+                .andExpect(jsonPath("$[0].answer.answerText.value").value(GUEST_ANSWER))
+                .andExpect(jsonPath("$[1].answer.answerText.value").value(HOST_ANSWER))
+                .andExpect(jsonPath("$[0].answer.playerId.value").value(round.guestPlayerId().toString()))
+                .andExpect(jsonPath("$[1].answer.playerId.value").value(round.hostPlayerId().toString()));
     }
 
     private SortingRound prepareRoundInSortingState() throws Exception {

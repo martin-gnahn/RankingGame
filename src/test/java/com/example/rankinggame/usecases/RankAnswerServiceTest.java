@@ -80,7 +80,6 @@ class RankAnswerServiceTest {
         answer.setId(ANSWER_ID);
         answer.setRoundId(ROUND_ID);
         answer.setText(ANSWER_TEXT);
-        answer.setCardValue(10);
         return answer;
     }
 

@@ -142,8 +142,7 @@ class AnswerControllerTest {
                         answerId,
                         playerId,
                         "Alex",
-                        "Mit WLAN-Problemen.",
-                        7
+                        "Mit WLAN-Problemen."
                 ))));
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
