@@ -8,6 +8,7 @@ import com.example.rankinggame.repositories.RoundRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+// TODO: this is a very critical and complex service. Check that in detail.
 @RequiredArgsConstructor
 @Service
 public class RoundProgressService {
