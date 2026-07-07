@@ -18,12 +18,6 @@ export interface RankedAnswerDto {
 
 export type ValueObjectResponse = string | { value?: string } | null | undefined;
 
-export interface RankedAnswerResponse {
-  id?: ValueObjectResponse;
-  answer?: {
-    playerId?: ValueObjectResponse;
-    answerId?: ValueObjectResponse;
-    answerText?: ValueObjectResponse;
-  } | null;
-  oneBasedPosition: number;
+export interface RankedAnswerListResponse {
+  rankings: RankedAnswerDto[];
 }

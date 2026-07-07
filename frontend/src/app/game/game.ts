@@ -317,7 +317,8 @@ export class Game {
     this.rankingLoading.set(true);
     this.gameApi.getRankingPositions(roomCode, activeRound.roundId, currentPlayerId)
       .subscribe({
-        next: (rankedAnswers) => {
+        next: (response) => {
+          const rankedAnswers = response.rankings;
           this.rankingPositions.set(rankedAnswers);
           this.rankingLoading.set(false);
         },
@@ -329,6 +330,7 @@ export class Game {
   }
 
   private toErrorMessage(error: unknown): string {
+    debugger;
     if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
       return error.error.message;
     }

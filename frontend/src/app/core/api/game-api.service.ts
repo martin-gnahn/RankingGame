@@ -1,14 +1,13 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {map, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 
 import {environment} from '../../../environments/environment';
 import {AnswerResponseDto, RoomCode} from './room.models';
 import {
   AddRankingPositionRequest,
   GameSessionPlayerResponse,
-  RankedAnswerDto,
-  RankedAnswerResponse,
+  RankedAnswerListResponse,
   ValueObjectResponse,
 } from './game.models';
 
@@ -48,23 +47,12 @@ export class GameApiService {
     roomCode: RoomCode,
     roundId: string,
     playerId: string,
-  ): Observable<RankedAnswerDto[]> {
+  ): Observable<RankedAnswerListResponse> {
     return this.http
-      .get<RankedAnswerResponse[]>(
+      .get<RankedAnswerListResponse>(
         `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answer/position/all`,
         {params: {playerId}},
-      )
-      .pipe(map((answers) => answers.map((answer) => this.toRankedAnswer(answer))));
-  }
-
-  private toRankedAnswer(response: RankedAnswerResponse): RankedAnswerDto {
-    return {
-      rankingId: this.valueOf(response.id),
-      answerId: this.valueOf(response.answer?.answerId),
-      playerId: this.valueOf(response.answer?.playerId),
-      answerText: this.valueOf(response.answer?.answerText),
-      oneBasedPosition: response.oneBasedPosition,
-    };
+      );
   }
 
   private valueOf(value: ValueObjectResponse): string {
