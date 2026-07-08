@@ -1,9 +1,10 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
+import {TestBed} from '@angular/core/testing';
 
-import { environment } from '../../../environments/environment';
-import { RoomApiService } from './room-api.service';
+import {environment} from '../../../environments/environment';
+import {RoomApiService} from './room-api.service';
+import {ActiveRoundResponse} from './room.models';
 
 describe('RoomApiService', () => {
   let service: RoomApiService;
@@ -123,7 +124,7 @@ describe('RoomApiService', () => {
   });
 
   it('should load the active round with an encoded room code', () => {
-    const response = {
+    const response: ActiveRoundResponse = {
       roomId: 'room-1',
       roomCode: 'A/B1',
       gameSessionId: 'session-1',
@@ -132,6 +133,7 @@ describe('RoomApiService', () => {
       questionId: 'question-1',
       questionText: 'Welche Ausrede funktioniert immer?',
       assignedCardValue: 7,
+      currentPlayerSubmitted: false,
     };
 
     service.getActiveRound('A/B1', 'player-1').subscribe((result) => {

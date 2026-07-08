@@ -95,15 +95,17 @@ describe('GameApiService', () => {
 
   it('should normalize ranking readback value objects', () => {
     service.getRankingPositions('A/B1', 'round-1', 'player-1').subscribe((result) => {
-      expect(result).toEqual([
-        {
-          rankingId: 'ranking-1',
-          answerId: 'answer-1',
-          playerId: 'player-2',
-          answerText: 'Im Aufzug stecken geblieben.',
-          oneBasedPosition: 1,
-        },
-      ]);
+      expect(result).toEqual({
+        rankings: [
+          {
+            rankingId: 'ranking-1',
+            answerId: 'answer-1',
+            playerId: 'player-2',
+            answerText: 'Im Aufzug stecken geblieben.',
+            oneBasedPosition: 1,
+          },
+        ]
+      });
     });
 
     const request = httpTesting.expectOne(

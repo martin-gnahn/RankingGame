@@ -28,6 +28,7 @@ describe('Game', () => {
     questionId: 'question-1',
     questionText: 'Welche Ausrede funktioniert immer?',
     assignedCardValue: 7,
+    currentPlayerSubmitted: false
   };
   const submittedAnswers = [
     {
@@ -69,7 +70,7 @@ describe('Game', () => {
     roomApi.getRecentChatMessages.and.returnValue(of([]));
     gameApi.addRankingPosition.and.returnValue(of({}));
     gameApi.getActivePlayers.and.returnValue(of([]));
-    gameApi.getRankingPositions.and.returnValue(of([]));
+    gameApi.getRankingPositions.and.returnValue(of({rankings: []}));
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: []}));
     paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
     queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'player-1' }));
@@ -202,8 +203,9 @@ describe('Game', () => {
     queryParamMap.next(convertToParamMap({playerId: 'host-1', role: 'host'}));
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     gameApi.getRankingPositions.and.returnValues(
-      of([]),
-      of([
+      of({rankings: []}),
+      of({
+        rankings: [
         {
           rankingId: 'ranking-1',
           answerId: 'answer-1',
@@ -211,7 +213,8 @@ describe('Game', () => {
           answerText: 'Mit WLAN-Problemen.',
           oneBasedPosition: 1,
         },
-      ]),
+        ]
+      }),
     );
     createComponent();
 
@@ -237,8 +240,9 @@ describe('Game', () => {
   it('should refresh ranking positions for all players after an answer ranked event', () => {
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     gameApi.getRankingPositions.and.returnValues(
-      of([]),
-      of([
+      of({rankings: []}),
+      of({
+        rankings: [
         {
           rankingId: 'ranking-1',
           answerId: 'answer-2',
@@ -246,7 +250,8 @@ describe('Game', () => {
           answerText: 'Im Aufzug stecken geblieben.',
           oneBasedPosition: 1,
         },
-      ]),
+        ]
+      }),
     );
     createComponent();
 
