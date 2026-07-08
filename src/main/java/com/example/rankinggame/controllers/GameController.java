@@ -61,7 +61,8 @@ public class GameController {
                 result.questionId(),
                 result.questionText(),
                 result.assignedCardValue(),
-                result.currentPlayerSubmitted()
+                result.currentPlayerSubmitted(),
+                result.currentPlayerIsCaptain()
         );
     }
 

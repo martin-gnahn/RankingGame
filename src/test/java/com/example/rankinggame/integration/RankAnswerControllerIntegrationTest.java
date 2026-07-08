@@ -8,7 +8,6 @@ import com.example.rankinggame.repositories.JpaRankingRepository;
 import com.example.rankinggame.repositories.RoundRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.assertj.core.groups.Tuple;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -123,7 +122,6 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Answer is not part of the requested round"));
     }
 
-    @Disabled("Your exercise: start a game, submit only one answer, then try sorting before all players answered.")
     @Test
     void answersCannotBeRankedBeforeRoundIsInSortingState() throws Exception {
         CreatedRoom room = createRoom(HOST_NAME);

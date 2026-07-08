@@ -11,5 +11,6 @@ public record ActiveRoundResponse(
         UUID questionId,
         String questionText,
         int assignedCardValue,
-        boolean currentPlayerSubmitted) {
+        boolean currentPlayerSubmitted,
+        boolean currentPlayerIsCaptain) {
 }

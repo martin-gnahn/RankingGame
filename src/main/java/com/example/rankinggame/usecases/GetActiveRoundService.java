@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -52,6 +53,7 @@ public class GetActiveRoundService {
         boolean currentPlayerSubmitted = answerRepository.existsByRoundIdAndPlayerId(round.getId(), playerId);
 
         log.info("Retrieved active round result for room '{}' and player '{}'", room.getId(), playerId);
+        boolean currentPlayerIsCaptain = Objects.equals(room.getHostPlayerId(), playerId);
         return new ActiveRoundResult(
                 room.getId(),
                 room.getCode(),
@@ -61,7 +63,8 @@ public class GetActiveRoundService {
                 question.getId(),
                 question.getText(),
                 assignedCardValue,
-                currentPlayerSubmitted
+                currentPlayerSubmitted,
+                currentPlayerIsCaptain
         );
     }
 

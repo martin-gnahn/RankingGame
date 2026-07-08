@@ -55,7 +55,7 @@ export class Game {
   protected readonly rankingLoading = signal(false);
   protected readonly rankingSubmittingAnswerId = signal<string | null>(null);
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
-  protected readonly isCurrentPlayerCaptain = computed(() => this.queryParamMap()?.get('role') === 'host');
+  protected readonly isCurrentPlayerCaptain = signal(false);
   protected readonly sortingHintMessage = computed(() =>
     this.isCurrentPlayerCaptain()
       ? 'Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.'
@@ -114,11 +114,6 @@ export class Game {
   }
 
   constructor() {
-    // TODO: I dont understand that
-    setInterval(() => {
-      const roomCodeCurrent = this.roomCode();
-      this.gameApi.getActivePlayers(roomCodeCurrent).subscribe();
-    }, 1000);
 
     this.loadActiveRound();
 
@@ -216,6 +211,7 @@ export class Game {
 
     this.roomApi.getActiveRound(roomCode, playerId).subscribe({
       next: (activeRound) => {
+        this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
         this.activeRound.set(activeRound);
         this.sortingStarted.set(false);
         this.loading.set(false);
