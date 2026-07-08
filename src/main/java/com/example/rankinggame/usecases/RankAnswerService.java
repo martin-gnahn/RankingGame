@@ -39,7 +39,7 @@ public class RankAnswerService {
     // TODO: implement domain specific sorting algorithm, which checks the right order of the cards
 
     @Transactional
-    public RankedAnswerEntity addRankingPosition(AddRankingPositionCommand command) {
+    public RankAnswerResult addRankingPosition(AddRankingPositionCommand command) {
         if (command.roundId() == null) {
             throw new RoundIdRequiredException();
         }
@@ -59,7 +59,14 @@ public class RankAnswerService {
             RankedAnswerEntity savedRanking = rankingRepository.saveAndFlush(newRankedAnswerEntity);
             roundProgressService.updateAfterAnswerRanked(context);
             publishAnswerRankedEvent(context, newRankedAnswer.getAnswer().answerId(), newRankedAnswer.getOneBasedPosition());
-            return savedRanking;
+            log.info("Saved ranking '{}' to DB.", savedRanking.getId());
+            return new RankAnswerResult(
+                    domainRound.getId(),
+                    newRankedAnswer.getAnswer().playerId(),
+                    newRankedAnswer.getAnswer().answerId(),
+                    newRankedAnswer.getId(),
+                    newRankedAnswer.getOneBasedPosition()
+            );
         } catch (DataIntegrityViolationException exception) {
             throw new AnswerAlreadySubmittedException(exception);
         }

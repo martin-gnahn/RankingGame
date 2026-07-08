@@ -35,7 +35,6 @@ class SubmitAnswerServiceTest {
         RoundMapper roundMapper = roundMapper();
         SubmitAnswerService service = new SubmitAnswerService(
                 answerRepository,
-                roundCardAssignmentService,
                 roundMapper,
                 eventPublisher,
                 new AnswerMapper(),
@@ -121,7 +120,6 @@ class SubmitAnswerServiceTest {
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 answerRepository,
-                roundCardAssignmentService,
                 roundMapper(),
                 eventPublisher,
                 new AnswerMapper(),
@@ -202,7 +200,6 @@ class SubmitAnswerServiceTest {
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 answerRepository,
-                mock(RoundCardAssignmentService.class),
                 roundMapper(),
                 mock(ApplicationEventPublisher.class),
                 new AnswerMapper(),
@@ -243,7 +240,6 @@ class SubmitAnswerServiceTest {
         AnswerRepository answerRepository = mock(AnswerRepository.class);
         SubmitAnswerService service = new SubmitAnswerService(
                 answerRepository,
-                mock(RoundCardAssignmentService.class),
                 roundMapper(),
                 mock(ApplicationEventPublisher.class),
                 new AnswerMapper(),
@@ -280,7 +276,6 @@ class SubmitAnswerServiceTest {
     private SubmitAnswerService serviceWithMocks() {
         return new SubmitAnswerService(
                 mock(AnswerRepository.class),
-                mock(RoundCardAssignmentService.class),
                 roundMapper(),
                 mock(ApplicationEventPublisher.class),
                 mock(AnswerMapper.class),

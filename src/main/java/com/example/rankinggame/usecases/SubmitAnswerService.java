@@ -27,7 +27,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubmitAnswerService {
     private final AnswerRepository answerRepository;
-    private final RoundCardAssignmentService roundCardAssignmentService;
     private final RoundMapper roundMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final AnswerMapper answerMapper;
@@ -46,7 +45,6 @@ public class SubmitAnswerService {
                 answerRepository.findByRoundIdOrderBySubmittedAtAsc(roundId.value());
 
         Round domainRound = roundMapper.toDomain(context.round(), context.captainPlayer(), existingSubmittedAnswers, List.of());
-        int cardValue = roundCardAssignmentService.getCardValue(context.room().getId(), roundId.value(), playerId.value());
         SubmittedAnswer submittedAnswer = domainRound.submitAnswer(playerId, command.answerText());
 
         AnswerEntity answer = answerMapper.toEntity(

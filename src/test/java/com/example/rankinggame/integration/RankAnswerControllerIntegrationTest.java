@@ -263,10 +263,10 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(playerId, answerId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isString())
-                .andExpect(jsonPath("$.answer.id").value(answerId.toString()))
+                .andExpect(jsonPath("$.rankingId").isString())
+                .andExpect(jsonPath("$.answerId").value(answerId.toString()))
                 .andExpect(jsonPath("$.roundId").value(round.roundId().toString()))
-                .andExpect(jsonPath("$.position").value(expectedPosition));
+                .andExpect(jsonPath("$.oneBasedPosition").value(expectedPosition));
     }
 
     private String sortAnswerRequest(UUID hostPlayerId, UUID answerId) {

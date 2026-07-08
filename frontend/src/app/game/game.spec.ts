@@ -1,7 +1,7 @@
+import {HttpErrorResponse} from '@angular/common/http';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, convertToParamMap, provideRouter} from '@angular/router';
 import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
-import {HttpErrorResponse} from '@angular/common/http';
 
 import {GameApiService} from '../core/api/game-api.service';
 import {RoomApiService} from '../core/api/room-api.service';
@@ -28,7 +28,7 @@ describe('Game', () => {
     questionId: 'question-1',
     questionText: 'Welche Ausrede funktioniert immer?',
     assignedCardValue: 7,
-    currentPlayerSubmitted: false
+    currentPlayerSubmitted: false,
   };
   const submittedAnswers = [
     {
@@ -72,16 +72,16 @@ describe('Game', () => {
     gameApi.getActivePlayers.and.returnValue(of([]));
     gameApi.getRankingPositions.and.returnValue(of({rankings: []}));
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: []}));
-    paramMap = new BehaviorSubject(convertToParamMap({ roomCode: 'ABCD12' }));
-    queryParamMap = new BehaviorSubject(convertToParamMap({ playerId: 'player-1' }));
+    paramMap = new BehaviorSubject(convertToParamMap({roomCode: 'ABCD12'}));
+    queryParamMap = new BehaviorSubject(convertToParamMap({playerId: 'player-1'}));
 
     await TestBed.configureTestingModule({
       imports: [Game],
       providers: [
         provideRouter([]),
-        { provide: RoomApiService, useValue: roomApi },
-        { provide: GameApiService, useValue: gameApi },
-        { provide: WebSocketService, useValue: webSocket },
+        {provide: RoomApiService, useValue: roomApi},
+        {provide: GameApiService, useValue: gameApi},
+        {provide: WebSocketService, useValue: webSocket},
         {
           provide: ActivatedRoute,
           useValue: {
@@ -96,7 +96,7 @@ describe('Game', () => {
   function createComponent(): void {
     roomApi.getActiveRound.and.returnValue(of(activeRound));
     roomApi.submitAnswer.and.returnValue(
-      of({ answerId: 'answer-1', roundId: 'round-1', playerId: 'player-1', submitted: true }),
+      of({answerId: 'answer-1', roundId: 'round-1', playerId: 'player-1', submitted: true}),
     );
     fixture = TestBed.createComponent(Game);
     fixture.detectChanges();
@@ -206,14 +206,14 @@ describe('Game', () => {
       of({rankings: []}),
       of({
         rankings: [
-        {
-          rankingId: 'ranking-1',
-          answerId: 'answer-1',
-          playerId: 'player-1',
-          answerText: 'Mit WLAN-Problemen.',
-          oneBasedPosition: 1,
-        },
-        ]
+          {
+            rankingId: 'ranking-1',
+            answerId: 'answer-1',
+            playerId: 'player-1',
+            answerText: 'Mit WLAN-Problemen.',
+            oneBasedPosition: 1,
+          },
+        ],
       }),
     );
     createComponent();
@@ -243,14 +243,14 @@ describe('Game', () => {
       of({rankings: []}),
       of({
         rankings: [
-        {
-          rankingId: 'ranking-1',
-          answerId: 'answer-2',
-          playerId: 'player-2',
-          answerText: 'Im Aufzug stecken geblieben.',
-          oneBasedPosition: 1,
-        },
-        ]
+          {
+            rankingId: 'ranking-1',
+            answerId: 'answer-2',
+            playerId: 'player-2',
+            answerText: 'Im Aufzug stecken geblieben.',
+            oneBasedPosition: 1,
+          },
+        ],
       }),
     );
     createComponent();
@@ -298,7 +298,7 @@ describe('Game', () => {
 
   it('should show an error when the active round cannot be loaded', () => {
     roomApi.getActiveRound.and.returnValue(
-      throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'No active game is running' } })),
+      throwError(() => new HttpErrorResponse({status: 400, error: {message: 'No active game is running'}})),
     );
     roomApi.getRecentChatMessages.and.returnValue(of([]));
 

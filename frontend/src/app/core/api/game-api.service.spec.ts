@@ -3,6 +3,7 @@ import {HttpTestingController, provideHttpClientTesting} from '@angular/common/h
 import {TestBed} from '@angular/core/testing';
 
 import {environment} from '../../../environments/environment';
+import {RankedAnswerListResponse} from './game.models';
 import {GameApiService} from './game-api.service';
 
 describe('GameApiService', () => {
@@ -93,19 +94,21 @@ describe('GameApiService', () => {
     request.flush({id: 'ranking-1'});
   });
 
-  it('should normalize ranking readback value objects', () => {
+  it('should return the current ranking positions wrapper', () => {
+    const response: RankedAnswerListResponse = {
+      rankings: [
+        {
+          rankingId: 'ranking-1',
+          answerId: 'answer-1',
+          playerId: 'player-2',
+          answerText: 'Im Aufzug stecken geblieben.',
+          oneBasedPosition: 1,
+        },
+      ],
+    };
+
     service.getRankingPositions('A/B1', 'round-1', 'player-1').subscribe((result) => {
-      expect(result).toEqual({
-        rankings: [
-          {
-            rankingId: 'ranking-1',
-            answerId: 'answer-1',
-            playerId: 'player-2',
-            answerText: 'Im Aufzug stecken geblieben.',
-            oneBasedPosition: 1,
-          },
-        ]
-      });
+      expect(result).toEqual(response);
     });
 
     const request = httpTesting.expectOne(
@@ -113,16 +116,6 @@ describe('GameApiService', () => {
     );
     expect(request.request.method).toBe('GET');
 
-    request.flush([
-      {
-        id: {value: 'ranking-1'},
-        answer: {
-          answerId: {value: 'answer-1'},
-          playerId: {value: 'player-2'},
-          answerText: {value: 'Im Aufzug stecken geblieben.'},
-        },
-        oneBasedPosition: 1,
-      },
-    ]);
+    request.flush(response);
   });
 });

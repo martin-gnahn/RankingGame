@@ -4,7 +4,7 @@ import com.example.rankinggame.dto.AddRankingPositionCommand;
 import com.example.rankinggame.dto.AddRankingPositionRequest;
 import com.example.rankinggame.dto.RankedAnswerDto;
 import com.example.rankinggame.dto.RankedAnswerListResponse;
-import com.example.rankinggame.entities.RankedAnswerEntity;
+import com.example.rankinggame.usecases.RankAnswerResult;
 import com.example.rankinggame.usecases.RankAnswerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,18 +22,18 @@ public class RankAnswerController {
     private final RankAnswerService rankAnswerService;
 
     @PostMapping("/new")
-    public HttpEntity<RankedAnswerEntity> addRankingPosition(
+    public HttpEntity<RankAnswerResult> addRankingPosition(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
             @Valid @RequestBody AddRankingPositionRequest request
     ) {
-        RankedAnswerEntity rankedAnswerEntity = rankAnswerService.addRankingPosition(new AddRankingPositionCommand(
+        RankAnswerResult rankAnswerResult = rankAnswerService.addRankingPosition(new AddRankingPositionCommand(
                 roomCode,
                 roundId,
                 request.hostId(),
                 request.answerId()
         ));
-        return ResponseEntity.ok(rankedAnswerEntity);
+        return ResponseEntity.ok(rankAnswerResult);
     }
 
     @GetMapping("/all")

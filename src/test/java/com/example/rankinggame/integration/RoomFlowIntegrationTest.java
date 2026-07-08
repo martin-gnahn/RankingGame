@@ -172,10 +172,6 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         queriedSubmittedAnswers.assertAllPlayersSeeSameAnswers();
         sortSubmittedAnswersAsHost(createdRoom, startedGame, submittedAnswers.hostAnswer().answerId());
         rejectSortSubmittedAnswersAsGuest(createdRoom, startedGame, firstGuestPlayerId, submittedAnswers.firstGuestAnswer().answerId());
-
-        int a = 0;
-
-        // Future backbone: submit a real ranking payload and persist ranking entries.
     }
 
     @Test
@@ -302,8 +298,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(createdRoom.hostPlayerId(), answerId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.answer.id").value(answerId.toString()))
-                .andExpect(jsonPath("$.position").value(1));
+                .andExpect(jsonPath("$.answerId").value(answerId.toString()))
+                .andExpect(jsonPath("$.oneBasedPosition").value(1));
     }
 
     private void rejectSortSubmittedAnswersAsGuest(
