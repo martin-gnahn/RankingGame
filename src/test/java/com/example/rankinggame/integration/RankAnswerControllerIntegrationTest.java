@@ -158,12 +158,12 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("playerId", String.valueOf(round.guestPlayerId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].oneBasedPosition").value(1))
-                .andExpect(jsonPath("$[1].oneBasedPosition").value(2))
-                .andExpect(jsonPath("$[0].answer.answerText.value").value(GUEST_ANSWER))
-                .andExpect(jsonPath("$[1].answer.answerText.value").value(HOST_ANSWER))
-                .andExpect(jsonPath("$[0].answer.playerId.value").value(round.guestPlayerId().toString()))
-                .andExpect(jsonPath("$[1].answer.playerId.value").value(round.hostPlayerId().toString()));
+                .andExpect(jsonPath("$.rankings[0].oneBasedPosition").value(1))
+                .andExpect(jsonPath("$.rankings[1].oneBasedPosition").value(2))
+                .andExpect(jsonPath("$.rankings[0].answerText").value(GUEST_ANSWER))
+                .andExpect(jsonPath("$.rankings[1].answerText").value(HOST_ANSWER))
+                .andExpect(jsonPath("$.rankings[0].playerId").value(round.guestPlayerId().toString()))
+                .andExpect(jsonPath("$.rankings[1].playerId").value(round.hostPlayerId().toString()));
     }
 
     private SortingRound prepareRoundInSortingState() throws Exception {

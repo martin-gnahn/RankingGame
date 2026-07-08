@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 public class RankAnswerService {
     private final RankingRepository rankingRepository;
-    private final AnswerRepository jpaAnswerRepository;
+    private final AnswerRepository answerRepository;
     private final RoundMapper roundMapper;
     private final AnswerMapper answerMapper;
     private final RankingMapper rankingMapper;
@@ -87,7 +87,7 @@ public class RankAnswerService {
     }
 
     private Round getDomainRound(AnswerRankingContext context) {
-        var allAnswersInRound = jpaAnswerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
+        var allAnswersInRound = answerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
         var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
         log.info("Constructing domain round from round entity with id '{}'...", context.round().getId());
         return roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);

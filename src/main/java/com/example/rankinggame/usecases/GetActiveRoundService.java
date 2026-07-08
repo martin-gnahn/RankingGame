@@ -24,7 +24,7 @@ public class GetActiveRoundService {
     private final RoundRepository roundRepository;
     private final QuestionRepository questionRepository;
     private final RoundCardAssignmentService roundCardAssignmentService;
-    private final JpaAnswerRepository answerRepository;
+    private final AnswerRepository answerRepository;
 
     @Transactional
     public ActiveRoundResult loadActiveRoundForPlayer(String roomCode, UUID playerId) {
