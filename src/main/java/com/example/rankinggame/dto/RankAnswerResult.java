@@ -1,4 +1,4 @@
-package com.example.rankinggame.usecases;
+package com.example.rankinggame.dto;
 
 import com.example.rankinggame.engine.AnswerId;
 import com.example.rankinggame.engine.PlayerId;

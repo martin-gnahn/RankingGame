@@ -49,21 +49,9 @@ public class GameController {
             @PathVariable String roomCode,
             @RequestParam UUID playerId
     ) {
-        // TODO: rework that. dirty.
         ActiveRoundResult result = getActiveRoundService.loadActiveRoundForPlayer(roomCode, playerId);
         log.info("ActiveRoundResult {}", objectMapper.writeValueAsString(result));
-        return new ActiveRoundResponse(
-                result.roomId(),
-                result.roomCode(),
-                result.gameSessionId(),
-                result.roundId(),
-                result.roundIndex(),
-                result.questionId(),
-                result.questionText(),
-                result.assignedCardValue(),
-                result.currentPlayerSubmitted(),
-                result.currentPlayerIsCaptain()
-        );
+        return ActiveRoundResponse.from(result);
     }
 
     @GetMapping("/current-round/players")

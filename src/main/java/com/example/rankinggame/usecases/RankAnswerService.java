@@ -2,6 +2,7 @@ package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.controllers.GetRankingPositionsCommand;
 import com.example.rankinggame.dto.AddRankingPositionCommand;
+import com.example.rankinggame.dto.RankAnswerResult;
 import com.example.rankinggame.dto.RankedAnswerDto;
 import com.example.rankinggame.engine.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;

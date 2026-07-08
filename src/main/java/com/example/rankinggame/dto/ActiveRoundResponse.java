@@ -13,4 +13,18 @@ public record ActiveRoundResponse(
         int assignedCardValue,
         boolean currentPlayerSubmitted,
         boolean currentPlayerIsCaptain) {
+    public static ActiveRoundResponse from(ActiveRoundResult result) {
+        return new ActiveRoundResponse(
+                result.roomId(),
+                result.roomCode(),
+                result.gameSessionId(),
+                result.roundId(),
+                result.roundIndex(),
+                result.questionId(),
+                result.questionText(),
+                result.assignedCardValue(),
+                result.currentPlayerSubmitted(),
+                result.currentPlayerIsCaptain()
+        );
+    }
 }
