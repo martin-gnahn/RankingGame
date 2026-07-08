@@ -8,6 +8,14 @@ export interface AddRankingPositionRequest {
   answerId: string;
 }
 
+export interface RankAnswerResultResponse {
+  roundId: string;
+  playerId: string;
+  answerId: string;
+  rankingId: string;
+  oneBasedPosition: number;
+}
+
 export interface RankedAnswerDto {
   rankingId: string;
   answerId: string;

@@ -68,7 +68,13 @@ describe('Game', () => {
     realtimeEvents = new Subject<RealtimeEvent>();
     webSocket.subscribeToRoom.and.returnValue(realtimeEvents.asObservable());
     roomApi.getRecentChatMessages.and.returnValue(of([]));
-    gameApi.addRankingPosition.and.returnValue(of({}));
+    gameApi.addRankingPosition.and.returnValue(of({
+      roundId: 'round-1',
+      playerId: 'player-1',
+      answerId: 'answer-1',
+      rankingId: 'ranking-1',
+      oneBasedPosition: 1,
+    }));
     gameApi.getActivePlayers.and.returnValue(of([]));
     gameApi.getRankingPositions.and.returnValue(of({rankings: []}));
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: []}));

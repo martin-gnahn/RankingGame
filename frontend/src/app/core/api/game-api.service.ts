@@ -7,6 +7,7 @@ import {AnswerResponseDto, RoomCode} from './room.models';
 import {
   AddRankingPositionRequest,
   GameSessionPlayerResponse,
+  RankAnswerResultResponse,
   RankedAnswerListResponse,
   ValueObjectResponse,
 } from './game.models';
@@ -36,8 +37,8 @@ export class GameApiService {
     roomCode: RoomCode,
     roundId: string,
     request: AddRankingPositionRequest,
-  ): Observable<unknown> {
-    return this.http.post(
+  ): Observable<RankAnswerResultResponse> {
+    return this.http.post<RankAnswerResultResponse>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answer/position/new`,
       request,
     );

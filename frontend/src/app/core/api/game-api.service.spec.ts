@@ -3,7 +3,7 @@ import {HttpTestingController, provideHttpClientTesting} from '@angular/common/h
 import {TestBed} from '@angular/core/testing';
 
 import {environment} from '../../../environments/environment';
-import {RankedAnswerListResponse} from './game.models';
+import {RankAnswerResultResponse, RankedAnswerListResponse} from './game.models';
 import {GameApiService} from './game-api.service';
 
 describe('GameApiService', () => {
@@ -73,13 +73,21 @@ describe('GameApiService', () => {
   });
 
   it('should add a ranking position with the host and answer ids', () => {
+    const response: RankAnswerResultResponse = {
+      roundId: 'round-1',
+      playerId: 'player-2',
+      answerId: 'answer-1',
+      rankingId: 'ranking-1',
+      oneBasedPosition: 1,
+    };
+
     service
       .addRankingPosition('A/B1', 'round-1', {
         hostId: 'host-1',
         answerId: 'answer-1',
       })
       .subscribe((result) => {
-        expect(result).toEqual({id: 'ranking-1'});
+        expect(result).toEqual(response);
       });
 
     const request = httpTesting.expectOne(
@@ -91,7 +99,7 @@ describe('GameApiService', () => {
       answerId: 'answer-1',
     });
 
-    request.flush({id: 'ranking-1'});
+    request.flush(response);
   });
 
   it('should return the current ranking positions wrapper', () => {
