@@ -1,5 +1,5 @@
 <main class="game-shell" aria-labelledby="game-title">
-  <a routerLink="/" class="back-link">Zur Startseite</a>
+  <a class="back-link" routerLink="/">{{ 'app.backToHome' | translate }}</a>
 
   <!--{{playerData()}}-->
   <div class="game-layout">
@@ -7,7 +7,7 @@
       @if (loading()) {
         <section class="state-message" role="status">
           <span class="loader" aria-hidden="true"></span>
-          Runde wird geladen
+          {{ 'game.loading' | translate }}
         </section>
       } @else if (errorMessage()) {
         <section class="state-message error" role="alert">
@@ -15,27 +15,27 @@
         </section>
       } @else if (activeRound(); as round) {
         <section class="question-section">
-          <p class="eyebrow">Runde {{ round.roundNumber }}</p>
+          <p class="eyebrow">{{ 'game.roundLabel' | translate: {roundNumber: round.roundNumber} }}</p>
           <p id="game-title">{{ round.questionText }}</p>
         </section>
 
         <form (ngSubmit)="submitAnswer()" [formGroup]="form" class="answer-form" novalidate>
-          <label for="answerText">Antwort</label>
+          <label for="answerText">{{ 'game.answer.label' | translate }}</label>
           <textarea
             id="answerText"
             formControlName="answerText"
             rows="5"
             maxlength="500"
-            placeholder="Deine Antwort"
+            [placeholder]="'game.answer.placeholder' | translate"
           ></textarea>
           @if (form.controls.answerText.touched && form.controls.answerText.invalid) {
-            <p class="field-error">Bitte gib eine Reaktion ein.</p>
+            <p class="field-error">{{ 'game.answer.required' | translate }}</p>
           }
 
           <section class="score-section" aria-labelledby="score-title">
-            <h2 id="score-title">Deine Karte:</h2>
-            <div class="assigned-card-summary" aria-label="Deine zugewiesene Karte">
-              <span>Deine Karte {{round.assignedCardValue}}</span>
+            <h2 id="score-title">{{ 'game.assignedCardTitle' | translate }}</h2>
+            <div [attr.aria-label]="'game.assignedCardAria' | translate" class="assigned-card-summary">
+              <span>{{ 'game.assignedCardValue' | translate: {value: round.assignedCardValue} }}</span>
               <strong>{{ round.assignedCardValue }}</strong>
             </div>
             <div class="score-grid">
@@ -47,12 +47,14 @@
                   [class.high]="card.tone === 'high'"
                   [class.active]="isAssignedCard(round.assignedCardValue, card.value)"
                   [attr.aria-label]="
-                    isAssignedCard(round.assignedCardValue, card.value) ? 'Deine Karte ' + card.value : null
+                    isAssignedCard(round.assignedCardValue, card.value)
+                      ? ('game.assignedCardValue' | translate: { value: card.value })
+                      : null
                   "
                 >
                   <span class="score-card-number">{{ card.value }}</span>
                   @if (isAssignedCard(round.assignedCardValue, card.value)) {
-                    <span class="assigned-card-label">Deine Karte</span>
+                    <span class="assigned-card-label">{{ 'game.assignedCardLabel' | translate }}</span>
                   }
                 </span>
               }
@@ -65,11 +67,11 @@
 
           <button class="primary-button" type="submit" [disabled]="submitting() || submitted()">
             @if (submitted()) {
-              Antwort gesendet
+              {{ 'game.submit.sent' | translate }}
             } @else if (submitting()) {
-              Wird gesendet
+              {{ 'game.submit.sending' | translate }}
             } @else {
-              Antwort abgeben
+              {{ 'game.submit.default' | translate }}
             }
           </button>
         </form>
@@ -78,11 +80,14 @@
           <section aria-labelledby="ranking-title" class="ranking-workspace">
             <div class="ranking-header">
               <div>
-                <p class="eyebrow">Ranking</p>
-                <h2 id="ranking-title">{{ sortingHintMessage() }}</h2>
+                <p class="eyebrow">{{ 'game.ranking.eyebrow' | translate }}</p>
+                <h2 id="ranking-title">{{ sortingHintKey() | translate }}</h2>
               </div>
               <span class="ranking-counter">
-                {{ rankedAnswers().length }} / {{ allSubmittedAnswers().length }} einsortiert
+                {{
+                  'game.ranking.counter'
+                    | translate: {ranked: rankedAnswers().length, total: allSubmittedAnswers().length}
+                }}
               </span>
             </div>
 
@@ -93,7 +98,7 @@
             @if (isCurrentPlayerCaptain()) {
               <div class="host-ranking-board">
                 <section aria-labelledby="answer-pool-title" class="answer-pool">
-                  <h3 id="answer-pool-title">Antworten</h3>
+                  <h3 id="answer-pool-title">{{ 'game.ranking.answerPoolTitle' | translate }}</h3>
                   <div
                     [cdkDropListConnectedTo]="['ranking-drop-zone']"
                     [cdkDropListData]="availableAnswers()"
@@ -119,14 +124,14 @@
                           type="button"
                         >
                           @if (rankingSubmittingAnswerId() === answer.answerId) {
-                            Wird einsortiert
+                            {{ 'game.ranking.submitting' | translate }}
                           } @else {
-                            Einordnen
+                            {{ 'game.ranking.rank' | translate }}
                           }
                         </button>
                       </article>
                     } @empty {
-                      <p class="empty-state">Alle Antworten liegen im Ranking.</p>
+                      <p class="empty-state">{{ 'game.ranking.emptyPool' | translate }}</p>
                     }
                   </div>
                 </section>
@@ -141,10 +146,10 @@
                   class="ranking-drop-zone"
                   id="ranking-drop-zone"
                 >
-                  <h3 id="ranking-drop-title">Hier ablegen</h3>
-                  <p class="drop-hint">Ziehe eine Antwort hierher. Sie wird als naechste Position gespeichert.</p>
+                  <h3 id="ranking-drop-title">{{ 'game.ranking.dropTitle' | translate }}</h3>
+                  <p class="drop-hint">{{ 'game.ranking.dropHint' | translate }}</p>
                   @if (rankingIsComplete()) {
-                    <p class="complete-state">Ranking komplett.</p>
+                    <p class="complete-state">{{ 'game.ranking.complete' | translate }}</p>
                   }
                 </section>
               </div>
@@ -152,9 +157,9 @@
 
             <section aria-labelledby="ranked-results-title" aria-live="polite" class="ranked-results">
               <div class="ranked-results-header">
-                <h3 id="ranked-results-title">Aktuelles Ranking</h3>
+                <h3 id="ranked-results-title">{{ 'game.ranking.resultsTitle' | translate }}</h3>
                 @if (rankingLoading()) {
-                  <span aria-label="Ranking wird aktualisiert" class="small-loader"></span>
+                  <span [attr.aria-label]="'game.ranking.loadingAria' | translate" class="small-loader"></span>
                 }
               </div>
 
@@ -170,9 +175,9 @@
                 } @empty {
                   <li class="ranked-empty">
                     @if (isCurrentPlayerCaptain()) {
-                      Lege die erste Antwort in das Ranking-Feld.
+                      {{ 'game.ranking.emptyCaptain' | translate }}
                     } @else {
-                      Noch keine Antwort wurde einsortiert.
+                      {{ 'game.ranking.emptyPlayer' | translate }}
                     }
                   </li>
                 }
@@ -181,7 +186,7 @@
           </section>
         } @else if (submitted()) {
           <section class="waiting-state" role="status">
-            <p>Antwort gespeichert. Warte auf die anderen Spieler.</p>
+            <p>{{ 'game.waitingForPlayers' | translate }}</p>
           </section>
         }
       }

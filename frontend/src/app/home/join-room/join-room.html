@@ -1,12 +1,12 @@
 <mat-card appearance="outlined" class="action-card">
   <mat-card-header>
-    <mat-card-title>Raum beitreten</mat-card-title>
+    <mat-card-title>{{ 'joinRoom.title' | translate }}</mat-card-title>
   </mat-card-header>
 
   <mat-card-content>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-form-field appearance="outline">
-        <mat-label>Raumcode</mat-label>
+        <mat-label>{{ 'joinRoom.roomCode' | translate }}</mat-label>
         <input
           matInput
           formControlName="roomCode"
@@ -18,19 +18,19 @@
           (input)="sanitizeJoinCodeInput()"
         />
         @if (form.controls.roomCode.hasError('required')) {
-          <mat-error>Raumcode fehlt</mat-error>
+          <mat-error>{{ 'joinRoom.errors.roomCodeRequired' | translate }}</mat-error>
         } @else if (
           form.controls.roomCode.hasError('pattern') || form.controls.roomCode.hasError('roomCode')
         ) {
-          <mat-error>4-8 Zeichen, A-Z oder 0-9</mat-error>
+          <mat-error>{{ 'joinRoom.errors.roomCodeFormat' | translate }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Dein Name</mat-label>
+        <mat-label>{{ 'joinRoom.playerName' | translate }}</mat-label>
         <input matInput formControlName="playerName" autocomplete="off" maxlength="32" value="Felix" />
         @if (form.controls.playerName.hasError('required')) {
-          <mat-error>Name fehlt</mat-error>
+          <mat-error>{{ 'joinRoom.errors.nameRequired' | translate }}</mat-error>
         }
       </mat-form-field>
 
@@ -38,7 +38,7 @@
         @if (loading) {
           <mat-spinner diameter="18" />
         } @else {
-          Raum beitreten
+          {{ 'joinRoom.submit' | translate }}
         }
       </button>
     </form>

@@ -1,10 +1,11 @@
-import {HttpErrorResponse} from '@angular/common/http';
+import {HttpErrorResponse, provideHttpClient} from '@angular/common/http';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, convertToParamMap, provideRouter, Router} from '@angular/router';
 import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
 
 import {RoomApiService} from '../core/api/room-api.service';
 import {RoomResponse} from '../core/api/room.models';
+import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {Lobby} from './lobby';
@@ -61,6 +62,8 @@ describe('Lobby', () => {
     await TestBed.configureTestingModule({
       imports: [Lobby],
       providers: [
+        provideHttpClient(),
+        provideTestingTranslations(),
         provideRouter([]),
         { provide: RoomApiService, useValue: roomApi },
         { provide: WebSocketService, useValue: webSocket },

@@ -4,6 +4,7 @@ import {Component, computed, effect, inject, signal, WritableSignal} from '@angu
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {ActivatedRoute, RouterLink} from '@angular/router';
+import {TranslatePipe, TranslateService} from '@ngx-translate/core';
 import {map} from 'rxjs';
 
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
@@ -27,7 +28,7 @@ interface RankedAnswerView extends RankedAnswerDto {
 
 @Component({
   selector: 'app-game',
-  imports: [ReactiveFormsModule, RouterLink, ChatSidebar, DragDropModule],
+  imports: [ReactiveFormsModule, RouterLink, ChatSidebar, DragDropModule, TranslatePipe],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
@@ -37,6 +38,11 @@ export class Game {
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
+  protected readonly sortingHintKey = computed(() =>
+    this.isCurrentPlayerCaptain()
+      ? 'game.ranking.hint.captain'
+      : 'game.ranking.hint.player',
+  );
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
@@ -56,11 +62,7 @@ export class Game {
   protected readonly rankingSubmittingAnswerId = signal<string | null>(null);
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
   protected readonly isCurrentPlayerCaptain = signal(false);
-  protected readonly sortingHintMessage = computed(() =>
-    this.isCurrentPlayerCaptain()
-      ? 'Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.'
-      : 'Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...',
-  );
+  private readonly translate = inject(TranslateService);
   protected readonly allSubmittedAnswers: WritableSignal<AnswerDto[]> = signal([]);
   protected readonly rankingPositions = signal<RankedAnswerDto[]>([]);
   protected readonly rankedAnswerIds = computed(() =>
@@ -82,7 +84,7 @@ export class Game {
         return {
           ...ranking,
           answerText: submittedAnswer?.answerText ?? ranking.answerText,
-          nickname: submittedAnswer?.nickname ?? 'Unbekannter Spieler',
+          nickname: submittedAnswer?.nickname ?? this.translate.instant('game.unknownPlayer'),
           cardValue: submittedAnswer?.cardValue,
         };
       });
@@ -156,7 +158,7 @@ export class Game {
     }
 
     if (!roomCode || !activeRound || !playerId || this.submitting()) {
-      this.submitErrorMessage.set('Antwort konnte nicht gesendet werden.');
+      this.submitErrorMessage.set(this.translate.instant('game.errors.submitFailed'));
       return;
     }
 
@@ -192,40 +194,38 @@ export class Game {
     this.webSocket.sendChatMessage(roomCode, playerId, body);
   }
 
-  private loadActiveRound(): void {
+  protected rankAnswer(answer: AnswerDto): void {
     const roomCode = this.roomCode();
+    const activeRound = this.activeRound();
+    const hostId = this.currentPlayerId();
 
-    if (!roomCode) {
-      this.errorMessage.set('Der Raumcode fehlt.');
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !hostId) {
+      this.rankingErrorMessage.set(this.translate.instant('game.errors.onlyHostCanRank'));
       return;
     }
 
-    const playerId = this.currentPlayerId();
-    if (!playerId) {
-      this.errorMessage.set('Die Spieler-ID fehlt.');
+    if (this.rankedAnswerIds().has(answer.answerId) || this.rankingSubmittingAnswerId()) {
       return;
     }
 
-    this.loading.set(true);
-    this.errorMessage.set('');
+    this.rankingErrorMessage.set('');
+    this.rankingSubmittingAnswerId.set(answer.answerId);
 
-    this.roomApi.getActiveRound(roomCode, playerId).subscribe({
-      next: (activeRound) => {
-        this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
-        this.activeRound.set(activeRound);
-        this.sortingStarted.set(false);
-        this.loading.set(false);
-        const alreadyHasSubmitted = activeRound.currentPlayerSubmitted;
-        this.submitted.set(alreadyHasSubmitted);
-        if (alreadyHasSubmitted) {
-          this.form.disable();
-        }
-      },
-      error: (error: unknown) => {
-        this.loading.set(false);
-        this.errorMessage.set(this.toErrorMessage(error));
-      },
-    });
+    this.gameApi
+      .addRankingPosition(roomCode, activeRound.roundId, {
+        hostId,
+        answerId: answer.answerId,
+      })
+      .subscribe({
+        next: () => {
+          this.rankingSubmittingAnswerId.set(null);
+          this.refreshRankingPositions();
+        },
+        error: (error: unknown) => {
+          this.rankingSubmittingAnswerId.set(null);
+          this.rankingErrorMessage.set(this.toErrorMessage(error));
+        },
+      });
   }
 
   private loadChatMessages(
@@ -254,38 +254,40 @@ export class Game {
     this.rankAnswer(answer);
   }
 
-  protected rankAnswer(answer: AnswerDto): void {
+  private loadActiveRound(): void {
     const roomCode = this.roomCode();
-    const activeRound = this.activeRound();
-    const hostId = this.currentPlayerId();
 
-    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !hostId) {
-      this.rankingErrorMessage.set('Nur der Host kann Antworten sortieren.');
+    if (!roomCode) {
+      this.errorMessage.set(this.translate.instant('game.errors.missingRoomCode'));
       return;
     }
 
-    if (this.rankedAnswerIds().has(answer.answerId) || this.rankingSubmittingAnswerId()) {
+    const playerId = this.currentPlayerId();
+    if (!playerId) {
+      this.errorMessage.set(this.translate.instant('game.errors.missingPlayerId'));
       return;
     }
 
-    this.rankingErrorMessage.set('');
-    this.rankingSubmittingAnswerId.set(answer.answerId);
+    this.loading.set(true);
+    this.errorMessage.set('');
 
-    this.gameApi
-      .addRankingPosition(roomCode, activeRound.roundId, {
-        hostId,
-        answerId: answer.answerId,
-      })
-      .subscribe({
-        next: () => {
-          this.rankingSubmittingAnswerId.set(null);
-          this.refreshRankingPositions();
-        },
-        error: (error: unknown) => {
-          this.rankingSubmittingAnswerId.set(null);
-          this.rankingErrorMessage.set(this.toErrorMessage(error));
-        },
-      });
+    this.roomApi.getActiveRound(roomCode, playerId).subscribe({
+      next: (activeRound) => {
+        this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
+        this.activeRound.set(activeRound);
+        this.sortingStarted.set(false);
+        this.loading.set(false);
+        const alreadyHasSubmitted = activeRound.currentPlayerSubmitted;
+        this.submitted.set(alreadyHasSubmitted);
+        if (alreadyHasSubmitted) {
+          this.form.disable();
+        }
+      },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        this.errorMessage.set(this.toErrorMessage(error));
+      },
+    });
   }
 
   private loadSubmittedAnswers(): void {
@@ -336,10 +338,10 @@ export class Game {
     }
 
     if (error instanceof HttpErrorResponse && error.status === 0) {
-      return 'Der Server ist gerade nicht erreichbar.';
+      return this.translate.instant('game.errors.serverUnavailable');
     }
 
-    return 'Die Runde konnte nicht geladen werden.';
+    return this.translate.instant('game.errors.roundLoadFailed');
   }
 
   private isChatMessage(payload: unknown): payload is ChatMessageResponse {

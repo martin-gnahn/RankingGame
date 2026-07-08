@@ -1,13 +1,14 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import {Component, EventEmitter, inject, Input, Output} from '@angular/core';
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCardModule} from '@angular/material/card';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {TranslatePipe} from '@ngx-translate/core';
 
-import { ROOM_CODE_PATTERN, RoomCode, isRoomCode } from '../../core/api/room.models';
-import { notBlankValidator } from '../../shared/validators/not-blank.validator';
+import {isRoomCode, ROOM_CODE_PATTERN, RoomCode} from '../../core/api/room.models';
+import {notBlankValidator} from '../../shared/validators/not-blank.validator';
 
 export interface JoinRoomRequestPayload {
   roomCode: RoomCode;
@@ -23,6 +24,7 @@ export interface JoinRoomRequestPayload {
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   templateUrl: './join-room.html',
   styleUrl: './join-room.scss',

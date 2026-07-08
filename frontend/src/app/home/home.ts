@@ -1,22 +1,24 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
+import {Component, inject} from '@angular/core';
+import {Router} from '@angular/router';
+import {TranslatePipe, TranslateService} from '@ngx-translate/core';
+import {finalize} from 'rxjs';
 
-import { RoomApiService } from '../core/api/room-api.service';
-import { CreateRoomRequest, RoomActionResponse } from '../core/api/room.models';
-import { CreateRoom } from './create-room/create-room';
-import { JoinRoom, JoinRoomRequestPayload } from './join-room/join-room';
+import {RoomApiService} from '../core/api/room-api.service';
+import {CreateRoomRequest, RoomActionResponse} from '../core/api/room.models';
+import {CreateRoom} from './create-room/create-room';
+import {JoinRoom, JoinRoomRequestPayload} from './join-room/join-room';
 
 @Component({
   selector: 'app-home',
-  imports: [CreateRoom, JoinRoom],
+  imports: [CreateRoom, JoinRoom, TranslatePipe],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
 export class Home {
   private readonly roomApi = inject(RoomApiService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   protected pendingAction: 'create' | 'join' | null = null;
   protected errorMessage = '';
@@ -57,7 +59,7 @@ export class Home {
 
   private navigateToLobby(response: RoomActionResponse, role: 'host' | 'player'): void {
     if (!response.roomCode) {
-      this.errorMessage = 'Die Raumantwort enthielt keinen Raumcode.';
+      this.errorMessage = this.translate.instant('home.errors.missingRoomCode');
       return;
     }
 
@@ -73,10 +75,10 @@ export class Home {
     }
 
     if (error instanceof HttpErrorResponse && error.status === 0) {
-      this.errorMessage = 'Der Server ist gerade nicht erreichbar.';
+      this.errorMessage = this.translate.instant('home.errors.serverUnavailable');
       return;
     }
 
-    this.errorMessage = 'Die Raumaktion konnte nicht abgeschlossen werden.';
+    this.errorMessage = this.translate.instant('home.errors.roomActionFailed');
   }
 }

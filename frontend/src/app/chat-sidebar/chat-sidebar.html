@@ -1,14 +1,14 @@
 <aside [class.is-collapsed]="isCollapsed()" aria-labelledby="chat-title" class="chat-sidebar">
   <header class="chat-header">
     <div>
-      <p class="chat-eyebrow">Live</p>
-      <h2 id="chat-title">Chat</h2>
+      <p class="chat-eyebrow">{{ 'chat.eyebrow' | translate }}</p>
+      <h2 id="chat-title">{{ 'chat.title' | translate }}</h2>
     </div>
     <button
       (click)="toggleCollapsed()"
       [attr.aria-expanded]="!isCollapsed()"
-      [attr.aria-label]="isCollapsed() ? 'Chat öffnen' : 'Chat minimieren'"
-      [attr.title]="isCollapsed() ? 'Chat öffnen' : 'Chat minimieren'"
+      [attr.aria-label]="(isCollapsed() ? 'chat.expand' : 'chat.collapse') | translate"
+      [attr.title]="(isCollapsed() ? 'chat.expand' : 'chat.collapse') | translate"
       aria-controls="chat-content"
       class="collapse-button"
       type="button"
@@ -31,24 +31,24 @@
             </article>
           }
         } @else {
-          <p class="empty-chat">Noch keine Nachrichten.</p>
+          <p class="empty-chat">{{ 'chat.empty' | translate }}</p>
         }
       </div>
 
       <form (ngSubmit)="submit()" [formGroup]="form" class="chat-form" novalidate>
-        <label for="chat-body">Nachricht</label>
+        <label for="chat-body">{{ 'chat.messageLabel' | translate }}</label>
         <textarea
           [readonly]="disabled()"
           formControlName="body"
           id="chat-body"
           maxlength="500"
-          placeholder="Schreib etwas"
+          [placeholder]="'chat.placeholder' | translate"
           rows="3"
         ></textarea>
         @if (form.controls.body.touched && form.controls.body.invalid) {
-          <p class="chat-error">Bitte gib eine Nachricht mit maximal 500 Zeichen ein.</p>
+          <p class="chat-error">{{ 'chat.errors.messageInvalid' | translate }}</p>
         }
-        <button [disabled]="disabled()" class="send-button" type="submit">Senden</button>
+        <button [disabled]="disabled()" class="send-button" type="submit">{{ 'chat.send' | translate }}</button>
       </form>
     </div>
   }

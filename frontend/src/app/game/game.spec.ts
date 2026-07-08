@@ -1,4 +1,4 @@
-import {HttpErrorResponse} from '@angular/common/http';
+import {HttpErrorResponse, provideHttpClient} from '@angular/common/http';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, convertToParamMap, provideRouter} from '@angular/router';
 import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
@@ -6,6 +6,7 @@ import {BehaviorSubject, Observable, of, Subject, throwError} from 'rxjs';
 import {GameApiService} from '../core/api/game-api.service';
 import {RoomApiService} from '../core/api/room-api.service';
 import {ActiveRoundResponse} from '../core/api/room.models';
+import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {Game} from './game';
@@ -29,6 +30,7 @@ describe('Game', () => {
     questionText: 'Welche Ausrede funktioniert immer?',
     assignedCardValue: 7,
     currentPlayerSubmitted: false,
+    currentPlayerIsCaptain: false,
   };
   const submittedAnswers = [
     {
@@ -84,6 +86,8 @@ describe('Game', () => {
     await TestBed.configureTestingModule({
       imports: [Game],
       providers: [
+        provideHttpClient(),
+        provideTestingTranslations(),
         provideRouter([]),
         {provide: RoomApiService, useValue: roomApi},
         {provide: GameApiService, useValue: gameApi},
@@ -99,8 +103,8 @@ describe('Game', () => {
     }).compileComponents();
   });
 
-  function createComponent(): void {
-    roomApi.getActiveRound.and.returnValue(of(activeRound));
+  function createComponent(roundResponse: ActiveRoundResponse = activeRound): void {
+    roomApi.getActiveRound.and.returnValue(of(roundResponse));
     roomApi.submitAnswer.and.returnValue(
       of({answerId: 'answer-1', roundId: 'round-1', playerId: 'player-1', submitted: true}),
     );
@@ -175,7 +179,7 @@ describe('Game', () => {
 
   it('should show the captain sorting hint for the host player', () => {
     queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
-    createComponent();
+    createComponent({...activeRound, currentPlayerIsCaptain: true});
 
     realtimeEvents.next({
       type: 'SORTING_STARTED',
@@ -189,7 +193,7 @@ describe('Game', () => {
   it('should render submitted answers as host ranking cards', () => {
     queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
-    createComponent();
+    createComponent({...activeRound, currentPlayerIsCaptain: true});
 
     realtimeEvents.next({
       type: 'SORTING_STARTED',
@@ -222,7 +226,7 @@ describe('Game', () => {
         ],
       }),
     );
-    createComponent();
+    createComponent({...activeRound, currentPlayerIsCaptain: true});
 
     realtimeEvents.next({
       type: 'SORTING_STARTED',

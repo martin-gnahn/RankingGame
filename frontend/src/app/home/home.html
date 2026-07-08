@@ -1,13 +1,13 @@
 <main class="home-shell">
   <section class="hero" aria-labelledby="home-title">
-    <p class="eyebrow">Party Games</p>
-    <h1 id="home-title">Ranking Game</h1>
+    <p class="eyebrow">{{ 'home.eyebrow' | translate }}</p>
+    <h1 id="home-title">{{ 'home.title' | translate }}</h1>
     <p class="intro">
-      Erstellt einen Raum, sammelt Antworten und sortiert gemeinsam die besten Rankings.
+      {{ 'home.intro' | translate }}
     </p>
   </section>
 
-  <section class="room-actions" aria-label="Raumaktionen">
+  <section [attr.aria-label]="'home.roomActions' | translate" class="room-actions">
     <app-create-room
       [disabled]="pendingAction !== null"
       [loading]="pendingAction === 'create'"

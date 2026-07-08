@@ -1,9 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import {provideHttpClient} from '@angular/common/http';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
 
-import { RoomApiService } from '../core/api/room-api.service';
-import { Home } from './home';
+import {RoomApiService} from '../core/api/room-api.service';
+import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
+import {Home} from './home';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
@@ -17,6 +19,8 @@ describe('Home', () => {
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
+        provideHttpClient(),
+        provideTestingTranslations(),
         { provide: RoomApiService, useValue: roomApi },
         { provide: Router, useValue: router },
       ],

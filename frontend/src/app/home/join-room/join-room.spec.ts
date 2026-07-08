@@ -1,6 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { JoinRoom } from './join-room';
+import {provideTestingTranslations} from '../../core/i18n/translate-testing.providers';
+import {JoinRoom} from './join-room';
 
 describe('JoinRoom', () => {
   let fixture: ComponentFixture<JoinRoom>;
@@ -8,6 +10,7 @@ describe('JoinRoom', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [JoinRoom],
+      providers: [provideHttpClient(), provideTestingTranslations()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(JoinRoom);

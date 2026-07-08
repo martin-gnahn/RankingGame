@@ -2,6 +2,7 @@ import {HttpErrorResponse} from '@angular/common/http';
 import {Component, computed, effect, inject, signal} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {TranslatePipe, TranslateService} from '@ngx-translate/core';
 import {map, Subscription} from 'rxjs';
 
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
@@ -12,7 +13,7 @@ import {WebSocketService} from '../core/websocket/web-socket.service';
 
 @Component({
   selector: 'app-lobby',
-  imports: [RouterLink, ChatSidebar],
+  imports: [RouterLink, ChatSidebar, TranslatePipe],
   templateUrl: './lobby.html',
   styleUrl: './lobby.scss',
 })
@@ -21,6 +22,7 @@ export class Lobby {
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
@@ -62,7 +64,7 @@ export class Lobby {
 
       if (!roomCode) {
         this.room.set(null);
-        this.errorMessage.set('Der Raumcode fehlt.');
+        this.errorMessage.set(this.translate.instant('lobby.errors.missingRoomCode'));
         this.loading.set(false);
         return;
       }
@@ -81,7 +83,8 @@ export class Lobby {
 
       const subscription = this.webSocket.subscribeToRoom(roomCode).subscribe({
         next: (event) => this.handleRealtimeEvent(roomCode, event),
-        error: () => this.refreshErrorMessage.set('Live-Update konnte nicht gelesen werden.'),
+        error: () =>
+          this.refreshErrorMessage.set(this.translate.instant('lobby.errors.liveUpdateReadFailed')),
       });
 
       if (playerId) {
@@ -107,7 +110,7 @@ export class Lobby {
     const hostPlayerId = this.currentPlayerId();
 
     if (!roomCode || !hostPlayerId || this.startingGame()) {
-      this.startErrorMessage.set('Das Spiel konnte nicht gestartet werden.');
+      this.startErrorMessage.set(this.translate.instant('lobby.errors.startFailed'));
       return;
     }
 
@@ -137,19 +140,19 @@ export class Lobby {
     this.webSocket.sendChatMessage(roomCode, playerId, body);
   }
 
-  protected statusLabel(status: string): string {
+  protected statusLabelKey(status: string): string {
     const labels: Record<string, string> = {
-      LOBBY: 'Wartet auf Spieler',
-      IN_GAME: 'Spiel laeuft',
-      FINISHED: 'Spiel beendet',
-      CLOSED: 'Raum geschlossen',
+      LOBBY: 'lobby.status.lobby',
+      IN_GAME: 'lobby.status.inGame',
+      FINISHED: 'lobby.status.finished',
+      CLOSED: 'lobby.status.closed',
     };
 
     return labels[status] ?? status;
   }
 
-  protected connectionLabel(status: string): string {
-    return status === 'CONNECTED' ? 'Online' : 'Getrennt';
+  protected connectionLabelKey(status: string): string {
+    return status === 'CONNECTED' ? 'lobby.connection.online' : 'lobby.connection.disconnected';
   }
 
   private loadRoom(
@@ -170,7 +173,7 @@ export class Lobby {
       },
       error: (error: unknown) => {
         if (this.room()) {
-          this.refreshErrorMessage.set('Live-Update konnte nicht geladen werden.');
+          this.refreshErrorMessage.set(this.translate.instant('lobby.errors.liveUpdateLoadFailed'));
         } else {
           this.room.set(null);
           this.errorMessage.set(this.toErrorMessage(error));
@@ -189,7 +192,7 @@ export class Lobby {
   private loadChatMessages(roomCode: string, onCleanup?: (cleanupFn: () => void) => void): void {
     const subscription = this.roomApi.getRecentChatMessages(roomCode).subscribe({
       next: (messages) => this.chatMessages.set(messages),
-      error: () => this.refreshErrorMessage.set('Chat konnte nicht geladen werden.'),
+      error: () => this.refreshErrorMessage.set(this.translate.instant('lobby.errors.chatLoadFailed')),
     });
 
     onCleanup?.(() => subscription.unsubscribe());
@@ -237,14 +240,14 @@ export class Lobby {
     }
 
     if (error instanceof HttpErrorResponse && error.status === 404) {
-      return 'Dieser Raum wurde nicht gefunden.';
+      return this.translate.instant('lobby.errors.roomNotFound');
     }
 
     if (error instanceof HttpErrorResponse && error.status === 0) {
-      return 'Der Server ist gerade nicht erreichbar.';
+      return this.translate.instant('lobby.errors.serverUnavailable');
     }
 
-    return 'Die Lobby konnte nicht geladen werden.';
+    return this.translate.instant('lobby.errors.loadFailed');
   }
 
   private isChatMessage(payload: unknown): payload is ChatMessageResponse {

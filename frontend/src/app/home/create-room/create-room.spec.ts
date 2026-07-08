@@ -1,6 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { CreateRoom } from './create-room';
+import {provideTestingTranslations} from '../../core/i18n/translate-testing.providers';
+import {CreateRoom} from './create-room';
 
 describe('CreateRoom', () => {
   let fixture: ComponentFixture<CreateRoom>;
@@ -8,6 +10,7 @@ describe('CreateRoom', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CreateRoom],
+      providers: [provideHttpClient(), provideTestingTranslations()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CreateRoom);

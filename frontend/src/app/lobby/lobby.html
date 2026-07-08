@@ -1,35 +1,35 @@
 <main class="lobby-shell" aria-labelledby="lobby-title">
-  <a routerLink="/" class="back-link">Zur Startseite</a>
+  <a class="back-link" routerLink="/">{{ 'app.backToHome' | translate }}</a>
 
   <div class="lobby-layout">
     <section class="lobby-panel">
       <div class="lobby-header">
         <div>
-          <p class="eyebrow">Lobby</p>
+          <p class="eyebrow">{{ 'lobby.eyebrow' | translate }}</p>
           <h1 id="lobby-title">{{ room()?.roomCode ?? roomCode() }}</h1>
         </div>
 
         @if (room(); as room) {
-          <p class="room-status">{{ statusLabel(room.status) }}</p>
+          <p class="room-status">{{ statusLabelKey(room.status) | translate }}</p>
         }
       </div>
 
       @if (loading()) {
         <div class="state-message" role="status">
           <span class="loader" aria-hidden="true"></span>
-          Lobby wird geladen
+          {{ 'lobby.loading' | translate }}
         </div>
       } @else if (errorMessage()) {
         <div class="state-message error" role="alert">
           <p>{{ errorMessage() }}</p>
           <button class="secondary-button" type="button" (click)="retryLoad()">
-            Erneut versuchen
+            {{ 'lobby.retry' | translate }}
           </button>
         </div>
       } @else if (room(); as room) {
-        <div class="lobby-summary" aria-label="Lobby Status">
-          <span>{{ playerCount() }} Spieler</span>
-          <span>{{ statusLabel(room.status) }}</span>
+        <div [attr.aria-label]="'lobby.statusAria' | translate" class="lobby-summary">
+          <span>{{ 'lobby.playerCount' | translate: {count: playerCount()} }}</span>
+          <span>{{ statusLabelKey(room.status) | translate }}</span>
         </div>
 
         @if (refreshErrorMessage()) {
@@ -37,7 +37,7 @@
         }
 
         <section class="players-section" aria-labelledby="players-title">
-          <h2 id="players-title">Spieler</h2>
+          <h2 id="players-title">{{ 'lobby.playersTitle' | translate }}</h2>
 
           @if (room.players.length) {
             <ul class="player-list">
@@ -46,20 +46,20 @@
                   <div class="player-main">
                     <span class="player-name">{{ player.nickname }}</span>
                     @if (player.host) {
-                      <span class="host-badge">Host</span>
+                      <span class="host-badge">{{ 'lobby.hostBadge' | translate }}</span>
                     }
                   </div>
                   <span
                     class="connection-badge"
                     [class.disconnected]="player.connectionStatus !== 'CONNECTED'"
                   >
-                    {{ connectionLabel(player.connectionStatus) }}
+                    {{ connectionLabelKey(player.connectionStatus) | translate }}
                   </span>
                 </li>
               }
             </ul>
           } @else {
-            <p class="empty-state">Noch keine Spieler im Raum.</p>
+            <p class="empty-state">{{ 'lobby.emptyPlayers' | translate }}</p>
           }
         </section>
 
@@ -74,13 +74,13 @@
             [disabled]="startingGame() || !canStartGame()"
             (click)="startGame()"
           >
-            Spiel starten
+            {{ 'lobby.startGame' | translate }}
           </button>
           @if (!canStartGame() && room.startBlockedReason) {
             <p class="waiting-note">{{ room.startBlockedReason }}</p>
           }
         } @else {
-          <p class="waiting-note">Der Host startet das Spiel.</p>
+          <p class="waiting-note">{{ 'lobby.hostStarts' | translate }}</p>
         }
       }
     </section>

@@ -134,6 +134,7 @@ describe('RoomApiService', () => {
       questionText: 'Welche Ausrede funktioniert immer?',
       assignedCardValue: 7,
       currentPlayerSubmitted: false,
+      currentPlayerIsCaptain: false,
     };
 
     service.getActiveRound('A/B1', 'player-1').subscribe((result) => {

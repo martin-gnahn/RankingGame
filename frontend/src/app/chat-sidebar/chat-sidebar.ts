@@ -1,11 +1,12 @@
 import {Component, computed, input, output, signal} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
+import {TranslatePipe} from '@ngx-translate/core';
 
 import {ChatMessageResponse} from '../core/api/room.models';
 
 @Component({
   selector: 'app-chat-sidebar',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './chat-sidebar.html',
   styleUrl: './chat-sidebar.scss',
 })
