@@ -9,15 +9,9 @@
     "test": "ng test",
     "e2e": "playwright test --project=chromium",
     "e2e:public": "playwright test --config=playwright.public.config.ts --project=chromium",
-    "e2e:smoke": "playwright test e2e/smoke.spec.ts --project=chromium",
-    "e2e:headed": "playwright test --project=chromium --headed",
-    "e2e:ui": "playwright test --project=chromium --ui --timeout=0",
-    "e2e:debug": "playwright test --project=chromium --debug --timeout=0",
-    "e2e:report": "playwright show-report",
-    "e2e:trace": "playwright show-trace",
-    "e2e:all-browsers": "playwright test",
-    "e2e:install": "playwright install chromium",
-    "e2e:install:all": "playwright install"
+    "e2e:debugger": "playwright test --project=chromium --headed --timeout=0 --workers=1",
+    "e2e:debug:ui": "playwright test --project=chromium --debug --timeout=0 --workers=1",
+    "e2e:ui": "playwright test --project=chromium --ui --timeout=0"
   },
   "prettier": {
     "printWidth": 100,

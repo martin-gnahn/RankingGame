@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/test';
 
+import {t} from './i18n';
 import {
   createRoom,
   expectGameScreen,
@@ -18,7 +19,7 @@ test('shows an error when the host starts with no other players in the lobby', a
   await hostPage.goto('/');
   await createRoom(hostPage, hostName);
 
-  await expect(hostPage.getByText('1 Spieler')).toBeVisible();
+  await expect(hostPage.getByText(t('lobby.playerCount', {count: 1}))).toBeVisible();
   await expectStartGameButtonState(hostPage, 'disabled');
   await expect(hostPage.locator('.waiting-note')).toContainText(
     'At least 2 players are required to start the game',
@@ -43,10 +44,10 @@ test('shows an error when every non-host player is disconnected', async ({
     await guestPage.goto('/');
     await joinRoom(guestPage, roomCode, guestName);
 
-    await expectPlayerConnectionStatus(hostPage, guestName, 'Online');
+    await expectPlayerConnectionStatus(hostPage, guestName, 'online');
     await guestContext.close();
     guestContextClosed = true;
-    await expectPlayerConnectionStatus(hostPage, guestName, 'Getrennt');
+    await expectPlayerConnectionStatus(hostPage, guestName, 'disconnected');
 
     await expectStartGameButtonState(hostPage, 'disabled');
     await expect(hostPage.locator('.waiting-note')).toContainText(
@@ -83,14 +84,14 @@ test('allows the host to start when one joined player remains online', async ({
     await guestTwoPage.goto('/');
     await joinRoom(guestTwoPage, roomCode, guestTwoName);
 
-    await expectPlayerConnectionStatus(hostPage, guestOneName, 'Online');
-    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'Online');
+    await expectPlayerConnectionStatus(hostPage, guestOneName, 'online');
+    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'online');
 
     await guestOneContext.close();
     guestOneContextClosed = true;
 
-    await expectPlayerConnectionStatus(hostPage, guestOneName, 'Getrennt');
-    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'Online');
+    await expectPlayerConnectionStatus(hostPage, guestOneName, 'disconnected');
+    await expectPlayerConnectionStatus(hostPage, guestTwoName, 'online');
 
     await expectStartGameButtonState(hostPage, 'enabled');
     await startGame(hostPage);
@@ -124,11 +125,11 @@ test('allows the host to start when another player is online while non-host play
     await guestPage.goto('/');
     await joinRoom(guestPage, roomCode, guestName);
 
-    await expectPlayerConnectionStatus(hostPage, guestName, 'Online');
-    await expect(hostPage.getByRole('button', { name: 'Spiel starten' })).toBeVisible();
+    await expectPlayerConnectionStatus(hostPage, guestName, 'online');
+    await expect(hostPage.getByRole('button', {name: t('lobby.startGame')})).toBeVisible();
     await expectStartGameButtonState(hostPage, 'enabled');
-    await expect(guestPage.getByRole('button', { name: 'Spiel starten' })).toHaveCount(0);
-    await expect(guestPage.getByText('Der Host startet das Spiel.')).toBeVisible();
+    await expect(guestPage.getByRole('button', {name: t('lobby.startGame')})).toHaveCount(0);
+    await expect(guestPage.getByText(t('lobby.hostStarts'))).toBeVisible();
 
     await startGame(hostPage);
 

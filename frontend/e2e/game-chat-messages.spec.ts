@@ -1,14 +1,11 @@
-import { expect, test } from '@playwright/test';
+import {expect, test} from '@playwright/test';
 
 import {
-  createRoom,
   expectChatMessageVisible,
   expectChatReady,
-  expectGameScreen,
-  joinRoom,
   roomCodeFromUrl,
   sendChatMessage,
-  startGame,
+  startGameWith2Players,
   uniquePlayerName,
 } from './room-flow-helpers';
 
@@ -25,16 +22,7 @@ test('lets players send and receive chat messages during an active game', async 
   const guestMessage = `In-game hello from guest ${messageSuffix}`;
 
   try {
-    await hostPage.goto('/');
-    const roomCode = await createRoom(hostPage, hostName);
-
-    await guestPage.goto('/');
-    await joinRoom(guestPage, roomCode, guestName);
-
-    await startGame(hostPage);
-
-    await expectGameScreen(hostPage);
-    await expectGameScreen(guestPage);
+    const roomCode = await startGameWith2Players(hostPage, hostName, guestPage, guestName);
     expect(roomCodeFromUrl(hostPage)).toBe(roomCode);
     expect(roomCodeFromUrl(guestPage)).toBe(roomCode);
 

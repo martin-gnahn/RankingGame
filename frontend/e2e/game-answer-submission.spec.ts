@@ -1,13 +1,6 @@
-import { test } from '@playwright/test';
+import {test} from '@playwright/test';
 
-import {
-  createRoom,
-  expectGameScreen,
-  joinRoom,
-  startGame,
-  submitAnswer,
-  uniquePlayerName,
-} from './room-flow-helpers';
+import {startGameWith2Players, submitAnswer, uniquePlayerName,} from './room-flow-helpers';
 
 test('lets two players submit answers after the host starts the game', async ({
   browser,
@@ -19,16 +12,7 @@ test('lets two players submit answers after the host starts the game', async ({
   const guestName = uniquePlayerName('Guest');
 
   try {
-    await hostPage.goto('/');
-    const roomCode = await createRoom(hostPage, hostName);
-
-    await guestPage.goto('/');
-    await joinRoom(guestPage, roomCode, guestName);
-
-    await startGame(hostPage);
-
-    await expectGameScreen(hostPage);
-    await expectGameScreen(guestPage);
+    await startGameWith2Players(hostPage, hostName, guestPage, guestName);
 
     await submitAnswer(hostPage, 'Ich wuerde erst mal die Kaffeemaschine beschuldigen.');
     await submitAnswer(guestPage, 'Ich sage, das WLAN hatte Lampenfieber.');

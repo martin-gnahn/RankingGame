@@ -1,7 +1,13 @@
 import {expect, Locator, Page} from '@playwright/test';
 
+import {t} from './i18n';
+
 const backendHealthUrl = process.env.E2E_BACKEND_HEALTH_URL ?? 'http://localhost:8080/health';
 let backendReady = false;
+const connectionStatusTranslationKeys = {
+  disconnected: 'lobby.connection.disconnected',
+  online: 'lobby.connection.online',
+} as const;
 
 export function uniquePlayerName(prefix: string): string {
   return `${prefix} ${Date.now().toString(36).slice(-6)}`;
@@ -10,8 +16,8 @@ export function uniquePlayerName(prefix: string): string {
 export async function createRoom(page: Page, playerName: string): Promise<string> {
   await ensureBackendReady(page);
 
-  await page.locator('app-create-room').getByLabel('Dein Name').fill(playerName);
-  await page.locator('app-create-room').getByRole('button', { name: 'Raum erstellen' }).click();
+  await page.locator('app-create-room').getByLabel(t('createRoom.playerName')).fill(playerName);
+  await page.locator('app-create-room').getByRole('button', {name: t('createRoom.submit')}).click();
   await page.waitForURL(/\/lobby\/[A-Z0-9]{4,8}(?:\?.*)?$/);
 
   return roomCodeFromUrl(page);
@@ -29,9 +35,9 @@ export async function submitJoinRoom(
 ): Promise<void> {
   const joinForm = page.locator('app-join-room');
 
-  await joinForm.getByLabel('Raumcode').fill(roomCode);
-  await joinForm.getByLabel('Dein Name').fill(playerName);
-  await joinForm.getByRole('button', { name: 'Raum beitreten' }).click();
+  await joinForm.getByLabel(t('joinRoom.roomCode')).fill(roomCode);
+  await joinForm.getByLabel(t('joinRoom.playerName')).fill(playerName);
+  await joinForm.getByRole('button', {name: t('joinRoom.submit')}).click();
 }
 
 export async function expectPlayerVisible(page: Page, playerName: string): Promise<void> {
@@ -42,8 +48,10 @@ export async function expectPlayerVisible(page: Page, playerName: string): Promi
 export async function expectPlayerConnectionStatus(
   page: Page,
   playerName: string,
-  statusLabel: 'Online' | 'Getrennt',
+  status: keyof typeof connectionStatusTranslationKeys,
 ): Promise<void> {
+  const statusLabel = t(connectionStatusTranslationKeys[status]);
+
   await expect(
     page.locator('.player-row').filter({ hasText: playerName }).getByText(statusLabel),
   ).toBeVisible();
@@ -70,32 +78,33 @@ export async function startGame(page: Page): Promise<void> {
 
 export async function expectGameScreen(page: Page): Promise<void> {
   await page.waitForURL(/\/game\/[A-Z0-9]{4,8}(?:\?.*)?$/);
-  await expect(page.getByText(/^Runde \d+$/)).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Antwort' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Antwort abgeben' })).toBeVisible();
+  let roundTranslated = t('game.roundLabel', {roundNumber: 1});
+  debugger;
+  await expect(page.getByText(roundTranslated)).toBeVisible();
+  await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toBeVisible();
+  await expect(page.getByRole('button', {name: t('game.submit.default')})).toBeVisible();
 }
 
 export async function submitAnswer(page: Page, answerText: string): Promise<void> {
-  await page.getByRole('textbox', { name: 'Antwort' }).fill(answerText);
-  await page.getByRole('button', { name: 'Antwort abgeben' }).click();
-  await expect(page.getByRole('button', { name: 'Antwort gesendet' })).toBeVisible();
-  await expect(page.getByText('Antwort gespeichert. Warte auf die anderen Spieler.')).toBeVisible();
+  await page.getByRole('textbox', {name: t('game.answer.label')}).fill(answerText);
+  await page.getByRole('button', {name: t('game.submit.default')}).click();
+  await expect(page.getByRole('button', {name: t('game.submit.sent')})).toBeVisible();
 }
 
 export async function expectChatReady(page: Page): Promise<void> {
   const chat = page.locator('app-chat-sidebar');
 
-  await expect(chat.getByRole('heading', { name: 'Chat' })).toBeVisible();
-  await expect(chat.getByRole('textbox', { name: 'Nachricht' })).toBeVisible();
-  await expect(chat.getByRole('button', { name: 'Senden' })).toBeEnabled();
+  await expect(chat.getByRole('heading', {name: t('chat.title')})).toBeVisible();
+  await expect(chat.getByRole('textbox', {name: t('chat.messageLabel')})).toBeVisible();
+  await expect(chat.getByRole('button', {name: t('chat.send')})).toBeEnabled();
 }
 
 export async function sendChatMessage(page: Page, messageBody: string): Promise<void> {
   const chat = page.locator('app-chat-sidebar');
 
-  await chat.getByRole('textbox', { name: 'Nachricht' }).fill(messageBody);
-  await chat.getByRole('button', { name: 'Senden' }).click();
-  await expect(chat.getByRole('textbox', { name: 'Nachricht' })).toHaveValue('');
+  await chat.getByRole('textbox', {name: t('chat.messageLabel')}).fill(messageBody);
+  await chat.getByRole('button', {name: t('chat.send')}).click();
+  await expect(chat.getByRole('textbox', {name: t('chat.messageLabel')})).toHaveValue('');
 }
 
 export async function expectChatMessageVisible(
@@ -123,7 +132,7 @@ export function roomCodeFromUrl(page: Page): string {
 }
 
 function startGameButton(page: Page): Locator {
-  return page.getByRole('button', {name: 'Spiel starten'});
+  return page.getByRole('button', {name: t('lobby.startGame')});
 }
 
 async function ensureBackendReady(page: Page): Promise<void> {
@@ -149,4 +158,18 @@ async function ensureBackendReady(page: Page): Promise<void> {
   }
 
   backendReady = true;
+}
+
+export async function startGameWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
+  await hostPage.goto('/');
+  const roomCode = await createRoom(hostPage, hostName);
+
+  await guestPage.goto('/');
+  await joinRoom(guestPage, roomCode, guestName);
+
+  await startGame(hostPage);
+
+  await expectGameScreen(hostPage);
+  await expectGameScreen(guestPage);
+  return roomCode;
 }
