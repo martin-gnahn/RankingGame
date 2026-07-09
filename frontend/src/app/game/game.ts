@@ -290,6 +290,7 @@ export class Game {
         const alreadyHasSubmitted = activeRound.currentPlayerSubmitted;
         this.submitted.set(alreadyHasSubmitted);
         if (alreadyHasSubmitted) {
+          this.form.controls.answerText.setValue(activeRound.submittedAnswerByPlayer ?? '');
           this.form.disable();
         }
       },

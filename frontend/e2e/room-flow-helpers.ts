@@ -87,12 +87,12 @@ export async function expectGameScreen(page: Page): Promise<void> {
 export async function submitAnswer(page: Page, answerText: string): Promise<void> {
   await page.getByRole('textbox', {name: t('game.answer.label')}).fill(answerText);
   await page.getByRole('button', {name: t('game.submit.default')}).click();
-  await expectAnswerBoxToHaveText(page, answerText);
+  await expectAnswerTextBoxToHaveValue(page, answerText);
   await expectAnswerButtonToHaveSentState(page);
 }
 
-export async function expectAnswerBoxToHaveText(page: Page, answerText: string): Promise<void> {
-  await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toHaveText(answerText);
+export async function expectAnswerTextBoxToHaveValue(page: Page, answerText: string): Promise<void> {
+  await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toHaveValue(answerText);
 }
 
 export async function expectAnswerButtonToHaveSentState(page: Page): Promise<void> {
