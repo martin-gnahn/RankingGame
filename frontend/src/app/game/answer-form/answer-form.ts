@@ -3,7 +3,7 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {TranslatePipe} from '@ngx-translate/core';
 
 import {ActiveRoundResponse} from '../../core/api/room.models';
-import {AnswerFormGroup, ScoreCard} from '../game-view.models';
+import {AnswerSubmissionState} from '../game-view.models';
 import {ScoreCard as ScoreCardComponent} from '../score-card/score-card';
 
 @Component({
@@ -14,10 +14,6 @@ import {ScoreCard as ScoreCardComponent} from '../score-card/score-card';
 })
 export class AnswerForm {
   readonly round = input.required<ActiveRoundResponse>();
-  readonly answerForm = input.required<AnswerFormGroup>();
-  readonly scoreCards = input.required<ScoreCard[]>();
-  readonly submitting = input(false);
-  readonly submitted = input(false);
-  readonly submitErrorMessage = input('');
+  readonly state = input.required<AnswerSubmissionState>();
   readonly answerSubmitted = output<void>();
 }

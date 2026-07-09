@@ -18,12 +18,8 @@
 
         <app-answer-form
           (answerSubmitted)="submitAnswer()"
-          [answerForm]="form"
           [round]="round"
-          [scoreCards]="scoreCards"
-          [submitErrorMessage]="submitErrorMessage()"
-          [submitted]="submitted()"
-          [submitting]="submitting()"
+          [state]="answerSubmissionState()"
         />
 
         @if (sortingStarted()) {

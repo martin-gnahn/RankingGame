@@ -15,7 +15,7 @@ import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {notBlankValidator} from '../shared/validators/not-blank.validator';
 import {AnswerForm} from './answer-form/answer-form';
-import {RankedAnswerView, ScoreCard} from './game-view.models';
+import {AnswerSubmissionState, RankedAnswerView, ScoreCard} from './game-view.models';
 import {Question} from './question/question';
 import {RankingAnswer} from './ranking-answer/ranking-answer';
 import {RankingOverview} from './ranking-overview/ranking-overview';
@@ -111,6 +111,13 @@ export class Game {
   protected readonly form = this.formBuilder.nonNullable.group({
     answerText: ['', [Validators.required, notBlankValidator(), Validators.maxLength(500)]],
   });
+  protected readonly answerSubmissionState = computed<AnswerSubmissionState>(() => ({
+    answerForm: this.form,
+    scoreCards: this.scoreCards,
+    submitting: this.submitting(),
+    submitted: this.submitted(),
+    submitErrorMessage: this.submitErrorMessage(),
+  }));
 
   constructor() {
 

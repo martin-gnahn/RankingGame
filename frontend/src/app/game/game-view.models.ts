@@ -16,3 +16,11 @@ export interface RankedAnswerView extends RankedAnswerDto {
 export type AnswerFormGroup = FormGroup<{
   answerText: FormControl<string>;
 }>;
+
+export interface AnswerSubmissionState {
+  answerForm: AnswerFormGroup;
+  scoreCards: ScoreCard[];
+  submitting: boolean;
+  submitted: boolean;
+  submitErrorMessage: string;
+}

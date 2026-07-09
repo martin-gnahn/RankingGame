@@ -1,4 +1,4 @@
-<form (ngSubmit)="answerSubmitted.emit()" [formGroup]="answerForm()" class="answer-form" novalidate>
+<form (ngSubmit)="answerSubmitted.emit()" [formGroup]="state().answerForm" class="answer-form" novalidate>
   <label for="answerText">{{ 'game.answer.label' | translate }}</label>
   <textarea
     [placeholder]="'game.answer.placeholder' | translate"
@@ -7,20 +7,20 @@
     maxlength="500"
     rows="5"
   ></textarea>
-  @if (answerForm().controls.answerText.touched && answerForm().controls.answerText.invalid) {
+  @if (state().answerForm.controls.answerText.touched && state().answerForm.controls.answerText.invalid) {
     <p class="field-error">{{ 'game.answer.required' | translate }}</p>
   }
 
-  <app-score-card [assignedCardValue]="round().assignedCardValue" [scoreCards]="scoreCards()"/>
+  <app-score-card [assignedCardValue]="round().assignedCardValue" [scoreCards]="state().scoreCards"/>
 
-  @if (submitErrorMessage()) {
-    <p class="submit-error" role="alert">{{ submitErrorMessage() }}</p>
+  @if (state().submitErrorMessage) {
+    <p class="submit-error" role="alert">{{ state().submitErrorMessage }}</p>
   }
 
-  <button [disabled]="submitting() || submitted()" class="primary-button" type="submit">
-    @if (submitted()) {
+  <button [disabled]="state().submitting || state().submitted" class="primary-button" type="submit">
+    @if (state().submitted) {
       {{ 'game.submit.sent' | translate }}
-    } @else if (submitting()) {
+    } @else if (state().submitting) {
       {{ 'game.submit.sending' | translate }}
     } @else {
       {{ 'game.submit.default' | translate }}
