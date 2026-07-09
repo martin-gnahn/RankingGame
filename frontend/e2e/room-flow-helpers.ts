@@ -172,12 +172,17 @@ async function ensureBackendReady(page: Page): Promise<void> {
   backendReady = true;
 }
 
-export async function startGameWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
+export async function createRoomWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
   await hostPage.goto('/');
   const roomCode = await createRoom(hostPage, hostName);
 
   await guestPage.goto('/');
   await joinRoom(guestPage, roomCode, guestName);
+  return roomCode;
+}
+
+export async function startGameWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
+  const roomCode = await createRoomWith2Players(hostPage, hostName, guestPage, guestName);
 
   await startGame(hostPage);
 
