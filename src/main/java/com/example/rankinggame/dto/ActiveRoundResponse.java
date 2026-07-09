@@ -19,7 +19,7 @@ public record ActiveRoundResponse(
                 result.roomCode(),
                 result.gameSessionId(),
                 result.roundId(),
-                result.roundIndex(),
+                result.roundNumber(),
                 result.questionId(),
                 result.questionText(),
                 result.assignedCardValue(),

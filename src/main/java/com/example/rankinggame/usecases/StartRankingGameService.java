@@ -1,7 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
-import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.engine.Game;
 import com.example.rankinggame.engine.GameParticipant;
 import com.example.rankinggame.engine.Question;
@@ -45,7 +45,7 @@ public class StartRankingGameService {
     private final RoomHostGuardService roomHostGuardService;
 
     @Transactional
-    public StartRankingGameResult startGame(StartRankingGameCommand command) {
+    public StartGameResult startGame(StartRankingGameCommand command) {
         String roomCode = roomCodeService.normalizeRoomCode(command);
         UUID hostPlayerId = requireHostPlayerId(command);
 
@@ -69,7 +69,7 @@ public class StartRankingGameService {
         assignFirstRoundCard(savedRoom, savedRound, hostPlayer);
         publishGameStarted(savedRoom, savedGameSession);
 
-        return toStartRankingGameResult(savedRoom, savedGameSession, savedRound);
+        return toStartGameResult(savedRoom, savedGameSession, savedRound);
     }
 
     private RoomEntity requireLobbyRoom(String roomCode) {
@@ -135,20 +135,25 @@ public class StartRankingGameService {
         ));
     }
 
-    private StartRankingGameResult toStartRankingGameResult(
+    private StartGameResult toStartGameResult(
             RoomEntity room,
             GameSession gameSession,
             RoundEntity round
     ) {
-        return new StartRankingGameResult(
-                new StartRankingGameResult.StartedRoom(room.getId(), room.getCode()),
-                new StartRankingGameResult.StartedGame(gameSession.getId(), gameSession.getGameType()),
-                new StartRankingGameResult.StartedRound(
-                        round.getId(),
-                        gameSession.getCurrentRoundIndex(),
-                        round.getQuestionId()
-                )
+
+        return new StartGameResult(
+                room.getId(),
+                room.getCode(),
+                gameSession.getId(),
+                gameSession.getGameType(),
+                round.getId(),
+                getRoundNumber(gameSession),
+                round.getQuestionId()
         );
+    }
+
+    private int getRoundNumber(GameSession gameSession) {
+        return gameSession.getCurrentRoundIndex() + 1;
     }
 
     private List<PlayerEntity> getPlayersSortedByJoinedAt(RoomEntity room) {

@@ -34,7 +34,7 @@ public class Game {
     }
 
     /**
-     * this is a 0-based roundIndex
+     * this is a 0-based round index
      */
     private int currentRoundIndex;
 

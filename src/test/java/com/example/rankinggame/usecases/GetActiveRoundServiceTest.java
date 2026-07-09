@@ -74,7 +74,7 @@ class GetActiveRoundServiceTest {
         assertThat(result.roomCode()).isEqualTo("ABCD12");
         assertThat(result.gameSessionId()).isEqualTo(gameSessionId);
         assertThat(result.roundId()).isEqualTo(roundId);
-        assertThat(result.roundIndex()).isEqualTo(0);
+        assertThat(result.roundNumber()).isEqualTo(1);
         assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.questionText()).isEqualTo("Welche Ausrede funktioniert immer?");
         assertThat(result.assignedCardValue()).isEqualTo(7);

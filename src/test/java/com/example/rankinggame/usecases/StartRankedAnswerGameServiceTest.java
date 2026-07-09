@@ -1,7 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
-import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.events.GameStartedRoomEvent;
 import com.example.rankinggame.exceptions.RoomNotInLobbyException;
@@ -61,15 +61,15 @@ class StartRankedAnswerGameServiceTest {
         when(roundRepository.save(any(RoundEntity.class))).thenReturn(savedRound);
         when(roomRepository.save(room)).thenReturn(room);
 
-        StartRankingGameResult result = service.startGame(new StartRankingGameCommand(" abcd12 ", hostPlayerId));
+        StartGameResult result = service.startGame(new StartRankingGameCommand(" abcd12 ", hostPlayerId));
 
-        assertThat(result.room().id()).isEqualTo(roomId);
-        assertThat(result.room().code()).isEqualTo("ABCD12");
-        assertThat(result.game().id()).isEqualTo(gameSessionId);
-        assertThat(result.game().gameType()).isEqualTo(GameType.RANKING_GAME);
-        assertThat(result.round().id()).isEqualTo(roundId);
-        assertThat(result.round().index()).isEqualTo(0);
-        assertThat(result.round().questionId()).isEqualTo(questionId);
+        assertThat(result.roomId()).isEqualTo(roomId);
+        assertThat(result.roomCode()).isEqualTo("ABCD12");
+        assertThat(result.gameSessionId()).isEqualTo(gameSessionId);
+        assertThat(result.gameType()).isEqualTo(GameType.RANKING_GAME);
+        assertThat(result.roundId()).isEqualTo(roundId);
+        assertThat(result.roundNumber()).isEqualTo(1);
+        assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_GAME);
 
         ArgumentCaptor<GameSession> gameSessionCaptor = ArgumentCaptor.forClass(GameSession.class);

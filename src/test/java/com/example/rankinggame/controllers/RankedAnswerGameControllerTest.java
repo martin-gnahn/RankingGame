@@ -1,8 +1,8 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.ActiveRoundResult;
+import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
-import com.example.rankinggame.dto.StartRankingGameResult;
 import com.example.rankinggame.entities.GameType;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
 import com.example.rankinggame.exceptions.RoomNotInLobbyException;
@@ -38,10 +38,14 @@ class RankedAnswerGameControllerTest {
         UUID roundId = UUID.randomUUID();
         UUID questionId = UUID.randomUUID();
         when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
-                .thenReturn(new StartRankingGameResult(
-                        new StartRankingGameResult.StartedRoom(roomId, "ABCD12"),
-                        new StartRankingGameResult.StartedGame(gameSessionId, GameType.RANKING_GAME),
-                        new StartRankingGameResult.StartedRound(roundId, 1, questionId)
+                .thenReturn(new StartGameResult(
+                        roomId,
+                        "ABCD12",
+                        gameSessionId,
+                        GameType.RANKING_GAME,
+                        roundId,
+                        1,
+                        questionId
                 ));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
 
@@ -49,13 +53,10 @@ class RankedAnswerGameControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerId\":\"" + hostPlayerId + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
-                .andExpect(jsonPath("$.gameSessionId").value(gameSessionId.toString()))
-                .andExpect(jsonPath("$.gameType").value("RANKING_GAME"))
-                .andExpect(jsonPath("$.roundId").value(roundId.toString()))
-                .andExpect(jsonPath("$.roundNumber").value(1))
-                .andExpect(jsonPath("$.questionId").value(questionId.toString()));
+                .andExpect(jsonPath("$.roomId").doesNotExist())
+                .andExpect(jsonPath("$.gameSessionId").doesNotExist())
+                .andExpect(jsonPath("$.roundId").doesNotExist());
 
         ArgumentCaptor<StartRankingGameCommand> commandCaptor = ArgumentCaptor.forClass(StartRankingGameCommand.class);
         org.mockito.Mockito.verify(startRankingGameService).startGame(commandCaptor.capture());

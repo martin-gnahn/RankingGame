@@ -59,13 +59,17 @@ public class GetActiveRoundService {
                 room.getCode(),
                 gameSession.getId(),
                 round.getId(),
-                gameSession.getCurrentRoundIndex(),
+                getRoundNumberOneBased(gameSession),
                 question.getId(),
                 question.getText(),
                 assignedCardValue,
                 currentPlayerSubmitted,
                 currentPlayerIsCaptain
         );
+    }
+
+    private int getRoundNumberOneBased(GameSession gameSession) {
+        return gameSession.getCurrentRoundIndex() + 1;
     }
 
     private String normalizeRoomCode(String roomCode) {

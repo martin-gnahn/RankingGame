@@ -4,7 +4,9 @@ import com.example.rankinggame.entities.AnswerEntity;
 import com.example.rankinggame.entities.RankedAnswerEntity;
 import com.example.rankinggame.entities.RoundEntity;
 import com.example.rankinggame.entities.RoundState;
+import com.example.rankinggame.repositories.GameSessionRepository;
 import com.example.rankinggame.repositories.JpaRankingRepository;
+import com.example.rankinggame.repositories.RoomRepository;
 import com.example.rankinggame.repositories.RoundRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.assertj.core.groups.Tuple;
@@ -37,7 +39,12 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
     private JpaRankingRepository rankingRepository;
     @Autowired
     private RoundRepository roundRepository;
+    @Autowired
+    private GameSessionRepository jpaGameSessionRepository;
+    @Autowired
+    private RoomRepository jpaRoomRepository;
 
+    // TODO check
     @Test
     void hostCanRankSubmittedAnswerAndRankingIsPersisted() throws Exception {
         SortingRound round = prepareRoundInSortingState();
@@ -227,12 +234,20 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                                 {"playerId":"%s"}
                                 """.formatted(hostPlayerId)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.roundId").isString())
+                .andExpect(jsonPath("$.roomCode").isString())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        return new StartedRound(readUuid(responseBody, "$.roundId"));
+        return new StartedRound(assertAndFindRoundId(roomCode));
+    }
+
+    private UUID assertAndFindRoundId(String roomCode) {
+        var room = jpaRoomRepository.findByCode(roomCode);
+        assertThat(room).isPresent();
+        var game = jpaGameSessionRepository.findByRoomId(room.get().getId());
+        assertThat(game).isPresent();
+        return game.get().getCurrentRoundId();
     }
 
     private UUID submitAnswer(String roomCode, UUID roundId, UUID playerId, String answerText) throws Exception {

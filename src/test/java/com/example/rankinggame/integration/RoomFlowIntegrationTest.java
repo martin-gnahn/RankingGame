@@ -1,6 +1,9 @@
 package com.example.rankinggame.integration;
 
-import com.example.rankinggame.dto.*;
+import com.example.rankinggame.dto.SubmitAnswerRequest;
+import com.example.rankinggame.dto.SubmitAnswerResponse;
+import com.example.rankinggame.dto.SubmittedAnswerResponse;
+import com.example.rankinggame.dto.SubmittedAnswersResponse;
 import com.example.rankinggame.usecases.RoundProgressService;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
@@ -88,14 +91,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .getContentAsString();
         String guestPlayerId = JsonPath.read(joinRoomResponse, "$.playerId");
 
-        String startGameResponse = mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start", roomCode)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + hostPlayerId + "\"}"))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        String roundId = JsonPath.read(startGameResponse, "$.roundId");
+        StartedGame startedGame = startGame(new CreatedRoom(roomCode, hostPlayerId));
+        String roundId = startedGame.roundId().toString();
 
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -140,7 +137,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         // Then: the lobby contains all three connected players, and the game has not started yet.
         ensurePlayersConnected(createdRoom, firstGuestPlayerId, secondGuestPlayerId);
 
-        StartGameResponse startedGame = startGame(createdRoom);
+        StartedGame startedGame = startGame(createdRoom);
 
         ensurePlayersConnectedInGame(createdRoom, firstGuestPlayerId, secondGuestPlayerId);
 
@@ -179,7 +176,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         CreatedRoom createdRoom = createRoom(MARTA);
         String firstGuestPlayerId = joinRoom(createdRoom, ALEX);
         String secondGuestPlayerId = joinRoom(createdRoom, SAM);
-        StartGameResponse startedGame = startGame(createdRoom);
+        StartedGame startedGame = startGame(createdRoom);
 
         SubmitAnswerResponse hostAnswer = submitAnswer(
                 createdRoom,
@@ -206,7 +203,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private FinalAnswerSubmissions submitMissingAnswersAtSameProgressBoundary(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String firstGuestPlayerId,
             String secondGuestPlayerId
     ) throws Exception {
@@ -247,7 +244,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private QueriedSubmittedAnswers querySubmittedAnswersForAllPlayers(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String firstGuestPlayerId,
             String secondGuestPlayerId
     ) throws Exception {
@@ -260,7 +257,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private SubmittedAnswersResponse querySubmittedAnswers(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String requestingPlayerId,
             String firstGuestPlayerId,
             String secondGuestPlayerId
@@ -288,7 +285,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private void sortSubmittedAnswersAsHost(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             UUID answerId
     ) throws Exception {
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position/new",
@@ -304,7 +301,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private void rejectSortSubmittedAnswersAsGuest(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String guestPlayerId,
             UUID answerId
     ) throws Exception {
@@ -328,7 +325,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private SubmittedAnswers submitAnswersForAllPlayers(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String firstGuestPlayerId,
             String secondGuestPlayerId
     ) throws Exception {
@@ -356,7 +353,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
 
     private SubmitAnswerResponse submitAnswer(
             CreatedRoom createdRoom,
-            StartGameResponse startedGame,
+            StartedGame startedGame,
             String playerId,
             String answerText
     ) throws Exception {
@@ -389,7 +386,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         return objectMapper.writeValueAsString(new SubmitAnswerRequest(UUID.fromString(playerId), answerText));
     }
 
-    private CurrentGameSessionState queryCurrentGameSessionState(StartGameResponse startedGame) {
+    private CurrentGameSessionState queryCurrentGameSessionState(StartedGame startedGame) {
         return jdbcTemplate.queryForObject("""
                         SELECT
                             rooms.status AS room_status,
@@ -426,8 +423,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         );
     }
 
-    private StartGameResponse startGame(CreatedRoom createdRoom) throws Exception {
-        String startGameResponse = mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start",
+    private StartedGame startGame(CreatedRoom createdRoom) throws Exception {
+        mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start",
                             createdRoom.roomCode()
                         )
                         .contentType(MediaType.APPLICATION_JSON)
@@ -435,23 +432,27 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").value(createdRoom.roomCode()))
-                .andExpect(jsonPath("$.gameType").value("RANKING_GAME"))
-                .andExpect(jsonPath("$.gameSessionId").isString())
-                .andExpect(jsonPath("$.roundId").isString())
-                .andExpect(jsonPath("$.roundNumber").value(0))
-                .andExpect(jsonPath("$.questionId").isString())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(jsonPath("$.gameSessionId").doesNotExist())
+                .andExpect(jsonPath("$.roundId").doesNotExist());
 
-        return new StartGameResponse(
-                readUuid(startGameResponse, "$.roomId"),
-                JsonPath.read(startGameResponse, "$.roomCode"),
-                readUuid(startGameResponse, "$.gameSessionId"),
-                JsonPath.read(startGameResponse, "$.gameType"),
-                readUuid(startGameResponse, "$.roundId"),
-                JsonPath.read(startGameResponse, "$.roundNumber"),
-                readUuid(startGameResponse, "$.questionId")
+        return queryStartedGame(createdRoom.roomCode());
+    }
+
+    private StartedGame queryStartedGame(String roomCode) {
+        return jdbcTemplate.queryForObject("""
+                        SELECT
+                            game_sessions.id AS game_session_id,
+                            rounds.id AS round_id
+                        FROM rooms
+                        JOIN game_sessions ON game_sessions.room_id = rooms.id
+                        JOIN rounds ON rounds.game_session_id = game_sessions.id
+                        WHERE rooms.code = ?
+                        """,
+                (rs, rowNum) -> new StartedGame(
+                        UUID.fromString(rs.getString("game_session_id")),
+                        UUID.fromString(rs.getString("round_id"))
+                ),
+                roomCode
         );
     }
 
@@ -554,6 +555,9 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     }
 
     private record CreatedRoom(String roomCode, String hostPlayerId) {
+    }
+
+    private record StartedGame(UUID gameSessionId, UUID roundId) {
     }
 
     private record SubmittedAnswers(

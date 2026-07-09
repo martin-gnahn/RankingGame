@@ -101,13 +101,7 @@ describe('RoomApiService', () => {
 
   it('should start a ranking game with an encoded room code and host player id', () => {
     const response = {
-      roomId: 'room-1',
       roomCode: 'A/B1',
-      gameSessionId: 'session-1',
-      gameType: 'RANKING_GAME' as const,
-      roundId: 'round-1',
-      roundNumber: 1,
-      questionId: 'question-1',
     };
 
     service.startRankingGame('A/B1', { hostPlayerId: 'host-1' }).subscribe((result) => {

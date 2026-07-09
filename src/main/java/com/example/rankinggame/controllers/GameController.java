@@ -29,19 +29,12 @@ public class GameController {
             @PathVariable String roomCode,
             @Valid @RequestBody StartGameRequest request
     ) {
-        StartRankingGameResult result = startRankingGameService.startGame(new StartRankingGameCommand(
+        StartGameResult result = startRankingGameService.startGame(new StartRankingGameCommand(
                 roomCode,
                 request == null ? null : request.hostPlayerId()
         ));
-        return new StartGameResponse(
-                result.room().id(),
-                result.room().code(),
-                result.game().id(),
-                result.game().gameType().name(),
-                result.round().id(),
-                result.round().index(),
-                result.round().questionId()
-        );
+
+        return StartGameResponse.from(result);
     }
 
     @GetMapping("/current-round")

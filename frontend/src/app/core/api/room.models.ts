@@ -46,13 +46,7 @@ export interface StartGameRequest {
 }
 
 export interface StartGameResponse {
-  roomId: string;
   roomCode: RoomCode;
-  gameSessionId: string;
-  gameType: 'RANKING_GAME';
-  roundId: string;
-  roundNumber: number;
-  questionId: string;
 }
 
 export interface ActiveRoundResponse {

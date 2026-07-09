@@ -32,7 +32,7 @@ public class GameSession {
     private GameSessionStatus status;
 
     /**
-     * this is a 0-based roundIndex
+     * this is a 0-based round index
      */
     @Column(name = "current_round_index", nullable = false)
     private int currentRoundIndex;

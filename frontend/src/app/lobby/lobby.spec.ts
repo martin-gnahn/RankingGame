@@ -142,13 +142,7 @@ describe('Lobby', () => {
     roomApi.getRoom.and.returnValue(of(roomResponse));
     roomApi.startRankingGame.and.returnValue(
       of({
-        roomId: 'room-1',
         roomCode: 'ABCD12',
-        gameSessionId: 'session-1',
-        gameType: 'RANKING_GAME',
-        roundId: 'round-1',
-        roundNumber: 1,
-        questionId: 'question-1',
       }),
     );
 
