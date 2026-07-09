@@ -1,8 +1,8 @@
 import {test} from '@playwright/test';
 
 import {
-  expectAnswerBoxToHaveText,
   expectAnswerButtonToHaveSentState,
+  expectAnswerTextBoxToHaveValue,
   startGameWith2Players,
   submitAnswer,
   uniquePlayerName,
@@ -41,9 +41,8 @@ test('after submitting answers, answer send button should stay disabled', async 
     await startGameWith2Players(hostPage, hostName, guestPage, guestName);
 
     await submitAnswer(hostPage, answerText);
-    debugger;
     await hostPage.reload();
-    await expectAnswerBoxToHaveText(hostPage, answerText);
+    await expectAnswerTextBoxToHaveValue(hostPage, answerText);
     await expectAnswerButtonToHaveSentState(hostPage);
   } finally {
     await guestContext.close();

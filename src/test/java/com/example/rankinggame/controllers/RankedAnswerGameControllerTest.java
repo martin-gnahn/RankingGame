@@ -146,7 +146,9 @@ class RankedAnswerGameControllerTest {
                 "Welche Ausrede funktioniert immer?",
                 7,
                 false,
-                currentPlayerIsCaptain));
+                null,
+                currentPlayerIsCaptain
+        ));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")

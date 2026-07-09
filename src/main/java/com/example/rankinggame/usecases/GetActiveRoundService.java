@@ -1,6 +1,7 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.dto.ActiveRoundResult;
+import com.example.rankinggame.engine.AnswerText;
 import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
 import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -50,7 +52,8 @@ public class GetActiveRoundService {
         log.info("Retrieved Question entity with id '{}'", question.getId());
         int assignedCardValue = roundCardAssignmentService.getCardValue(room.getId(), round.getId(), playerId);
 
-        boolean currentPlayerSubmitted = answerRepository.existsByRoundIdAndPlayerId(round.getId(), playerId);
+        Optional<AnswerEntity> answerByPlayer = answerRepository.findByRoundIdAndPlayerId(round.getId(), playerId);
+        boolean currentPlayerSubmitted = answerByPlayer.isPresent();
 
         log.info("Retrieved active round result for room '{}' and player '{}'", room.getId(), playerId);
         boolean currentPlayerIsCaptain = Objects.equals(room.getHostPlayerId(), playerId);
@@ -64,6 +67,7 @@ public class GetActiveRoundService {
                 question.getText(),
                 assignedCardValue,
                 currentPlayerSubmitted,
+                answerByPlayer.map(AnswerEntity::getText).map(AnswerText::new).orElse(null),
                 currentPlayerIsCaptain
         );
     }
