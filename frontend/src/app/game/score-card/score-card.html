@@ -1,0 +1,28 @@
+<section aria-labelledby="score-title" class="score-section">
+  <h2 id="score-title">{{ 'game.assignedCardTitle' | translate }}</h2>
+  <div [attr.aria-label]="'game.assignedCardAria' | translate" class="assigned-card-summary">
+    <span>{{ 'game.assignedCardValue' | translate: {value: assignedCardValue()} }}</span>
+    <strong>{{ assignedCardValue() }}</strong>
+  </div>
+  <div class="score-grid">
+    @for (card of scoreCards(); track card.value) {
+      <span
+        [attr.aria-label]="
+          isAssignedCard(card.value)
+            ? ('game.assignedCardValue' | translate: { value: card.value })
+            : null
+        "
+        [class.active]="isAssignedCard(card.value)"
+        [class.high]="card.tone === 'high'"
+        [class.low]="card.tone === 'low'"
+        [class.middle]="card.tone === 'middle'"
+        class="score-card"
+      >
+        <span class="score-card-number">{{ card.value }}</span>
+        @if (isAssignedCard(card.value)) {
+          <span class="assigned-card-label">{{ 'game.assignedCardLabel' | translate }}</span>
+        }
+      </span>
+    }
+  </div>
+</section>

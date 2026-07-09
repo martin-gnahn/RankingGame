@@ -1,7 +1,6 @@
 import {HttpErrorResponse} from '@angular/common/http';
-import {CdkDragDrop, DragDropModule} from '@angular/cdk/drag-drop';
 import {Component, computed, effect, inject, signal, WritableSignal} from '@angular/core';
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, Validators} from '@angular/forms';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {TranslatePipe, TranslateService} from '@ngx-translate/core';
@@ -15,20 +14,23 @@ import {ActiveRoundResponse, AnswerDto, ChatMessageResponse} from '../core/api/r
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {notBlankValidator} from '../shared/validators/not-blank.validator';
-
-interface ScoreCard {
-  value: number;
-  tone: 'low' | 'middle' | 'high';
-}
-
-interface RankedAnswerView extends RankedAnswerDto {
-  nickname: string;
-  cardValue?: AnswerDto['cardValue'];
-}
+import {AnswerForm} from './answer-form/answer-form';
+import {AnswerSubmissionState, RankedAnswerView, ScoreCard} from './game-view.models';
+import {Question} from './question/question';
+import {RankingAnswer} from './ranking-answer/ranking-answer';
+import {RankingOverview} from './ranking-overview/ranking-overview';
 
 @Component({
   selector: 'app-game',
-  imports: [ReactiveFormsModule, RouterLink, ChatSidebar, DragDropModule, TranslatePipe],
+  imports: [
+    RouterLink,
+    ChatSidebar,
+    TranslatePipe,
+    Question,
+    AnswerForm,
+    RankingAnswer,
+    RankingOverview,
+  ],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
@@ -109,11 +111,13 @@ export class Game {
   protected readonly form = this.formBuilder.nonNullable.group({
     answerText: ['', [Validators.required, notBlankValidator(), Validators.maxLength(500)]],
   });
-  protected readonly JSON = JSON;
-
-  protected isAssignedCard(assignedCardValue: number, cardValue: number): boolean {
-    return Number(assignedCardValue) === cardValue;
-  }
+  protected readonly answerSubmissionState = computed<AnswerSubmissionState>(() => ({
+    answerForm: this.form,
+    scoreCards: this.scoreCards,
+    submitting: this.submitting(),
+    submitted: this.submitted(),
+    submitErrorMessage: this.submitErrorMessage(),
+  }));
 
   constructor() {
 
@@ -237,21 +241,6 @@ export class Game {
     });
 
     onCleanup?.(() => subscription.unsubscribe());
-  }
-
-  protected displayAllSubmittedAnswers(): void {
-    this.loadSubmittedAnswers();
-  }
-
-  protected rankDroppedAnswer(event: CdkDragDrop<RankedAnswerView[], AnswerDto[], AnswerDto>): void {
-    const answer = event.item.data as AnswerDto | undefined;
-    const droppedIntoSameContainer =
-      (event.previousContainer as unknown) === (event.container as unknown);
-    if (!answer || droppedIntoSameContainer) {
-      return;
-    }
-
-    this.rankAnswer(answer);
   }
 
   private loadActiveRound(): void {

@@ -1,0 +1,28 @@
+<section aria-labelledby="ranked-results-title" aria-live="polite" class="ranked-results">
+  <div class="ranked-results-header">
+    <h3 id="ranked-results-title">{{ 'game.ranking.resultsTitle' | translate }}</h3>
+    @if (rankingLoading()) {
+      <span [attr.aria-label]="'game.ranking.loadingAria' | translate" class="small-loader"></span>
+    }
+  </div>
+
+  <ol class="ranked-list">
+    @for (answer of rankedAnswers(); track answer.answerId) {
+      <li class="ranked-item">
+        <span class="rank-number">{{ answer.oneBasedPosition }}</span>
+        <div>
+          <span class="answer-author">{{ answer.nickname }}</span>
+          <p>{{ answer.answerText }}</p>
+        </div>
+      </li>
+    } @empty {
+      <li class="ranked-empty">
+        @if (isCurrentPlayerCaptain()) {
+          {{ 'game.ranking.emptyCaptain' | translate }}
+        } @else {
+          {{ 'game.ranking.emptyPlayer' | translate }}
+        }
+      </li>
+    }
+  </ol>
+</section>

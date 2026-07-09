@@ -1,0 +1,29 @@
+<form (ngSubmit)="answerSubmitted.emit()" [formGroup]="state().answerForm" class="answer-form" novalidate>
+  <label for="answerText">{{ 'game.answer.label' | translate }}</label>
+  <textarea
+    [placeholder]="'game.answer.placeholder' | translate"
+    formControlName="answerText"
+    id="answerText"
+    maxlength="500"
+    rows="5"
+  ></textarea>
+  @if (state().answerForm.controls.answerText.touched && state().answerForm.controls.answerText.invalid) {
+    <p class="field-error">{{ 'game.answer.required' | translate }}</p>
+  }
+
+  <app-score-card [assignedCardValue]="round().assignedCardValue" [scoreCards]="state().scoreCards"/>
+
+  @if (state().submitErrorMessage) {
+    <p class="submit-error" role="alert">{{ state().submitErrorMessage }}</p>
+  }
+
+  <button [disabled]="state().submitting || state().submitted" class="primary-button" type="submit">
+    @if (state().submitted) {
+      {{ 'game.submit.sent' | translate }}
+    } @else if (state().submitting) {
+      {{ 'game.submit.sending' | translate }}
+    } @else {
+      {{ 'game.submit.default' | translate }}
+    }
+  </button>
+</form>

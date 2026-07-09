@@ -1,0 +1,57 @@
+<div class="host-ranking-board">
+  <section aria-labelledby="answer-pool-title" class="answer-pool">
+    <h3 id="answer-pool-title">{{ 'game.ranking.answerPoolTitle' | translate }}</h3>
+    <div
+      [cdkDropListConnectedTo]="['ranking-drop-zone']"
+      [cdkDropListData]="availableAnswers()"
+      cdkDropList
+      class="answer-card-list"
+      id="answer-pool"
+    >
+      @for (answer of availableAnswers(); track answer.answerId) {
+        <article
+          [cdkDragData]="answer"
+          [cdkDragDisabled]="rankingDropDisabled() || rankingSubmittingAnswerId() === answer.answerId"
+          cdkDrag
+          class="answer-card"
+        >
+          <div>
+            <span class="answer-author">{{ answer.nickname }}</span>
+            <p>{{ answer.answerText }}</p>
+          </div>
+          <button
+            (click)="answerRanked.emit(answer)"
+            [disabled]="rankingDropDisabled() || rankingSubmittingAnswerId() === answer.answerId"
+            class="rank-button"
+            type="button"
+          >
+            @if (rankingSubmittingAnswerId() === answer.answerId) {
+              {{ 'game.ranking.submitting' | translate }}
+            } @else {
+              {{ 'game.ranking.rank' | translate }}
+            }
+          </button>
+        </article>
+      } @empty {
+        <p class="empty-state">{{ 'game.ranking.emptyPool' | translate }}</p>
+      }
+    </div>
+  </section>
+
+  <section
+    (cdkDropListDropped)="rankDroppedAnswer($event)"
+    [cdkDropListConnectedTo]="['answer-pool']"
+    [cdkDropListData]="rankedAnswers()"
+    [cdkDropListDisabled]="rankingDropDisabled()"
+    aria-labelledby="ranking-drop-title"
+    cdkDropList
+    class="ranking-drop-zone"
+    id="ranking-drop-zone"
+  >
+    <h3 id="ranking-drop-title">{{ 'game.ranking.dropTitle' | translate }}</h3>
+    <p class="drop-hint">{{ 'game.ranking.dropHint' | translate }}</p>
+    @if (rankingIsComplete()) {
+      <p class="complete-state">{{ 'game.ranking.complete' | translate }}</p>
+    }
+  </section>
+</div>
