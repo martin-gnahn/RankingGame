@@ -9,7 +9,7 @@
     "test": "ng test",
     "e2e": "playwright test --project=chromium",
     "e2e:public": "playwright test --config=playwright.public.config.ts --project=chromium",
-    "e2e:debugger": "playwright test --project=chromium --headed --timeout=0 --workers=1",
+    "e2e:debugger": "playwright test -g \"after submitting answers, answer send button should stay disabled\" --project=chromium --headed --timeout=0 --workers=1",
     "e2e:debug:ui": "playwright test --project=chromium --debug --timeout=0 --workers=1",
     "e2e:ui": "playwright test --project=chromium --ui --timeout=0"
   },
