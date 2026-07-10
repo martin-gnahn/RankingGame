@@ -1,5 +1,5 @@
 import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 
 import {environment} from '../../../environments/environment';
@@ -9,7 +9,6 @@ import {
   GameSessionPlayerResponse,
   RankAnswerResultResponse,
   RankedAnswerListResponse,
-  ValueObjectResponse,
 } from './game.models';
 
 @Injectable({
@@ -18,7 +17,7 @@ import {
 export class GameApiService {
   private readonly roomsUrl = `${environment.apiBaseUrl}/rooms`;
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   getActivePlayers(roomCode: RoomCode): Observable<GameSessionPlayerResponse[]> {
     return this.http.get<GameSessionPlayerResponse[]>(
@@ -54,13 +53,5 @@ export class GameApiService {
         `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answer/position/all`,
         {params: {playerId}},
       );
-  }
-
-  private valueOf(value: ValueObjectResponse): string {
-    if (typeof value === 'string') {
-      return value;
-    }
-
-    return value?.value ?? '';
   }
 }

@@ -24,7 +24,7 @@ describe('RoomApiService', () => {
   });
 
   it('should create a room with the expected URL and payload', () => {
-    const response = { roomCode: 'ABCD', playerId: '7' };
+    const response = {roomCode: 'ABCD', playerId: '7', playerToken: 'token-7'};
 
     service.createRoom({ playerName: 'Marta' }).subscribe((result) => {
       expect(result).toEqual(response);
@@ -38,7 +38,7 @@ describe('RoomApiService', () => {
   });
 
   it('should join a room with an encoded room code and expected payload', () => {
-    const response = { roomCode: 'A/B1', playerId: '9' };
+    const response = {roomCode: 'A/B1', playerId: '9', playerToken: 'token-9'};
 
     service.joinRoom('A/B1', { playerName: 'Alex' }).subscribe((result) => {
       expect(result).toEqual(response);

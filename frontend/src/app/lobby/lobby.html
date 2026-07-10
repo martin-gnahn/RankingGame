@@ -42,7 +42,7 @@
           @if (room.players.length) {
             <ul class="player-list">
               @for (player of room.players; track player.playerId) {
-                <li class="player-row" [class.current-player]="player.playerId === currentPlayerId()">
+                <li [class.current-player]="player.playerId === currentPlayerId()" class="player-row">
                   <div class="player-main">
                     <span class="player-name">{{ player.nickname }}</span>
                     @if (player.host) {
@@ -71,7 +71,7 @@
           <button
             class="primary-button"
             type="button"
-            [disabled]="startingGame() || !canStartGame()"
+            [disabled]="gameIsInStartingProcess() || !canStartGame()"
             (click)="startGame()"
           >
             {{ 'lobby.startGame' | translate }}
@@ -88,7 +88,7 @@
     <app-chat-sidebar
       [messages]="chatMessages()"
       [currentPlayerId]="currentPlayerId()"
-      [disabled]="!currentPlayerId()"
+      [disabled]="!isValidPlayer()"
       (sendMessage)="sendChatMessage($event)"
     />
   </div>
