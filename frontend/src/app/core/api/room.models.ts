@@ -20,6 +20,7 @@ export interface RoomActionResponse {
   playerId?: string;
   playerName?: string;
   host?: boolean;
+  playerToken: string;
 }
 
 export type RoomStatus = 'LOBBY' | 'IN_GAME' | 'FINISHED' | 'CLOSED';
