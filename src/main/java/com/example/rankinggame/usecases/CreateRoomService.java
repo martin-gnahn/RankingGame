@@ -26,27 +26,29 @@ public class CreateRoomService {
     private final PlayerRepository playerRepository;
     private final RoomCodeGenerator roomCodeGenerator;
     private final TransactionOperations transactionOperations;
+    private final TokenGenerator tokenGenerator;
 
     @Autowired
     public CreateRoomService(
             RoomRepository roomRepository,
             PlayerRepository playerRepository,
             RoomCodeGenerator roomCodeGenerator,
-            PlatformTransactionManager transactionManager
+            PlatformTransactionManager transactionManager, TokenGenerator tokenGenerator
     ) {
-        this(roomRepository, playerRepository, roomCodeGenerator, new TransactionTemplate(transactionManager));
+        this(roomRepository, playerRepository, roomCodeGenerator, new TransactionTemplate(transactionManager), tokenGenerator);
     }
 
     CreateRoomService(
             RoomRepository roomRepository,
             PlayerRepository playerRepository,
             RoomCodeGenerator roomCodeGenerator,
-            TransactionOperations transactionOperations
+            TransactionOperations transactionOperations, TokenGenerator tokenGenerator
     ) {
         this.roomRepository = roomRepository;
         this.playerRepository = playerRepository;
         this.roomCodeGenerator = roomCodeGenerator;
         this.transactionOperations = transactionOperations;
+        this.tokenGenerator = tokenGenerator;
     }
 
     public CreateRoomResult createRoom(CreateRoomCommand command) {
@@ -65,6 +67,8 @@ public class CreateRoomService {
     }
 
     private CreateRoomResult createRoomInTransaction(String playerName) {
+        String playerToken = tokenGenerator.generateSafeToken();
+
         RoomEntity room = new RoomEntity();
         room.setId(UUID.randomUUID());
         room.setCode(roomCodeGenerator.generateUniqueCode());
@@ -75,12 +79,14 @@ public class CreateRoomService {
         hostPlayer.setRoomId(savedRoom.getId());
         hostPlayer.setNickname(playerName);
         hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
+        hostPlayer.setTokenHash(hashFromToken);
         PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
 
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 
-        return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname());
+        return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname(), playerToken);
     }
 
     private RoomEntity saveRoomWithFreshCode(RoomEntity room) {

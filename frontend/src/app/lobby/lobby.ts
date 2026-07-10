@@ -10,6 +10,8 @@ import {RoomApiService} from '../core/api/room-api.service';
 import {ChatMessageResponse, RoomResponse} from '../core/api/room.models';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
+import {UNKNOWN_PLAYER_CONST, UNKNOWN_ROLE_CONST} from '../shared/player-data.model';
+import {PlayerSessionStore} from '../shared/player-session-store';
 
 @Component({
   selector: 'app-lobby',
@@ -23,30 +25,32 @@ export class Lobby {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  // TODO: maybe extract room info to another signal.
+  protected readonly isCurrentPlayerHost = computed(() => {
+    const room = this.room();
+    if (!room) {
+      return this.currentPlayerRole() === 'host';
+    }
+    return room.players.some((player) => player?.playerId === this.currentPlayerId() && player.host && this.currentPlayerRole() === 'host');
+  });
+  private readonly playerSessionStore = inject(PlayerSessionStore);
+  protected readonly currentPlayerData = this.playerSessionStore.playerData;
+  protected readonly currentPlayerId = this.playerSessionStore.playerId;
+  protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
+  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
-  private readonly queryParamMap = toSignal(this.route.queryParamMap);
 
   protected readonly roomCode = computed(() => this.roomCodeParam() ?? '');
   protected readonly room = signal<RoomResponse | null>(null);
   protected readonly loading = signal(false);
-  protected readonly startingGame = signal(false);
+  protected readonly gameIsInStartingProcess = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly refreshErrorMessage = signal('');
   protected readonly startErrorMessage = signal('');
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
-  protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
-  protected readonly isCurrentPlayerHost = computed(() => {
-    const room = this.room();
-    const currentPlayerId = this.currentPlayerId();
-
-    if (!room) {
-      return this.queryParamMap()?.get('role') === 'host';
-    }
-
-    return room.players.some((player) => player.playerId === currentPlayerId && player.host);
-  });
   protected readonly playerCount = computed(() => this.room()?.players.length ?? 0);
   protected readonly canStartGame = computed(() => {
     const room = this.room();
@@ -75,7 +79,6 @@ export class Lobby {
 
     effect((onCleanup) => {
       const roomCode = this.roomCode();
-      const playerId = this.currentPlayerId();
 
       if (!roomCode) {
         return;
@@ -87,8 +90,8 @@ export class Lobby {
           this.refreshErrorMessage.set(this.translate.instant('lobby.errors.liveUpdateReadFailed')),
       });
 
-      if (playerId) {
-        this.webSocket.joinLive(roomCode, playerId);
+      if (this.isValidPlayer()) {
+        this.webSocket.joinLive(roomCode, this.currentPlayerId());
       }
 
       onCleanup(() => {
@@ -107,23 +110,22 @@ export class Lobby {
 
   protected startGame(): void {
     const roomCode = this.roomCode();
-    const hostPlayerId = this.currentPlayerId();
 
-    if (!roomCode || !hostPlayerId || this.startingGame()) {
+    if (!roomCode || !this.isValidPlayer() || this.gameIsInStartingProcess()) {
       this.startErrorMessage.set(this.translate.instant('lobby.errors.startFailed'));
       return;
     }
 
     this.startErrorMessage.set('');
-    this.startingGame.set(true);
+    this.gameIsInStartingProcess.set(true);
 
-    this.roomApi.startRankingGame(roomCode, { hostPlayerId }).subscribe({
+    this.roomApi.startRankingGame(roomCode, {hostPlayerId: this.currentPlayerId()}).subscribe({
       next: () => {
-        this.startingGame.set(false);
+        this.gameIsInStartingProcess.set(false);
         this.navigateToGame(roomCode);
       },
       error: (error: unknown) => {
-        this.startingGame.set(false);
+        this.gameIsInStartingProcess.set(false);
         this.startErrorMessage.set(this.toErrorMessage(error));
       },
     });
@@ -131,13 +133,12 @@ export class Lobby {
 
   protected sendChatMessage(body: string): void {
     const roomCode = this.roomCode();
-    const playerId = this.currentPlayerId();
 
-    if (!roomCode || !playerId) {
+    if (!roomCode || !this.isValidPlayer()) {
       return;
     }
 
-    this.webSocket.sendChatMessage(roomCode, playerId, body);
+    this.webSocket.sendChatMessage(roomCode, this.currentPlayerId(), body);
   }
 
   protected statusLabelKey(status: string): string {
@@ -219,19 +220,21 @@ export class Lobby {
   }
 
   private navigateToGame(roomCode: string): void {
-    const queryParams: Record<string, string> = {};
-    const playerId = this.currentPlayerId();
-    const role = this.queryParamMap()?.get('role') ?? '';
-
-    if (playerId) {
-      queryParams['playerId'] = playerId;
+    const currentPlayerData = this.currentPlayerData();
+    if (currentPlayerData.playerId === UNKNOWN_PLAYER_CONST || currentPlayerData.role === UNKNOWN_ROLE_CONST) {
+      // TODO: navigate to error
+      return;
     }
 
-    if (role) {
-      queryParams['role'] = role;
-    }
+    const playerId = currentPlayerData.playerId;
+    const role = currentPlayerData.role;
+    this.playerSessionStore.storePlayerData({
+      playerId: playerId,
+      role: role,
+      playerSessionToken: currentPlayerData.playerSessionToken,
+    });
 
-    void this.router.navigate(['/game', roomCode], { queryParams });
+    void this.router.navigate(['/game', roomCode]);
   }
 
   private toErrorMessage(error: unknown): string {

@@ -23,9 +23,12 @@ public class JoinRoomService {
     private final PlayerRepository playerRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final RoomCodeService roomCodeService;
+    private final TokenGenerator tokenGenerator;
 
     @Transactional
     public JoinRoomResult joinRoom(JoinRoomCommand command) {
+        String playerToken = tokenGenerator.generateSafeToken();
+
         String roomCode = roomCodeService.normalizeRoomCode(command);
         String playerName = normalizePlayerName(command);
 
@@ -47,6 +50,8 @@ public class JoinRoomService {
         player.setRoomId(room.getId());
         player.setNickname(playerName);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
+        player.setTokenHash(hashFromToken);
 
         PlayerEntity savedPlayer = savePlayerAndVerifyUniqueName(player);
 
@@ -57,7 +62,7 @@ public class JoinRoomService {
                 false
         ));
 
-        return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname());
+        return new JoinRoomResult(room.getCode(), room.getId(), savedPlayer.getId(), savedPlayer.getNickname(), playerToken);
     }
 
     private PlayerEntity savePlayerAndVerifyUniqueName(PlayerEntity player) {

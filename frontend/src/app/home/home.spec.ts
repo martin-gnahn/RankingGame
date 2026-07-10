@@ -13,6 +13,8 @@ describe('Home', () => {
   let router: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
+    sessionStorage.clear();
+
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', ['createRoom', 'joinRoom']);
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
@@ -30,6 +32,10 @@ describe('Home', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
   it('should create', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
@@ -40,7 +46,7 @@ describe('Home', () => {
   });
 
   it('should create a room and route to the lobby', () => {
-    roomApi.createRoom.and.returnValue(of({ roomCode: 'ABCD', playerId: '7' }));
+    roomApi.createRoom.and.returnValue(of({roomCode: 'ABCD', playerId: '7', playerToken: 'token-7'}));
 
     const compiled = fixture.nativeElement as HTMLElement;
     const nameInput = compiled.querySelector<HTMLInputElement>('input[formControlName="playerName"]');
@@ -50,13 +56,16 @@ describe('Home', () => {
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 
     expect(roomApi.createRoom).toHaveBeenCalledWith({ playerName: 'Marta' });
-    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD'], {
-      queryParams: { playerId: '7', role: 'host' },
-    });
+    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD']);
+    expect(sessionStorage.getItem('playerData')).toBe(JSON.stringify({
+      playerId: '7',
+      role: 'host',
+      playerSessionToken: 'token-7',
+    }));
   });
 
   it('should join a room and route to the lobby', () => {
-    roomApi.joinRoom.and.returnValue(of({ roomCode: 'ABCD9', playerId: '9' }));
+    roomApi.joinRoom.and.returnValue(of({roomCode: 'ABCD9', playerId: '9', playerToken: 'token-9'}));
 
     const compiled = fixture.nativeElement as HTMLElement;
     const inputs = compiled.querySelectorAll<HTMLInputElement>('input');
@@ -68,9 +77,12 @@ describe('Home', () => {
     fixture.nativeElement.querySelectorAll('form')[1].dispatchEvent(new Event('submit'));
 
     expect(roomApi.joinRoom).toHaveBeenCalledWith('ABCD9', { playerName: 'Alex' });
-    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD9'], {
-      queryParams: { playerId: '9', role: 'player' },
-    });
+    expect(router.navigate).toHaveBeenCalledWith(['/lobby', 'ABCD9']);
+    expect(sessionStorage.getItem('playerData')).toBe(JSON.stringify({
+      playerId: '9',
+      role: 'player',
+      playerSessionToken: 'token-9',
+    }));
   });
 
   it('should show an error when a room action fails', () => {

@@ -1,29 +1,13 @@
 package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.dto.CreateRoomCommand;
-import com.example.rankinggame.dto.CreateRoomRequest;
-import com.example.rankinggame.dto.CreateRoomResult;
-import com.example.rankinggame.dto.JoinRoomCommand;
-import com.example.rankinggame.dto.JoinRoomRequest;
-import com.example.rankinggame.dto.JoinRoomResult;
-import com.example.rankinggame.dto.PlayerDetailsResult;
-import com.example.rankinggame.dto.RoomActionResponse;
-import com.example.rankinggame.dto.RoomDetailsResult;
-import com.example.rankinggame.dto.RoomPlayerResponse;
-import com.example.rankinggame.dto.RoomResponse;
+import com.example.rankinggame.dto.*;
 import com.example.rankinggame.usecases.CreateRoomService;
 import com.example.rankinggame.usecases.GetRoomService;
 import com.example.rankinggame.usecases.JoinRoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -38,7 +22,7 @@ public class RoomController {
     public RoomActionResponse createRoom(@Valid @RequestBody(required = false) CreateRoomRequest request) {
         String playerName = request == null ? null : request.playerName();
         CreateRoomResult result = createRoomService.createRoom(new CreateRoomCommand(playerName));
-        return new RoomActionResponse(result.roomCode(), result.roomId(), result.playerId(), result.playerName(), true);
+        return new RoomActionResponse(result.roomCode(), result.roomId(), result.playerId(), result.playerName(), result.playerToken(), true);
     }
 
     @PostMapping("/{roomCode}/players")
@@ -49,7 +33,7 @@ public class RoomController {
     ) {
         String playerName = request == null ? null : request.playerName();
         JoinRoomResult result = joinRoomService.joinRoom(new JoinRoomCommand(roomCode, playerName));
-        return new RoomActionResponse(result.roomCode(), result.roomId(), result.playerId(), result.playerName(), false);
+        return new RoomActionResponse(result.roomCode(), result.roomId(), result.playerId(), result.playerName(), result.playerToken(), false);
     }
 
     @GetMapping("/{roomCode}")
