@@ -14,9 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,6 +32,8 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
     private static final String GAME_STATE_CONFLICT = "GAME_STATE_CONFLICT";
     private static final String HOST_ANSWER = "Host answer";
     private static final String GUEST_ANSWER = "Guest answer";
+    private static final String PLAYER_SESSION_TOKEN_HEADER = "X-Player-Session-Token";
+    private final Map<UUID, String> playerTokens = new HashMap<>();
 
     @Autowired
     private JpaRankingRepository rankingRepository;
@@ -67,10 +67,11 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         round.roomCode(),
                         round.roundId()
                 )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(round.guestPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(round.guestPlayerId(), round.hostAnswerId())))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(ACCESS_DENIED))
+                .andExpect(jsonPath("$.errorKey").value(ACCESS_DENIED))
                 .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
 
         List<RankedAnswerEntity> allRankings = rankingRepository.findAll();
@@ -106,10 +107,11 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         round.roomCode(),
                         round.roundId()
                 )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(round.hostPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(round.hostPlayerId(), answerId)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.errorKey").value(GAME_STATE_CONFLICT))
                 .andExpect(jsonPath("$.message").value("Answer already has been ranked"));
     }
 
@@ -122,10 +124,11 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         thisRound.roomCode(),
                         thisRound.roundId()
                 )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(thisRound.hostPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(thisRound.hostPlayerId(), otherRound.hostAnswerId())))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.errorKey").value(GAME_STATE_CONFLICT))
                 .andExpect(jsonPath("$.message").value("Answer is not part of the requested round"));
     }
 
@@ -141,10 +144,11 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         room.roomCode(),
                         startedRound.roundId()
                 )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(room.hostPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(room.hostPlayerId(), hostAnswerId)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(GAME_STATE_CONFLICT))
+                .andExpect(jsonPath("$.errorKey").value(GAME_STATE_CONFLICT))
                 .andExpect(jsonPath("$.message").value("Answers can only be sorted in sorting mode"));
     }
 
@@ -161,7 +165,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         round.roundId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("playerId", String.valueOf(round.guestPlayerId())))
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(round.guestPlayerId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rankings[0].oneBasedPosition").value(1))
                 .andExpect(jsonPath("$.rankings[1].oneBasedPosition").value(2))
@@ -204,9 +208,12 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
+        UUID hostPlayerId = readUuid(responseBody, "$.playerId");
+        playerTokens.put(hostPlayerId, JsonPath.read(responseBody, "$.playerToken"));
+
         return new CreatedRoom(
                 JsonPath.read(responseBody, "$.roomCode"),
-                readUuid(responseBody, "$.playerId")
+                hostPlayerId
         );
     }
 
@@ -224,15 +231,16 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        return readUuid(responseBody, "$.playerId");
+        UUID playerId = readUuid(responseBody, "$.playerId");
+        playerTokens.put(playerId, JsonPath.read(responseBody, "$.playerToken"));
+        return playerId;
     }
 
     private StartedRound startRankingGame(String roomCode, UUID hostPlayerId) throws Exception {
         String responseBody = mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start", roomCode)
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(hostPlayerId))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"playerId":"%s"}
-                                """.formatted(hostPlayerId)))
+                        .content("{}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").isString())
                 .andReturn()
@@ -252,10 +260,11 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
 
     private UUID submitAnswer(String roomCode, UUID roundId, UUID playerId, String answerText) throws Exception {
         String responseBody = mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(playerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"playerId":"%s","answerText":"%s"}
-                                """.formatted(playerId, answerText)))
+                                {"answerText":"%s"}
+                                """.formatted(answerText)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.answerId").isString())
                 .andExpect(jsonPath("$.roundId").value(roundId.toString()))
@@ -273,6 +282,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
                         round.roomCode(),
                         round.roundId()
                 )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(playerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(playerId, answerId)))
                 .andExpect(status().isOk())
@@ -284,8 +294,12 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
 
     private String sortAnswerRequest(UUID hostPlayerId, UUID answerId) {
         return """
-                {"hostId":"%s","answerId":"%s"}
-                """.formatted(hostPlayerId, answerId);
+                {"answerId":"%s"}
+                """.formatted(answerId);
+    }
+
+    private String tokenFor(UUID playerId) {
+        return Objects.requireNonNull(playerTokens.get(playerId), "No test token for player " + playerId);
     }
 
     private void assertRoundState(UUID roundId, RoundState expectedState) {

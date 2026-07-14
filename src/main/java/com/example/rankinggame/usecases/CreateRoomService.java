@@ -16,6 +16,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -75,18 +77,29 @@ public class CreateRoomService {
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
-        PlayerEntity hostPlayer = new PlayerEntity();
-        hostPlayer.setRoomId(savedRoom.getId());
-        hostPlayer.setNickname(playerName);
-        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
-        String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
-        hostPlayer.setTokenHash(hashFromToken);
+        PlayerEntity hostPlayer = getPlayerEntity(playerName, savedRoom, playerToken);
         PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
 
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 
         return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname(), playerToken);
+    }
+
+    private PlayerEntity getPlayerEntity(String playerName, RoomEntity savedRoom, String playerToken) {
+        PlayerEntity hostPlayer = new PlayerEntity();
+        hostPlayer.setRoomId(savedRoom.getId());
+        hostPlayer.setNickname(playerName);
+        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
+        hostPlayer.setTokenHash(hashFromToken);
+        Instant nowInOneHour = getTokenExpirationDate();
+        hostPlayer.setSessionExpiresAt(nowInOneHour);
+        return hostPlayer;
+    }
+
+    private Instant getTokenExpirationDate() {
+        return Instant.now().plus(10, ChronoUnit.SECONDS);
     }
 
     private RoomEntity saveRoomWithFreshCode(RoomEntity room) {

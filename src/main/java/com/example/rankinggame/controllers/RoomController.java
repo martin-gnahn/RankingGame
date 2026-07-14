@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
+import com.example.rankinggame.engine.GameConstants;
 import com.example.rankinggame.usecases.CreateRoomService;
 import com.example.rankinggame.usecases.GetRoomService;
 import com.example.rankinggame.usecases.JoinRoomService;
@@ -16,6 +17,7 @@ public class RoomController {
     private final CreateRoomService createRoomService;
     private final JoinRoomService joinRoomService;
     private final GetRoomService getRoomService;
+    private final PlayerSessionService playerSessionService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -37,7 +39,12 @@ public class RoomController {
     }
 
     @GetMapping("/{roomCode}")
-    public RoomResponse getRoom(@PathVariable String roomCode) {
+    public RoomResponse getRoom(
+            @PathVariable String roomCode,
+            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+    ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         RoomDetailsResult result = getRoomService.getRoom(roomCode);
         return new RoomResponse(
                 result.roomId(),

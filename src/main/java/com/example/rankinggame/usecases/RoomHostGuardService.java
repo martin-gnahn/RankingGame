@@ -14,7 +14,7 @@ import java.util.UUID;
 class RoomHostGuardService {
     private final PlayerRepository playerRepository;
 
-    public PlayerEntity requireRoomHostForStart(RoomEntity room, UUID hostPlayerId) {
+    public PlayerEntity requireRoomHost(RoomEntity room, UUID hostPlayerId) {
         return playerRepository.findById(hostPlayerId)
                 .filter(player -> Objects.equals(player.getRoomId(), room.getId()))
                 .filter(player -> Objects.equals(room.getHostPlayerId(), player.getId()))
