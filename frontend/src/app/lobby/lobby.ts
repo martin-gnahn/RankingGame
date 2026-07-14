@@ -119,7 +119,7 @@ export class Lobby {
     this.startErrorMessage.set('');
     this.gameIsInStartingProcess.set(true);
 
-    this.roomApi.startRankingGame(roomCode, {hostPlayerId: this.currentPlayerId()}).subscribe({
+    this.roomApi.startRankingGame(roomCode).subscribe({
       next: () => {
         this.gameIsInStartingProcess.set(false);
         this.navigateToGame(roomCode);

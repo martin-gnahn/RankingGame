@@ -1,0 +1,22 @@
+<main aria-labelledby="error-title" class="error-shell">
+  <section class="error-panel" role="alert">
+    <p class="eyebrow">{{ 'error.eyebrow' | translate }}</p>
+    <h1 id="error-title">{{ titleKey() | translate }}</h1>
+    <p class="message">{{ messageKey() | translate }}</p>
+
+    <dl [attr.aria-label]="'error.details.title' | translate" class="details">
+      <div>
+        <dt>{{ 'error.details.status' | translate }}</dt>
+        <dd>{{ displayStatus() }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'error.details.message' | translate }}</dt>
+        <dd>{{ displayMessage() || ('error.details.noMessage' | translate) }}</dd>
+      </div>
+    </dl>
+
+    <a [routerLink]="homeLink" class="home-link">
+      {{ 'app.backToHome' | translate }}
+    </a>
+  </section>
+</main>

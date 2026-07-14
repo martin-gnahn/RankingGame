@@ -138,7 +138,7 @@ describe('Game', () => {
   it('should render the active round question', () => {
     createComponent();
 
-    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
+    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12');
     expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
@@ -172,7 +172,6 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(roomApi.submitAnswer).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
-      playerId: 'player-1',
       answerText: 'Mit WLAN-Problemen.',
     });
     expect(textContent()).toContain('Antwort gespeichert');
@@ -220,8 +219,8 @@ describe('Game', () => {
     });
     fixture.detectChanges();
 
-    expect(gameApi.getSubmittedAnswers).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
-    expect(gameApi.getRankingPositions).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
+    expect(gameApi.getSubmittedAnswers).toHaveBeenCalledOnceWith('ABCD12', 'round-1');
+    expect(gameApi.getRankingPositions).toHaveBeenCalledOnceWith('ABCD12', 'round-1');
     expect(textContent()).toContain('Mit WLAN-Problemen.');
     expect(textContent()).toContain('Im Aufzug stecken geblieben.');
     expect(textContent()).toContain('Hier ablegen');
@@ -258,7 +257,6 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(gameApi.addRankingPosition).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
-      hostId: 'host-1',
       answerId: 'answer-1',
     });
     expect(gameApi.getRankingPositions).toHaveBeenCalledTimes(2);

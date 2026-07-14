@@ -1,6 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 
-import {INITIAL_PLAYER_STATE} from './player-data.model';
+import {UNKNOWN_PLAYER_STATE} from './player-data.model';
 import {PlayerSessionStore} from './player-session-store';
 
 describe('PlayerSessionStore', () => {
@@ -47,7 +47,7 @@ describe('PlayerSessionStore', () => {
 
     service.clearPlayerData();
 
-    expect(service.playerData()).toEqual(INITIAL_PLAYER_STATE);
+    expect(service.playerData()).toEqual(UNKNOWN_PLAYER_STATE);
     expect(sessionStorage.getItem('playerData')).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Input, Output} from '@angular/core';
+import {Component, inject, input, output} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatCardModule} from '@angular/material/card';
@@ -27,16 +27,16 @@ import {notBlankValidator} from '../../shared/validators/not-blank.validator';
 export class CreateRoom {
   private readonly formBuilder = inject(FormBuilder);
 
-  @Input() disabled = false;
-  @Input() loading = false;
-  @Output() createRoomRequested = new EventEmitter<CreateRoomRequest>();
+  readonly disabled = input(false);
+  readonly loading = input(false);
+  readonly createRoomRequested = output<CreateRoomRequest>();
 
   protected readonly form = this.formBuilder.nonNullable.group({
     playerName: ['Martin', [Validators.required, notBlankValidator(), Validators.maxLength(32)]],
   });
 
   protected submit(): void {
-    if (this.form.invalid || this.disabled) {
+    if (this.form.invalid || this.disabled()) {
       this.form.markAllAsTouched();
       return;
     }

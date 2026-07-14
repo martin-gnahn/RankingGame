@@ -42,10 +42,6 @@ export interface RoomResponse {
   startBlockedReason?: string | null;
 }
 
-export interface StartGameRequest {
-  hostPlayerId: string;
-}
-
 export interface StartGameResponse {
   roomCode: RoomCode;
 }
@@ -64,7 +60,6 @@ export interface ActiveRoundResponse {
 }
 
 export interface SubmitAnswerRequest {
-  playerId: string;
   answerText: string;
 }
 
