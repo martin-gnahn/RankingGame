@@ -16,6 +16,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @RequiredArgsConstructor
 @Service
 public class JoinRoomService {
@@ -52,6 +55,7 @@ public class JoinRoomService {
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
         player.setTokenHash(hashFromToken);
+        player.setSessionExpiresAt(Instant.now().plus(60, ChronoUnit.MINUTES));
 
         PlayerEntity savedPlayer = savePlayerAndVerifyUniqueName(player);
 

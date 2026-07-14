@@ -17,5 +17,7 @@ public interface PlayerRepository {
 
     List<PlayerEntity> findByGameSessionId(UUID gameSessionId);
 
+    Optional<PlayerEntity> findByRoomIdAndTokenHash(UUID id, String tokenHash);
+
     // List<PlayerEntity> findByRoomCode(String roomCode);
 }

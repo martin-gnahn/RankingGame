@@ -50,7 +50,7 @@ public class StartRankingGameService {
         UUID hostPlayerId = requireHostPlayerId(command);
 
         RoomEntity room = requireLobbyRoom(roomCode);
-        PlayerEntity hostPlayer = roomHostGuardService.requireRoomHostForStart(room, hostPlayerId);
+        PlayerEntity hostPlayer = roomHostGuardService.requireRoomHost(room, hostPlayerId);
 
         List<PlayerEntity> playerEntities = getPlayersSortedByJoinedAt(room);
         List<GameParticipant> participants = playerMapper.toParticipants(playerEntities);

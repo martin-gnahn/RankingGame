@@ -4,7 +4,6 @@ export interface GameSessionPlayerResponse {
 }
 
 export interface AddRankingPositionRequest {
-  hostId: string;
   answerId: string;
 }
 

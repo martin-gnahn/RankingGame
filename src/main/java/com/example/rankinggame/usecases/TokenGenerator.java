@@ -9,7 +9,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @Service
-class TokenGenerator {
+public class TokenGenerator {
     String generateSafeToken() {
         byte[] tokenBytes = new byte[32];
         new SecureRandom().nextBytes(tokenBytes);
@@ -17,7 +17,7 @@ class TokenGenerator {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
-    String generateHashFromToken(String rawToken) {
+    public String generateHashFromToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hashBytes = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));

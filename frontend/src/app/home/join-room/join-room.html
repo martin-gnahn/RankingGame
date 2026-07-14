@@ -34,8 +34,8 @@
         }
       </mat-form-field>
 
-      <button mat-stroked-button color="primary" type="submit" [disabled]="disabled">
-        @if (loading) {
+      <button [disabled]="disabled()" color="primary" mat-stroked-button type="submit">
+        @if (loading()) {
           <mat-spinner diameter="18" />
         } @else {
           {{ 'joinRoom.submit' | translate }}

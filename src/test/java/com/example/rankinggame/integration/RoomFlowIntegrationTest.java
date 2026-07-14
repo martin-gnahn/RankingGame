@@ -28,7 +28,9 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     public static final String MARTA = "Marta";
     public static final String ALEX = "Alex";
     public static final String SAM = "Sam";
+    private static final String PLAYER_SESSION_TOKEN_HEADER = "X-Player-Session-Token";
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, String> playerTokens = new HashMap<>();
 
     @MockitoSpyBean
     private RoundProgressService roundProgressService;
@@ -48,6 +50,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .getResponse()
                 .getContentAsString();
         String roomCode = JsonPath.read(createRoomResponse, "$.roomCode");
+        String hostPlayerId = JsonPath.read(createRoomResponse, "$.playerId");
+        playerTokens.put(hostPlayerId, JsonPath.read(createRoomResponse, "$.playerToken"));
 
         mockMvc.perform(post("/api/rooms/{roomCode}/players", roomCode)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -57,7 +61,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .andExpect(jsonPath("$.nickname").value(ALEX))
                 .andExpect(jsonPath("$.host").value(false));
 
-        mockMvc.perform(get("/api/rooms/{roomCode}", roomCode))
+        mockMvc.perform(get("/api/rooms/{roomCode}", roomCode)
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(hostPlayerId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomCode").value(roomCode))
                 .andExpect(jsonPath("$.status").value("LOBBY"))
@@ -81,6 +86,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .getContentAsString();
         String roomCode = JsonPath.read(createRoomResponse, "$.roomCode");
         String hostPlayerId = JsonPath.read(createRoomResponse, "$.playerId");
+        playerTokens.put(hostPlayerId, JsonPath.read(createRoomResponse, "$.playerToken"));
 
         String joinRoomResponse = mockMvc.perform(post("/api/rooms/{roomCode}/players", roomCode)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,16 +96,19 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .getResponse()
                 .getContentAsString();
         String guestPlayerId = JsonPath.read(joinRoomResponse, "$.playerId");
+        playerTokens.put(guestPlayerId, JsonPath.read(joinRoomResponse, "$.playerToken"));
 
         StartedGame startedGame = startGame(new CreatedRoom(roomCode, hostPlayerId));
         String roundId = startedGame.roundId().toString();
 
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(hostPlayerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(hostPlayerId, "Answer1")))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(guestPlayerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(guestPlayerId, "Answer2")))
                 .andExpect(status().isCreated());
@@ -112,14 +121,14 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         org.assertj.core.api.Assertions.assertThat(roundState).isEqualTo("SORTING");
 
         mockMvc.perform(get("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
-                        .param("playerId", hostPlayerId))
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(hostPlayerId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answers", hasSize(2)))
                 .andExpect(jsonPath("$.answers[*].answerText", containsInAnyOrder("Answer1", "Answer2")))
                 .andExpect(jsonPath("$.answers[*].playerId", containsInAnyOrder(hostPlayerId, guestPlayerId)));
 
         mockMvc.perform(get("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answers", roomCode, roundId)
-                        .param("playerId", guestPlayerId))
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(guestPlayerId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answers", hasSize(2)))
                 .andExpect(jsonPath("$.answers[*].answerText", containsInAnyOrder("Answer1", "Answer2")))
@@ -266,7 +275,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
-                        .param("playerId", requestingPlayerId))
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(requestingPlayerId)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -292,6 +301,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(createdRoom.hostPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(createdRoom.hostPlayerId(), answerId)))
                 .andExpect(status().isOk())
@@ -309,16 +319,16 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(guestPlayerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sortAnswerRequest(guestPlayerId, answerId)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.errorKey").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can sort submitted answers"));
     }
 
     private String sortAnswerRequest(String playerId, UUID answerId) throws Exception {
         return objectMapper.writeValueAsString(Map.of(
-                "hostId", UUID.fromString(playerId),
                 "answerId", answerId
         ));
     }
@@ -362,6 +372,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                             createdRoom.roomCode(),
                             startedGame.roundId()
                         )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(playerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, answerText))
                 )
@@ -383,7 +394,7 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     }
 
     private String submitAnswerRequest(String playerId, String answerText) {
-        return objectMapper.writeValueAsString(new SubmitAnswerRequest(UUID.fromString(playerId), answerText));
+        return objectMapper.writeValueAsString(new SubmitAnswerRequest(answerText));
     }
 
     private CurrentGameSessionState queryCurrentGameSessionState(StartedGame startedGame) {
@@ -427,8 +438,9 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
         mockMvc.perform(post("/api/rooms/{roomCode}/ranking-game/start",
                             createdRoom.roomCode()
                         )
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(createdRoom.hostPlayerId()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + createdRoom.hostPlayerId() + "\"}")
+                        .content("{}")
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").value(createdRoom.roomCode()))
@@ -461,7 +473,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
             String firstGuestPlayerId,
             String secondGuestPlayerId
     ) throws Exception {
-        mockMvc.perform(get("/api/rooms/{roomCode}", createdRoom.roomCode()))
+        mockMvc.perform(get("/api/rooms/{roomCode}", createdRoom.roomCode())
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(createdRoom.hostPlayerId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomCode").value(createdRoom.roomCode()))
                 .andExpect(jsonPath("$.status").value("IN_GAME"))
@@ -504,7 +517,8 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     }
 
     private void ensurePlayersConnected(CreatedRoom createdRoom, String firstGuestPlayerId, String secondGuestPlayerId) throws Exception {
-        mockMvc.perform(get("/api/rooms/{roomCode}", createdRoom.roomCode()))
+        mockMvc.perform(get("/api/rooms/{roomCode}", createdRoom.roomCode())
+                        .header(PLAYER_SESSION_TOKEN_HEADER, tokenFor(createdRoom.hostPlayerId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomCode").value(createdRoom.roomCode()))
                 .andExpect(jsonPath("$.status").value("LOBBY"))
@@ -534,7 +548,9 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return JsonPath.read(firstGuestResponse, "$.playerId");
+        String playerId = JsonPath.read(firstGuestResponse, "$.playerId");
+        playerTokens.put(playerId, JsonPath.read(firstGuestResponse, "$.playerToken"));
+        return playerId;
     }
 
     private RoomFlowIntegrationTest.CreatedRoom createRoom(String hostName) throws Exception {
@@ -551,7 +567,12 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
                 .getContentAsString();
         String roomCode = JsonPath.read(createRoomResponse, "$.roomCode");
         String hostPlayerId = JsonPath.read(createRoomResponse, "$.playerId");
+        playerTokens.put(hostPlayerId, JsonPath.read(createRoomResponse, "$.playerToken"));
         return new CreatedRoom(roomCode, hostPlayerId);
+    }
+
+    private String tokenFor(String playerId) {
+        return Objects.requireNonNull(playerTokens.get(playerId), "No test token for player " + playerId);
     }
 
     private record CreatedRoom(String roomCode, String hostPlayerId) {
@@ -620,3 +641,4 @@ class RoomFlowIntegrationTest extends BackendIntegrationTest {
     ) {
     }
 }
+

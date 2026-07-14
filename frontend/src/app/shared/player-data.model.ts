@@ -12,7 +12,7 @@ export type PlayerData = {
 
 export type PlayerRole = 'host' | 'player';
 
-export const INITIAL_PLAYER_STATE: PlayerData = {
+export const UNKNOWN_PLAYER_STATE: PlayerData = {
   playerId: UNKNOWN_PLAYER_CONST,
   role: UNKNOWN_ROLE_CONST,
   playerSessionToken: null,

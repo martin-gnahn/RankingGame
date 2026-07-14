@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Input, Output} from '@angular/core';
+import {Component, inject, input, output} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatCardModule} from '@angular/material/card';
@@ -32,9 +32,9 @@ export interface JoinRoomRequestPayload {
 export class JoinRoom {
   private readonly formBuilder = inject(FormBuilder);
 
-  @Input() disabled = false;
-  @Input() loading = false;
-  @Output() joinRoomRequested = new EventEmitter<JoinRoomRequestPayload>();
+  readonly disabled = input(false);
+  readonly loading = input(false);
+  readonly joinRoomRequested = output<JoinRoomRequestPayload>();
 
   protected readonly form = this.formBuilder.nonNullable.group({
     roomCode: ['', [Validators.required, Validators.pattern(ROOM_CODE_PATTERN)]],
@@ -42,7 +42,7 @@ export class JoinRoom {
   });
 
   protected submit(): void {
-    if (this.disabled) {
+    if (this.disabled()) {
       return;
     }
 

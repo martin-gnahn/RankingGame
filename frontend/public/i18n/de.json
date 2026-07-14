@@ -79,6 +79,39 @@
   "game.errors.onlyHostCanRank": "Nur der Host kann Antworten sortieren.",
   "game.errors.serverUnavailable": "Der Server ist gerade nicht erreichbar.",
   "game.errors.roundLoadFailed": "Die Runde konnte nicht geladen werden.",
+  "error": {
+    "eyebrow": "Fehler",
+    "noToken": {
+      "title": "Kein Token gefunden.",
+      "message": "User-Token konnte nicht gefunden werden."
+    },
+    "tokenExpired": {
+      "title": "Sitzung abgelaufen",
+      "message": "Deine Spielsitzung ist abgelaufen. Bitte tritt dem Raum erneut bei."
+    },
+    "invalidToken": {
+      "title": "Ungültige Sitzung",
+      "message": "Dein Sitzungstoken ist ungültig oder gehört nicht zu diesem Raum. Bitte tritt dem Raum erneut bei."
+    },
+    "notFound": {
+      "title": "Nicht gefunden",
+      "message": "Die angeforderte Seite oder der Raum konnte nicht gefunden werden."
+    },
+    "serverUnavailable": {
+      "title": "Server nicht erreichbar",
+      "message": "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal."
+    },
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "message": "Die Aktion konnte nicht abgeschlossen werden."
+    },
+    "details": {
+      "title": "Technische Fehlerdetails",
+      "status": "HTTP-Status",
+      "message": "Meldung",
+      "noMessage": "Keine Servermeldung vorhanden."
+    }
+  },
   "chat.eyebrow": "Live",
   "chat.title": "Chat",
   "chat.expand": "Chat öffnen",

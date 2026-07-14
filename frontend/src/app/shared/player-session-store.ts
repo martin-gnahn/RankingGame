@@ -1,5 +1,5 @@
 import {computed, effect, Injectable, signal} from '@angular/core';
-import {INITIAL_PLAYER_STATE, PlayerData, UNKNOWN_PLAYER_CONST} from './player-data.model';
+import {PlayerData, UNKNOWN_PLAYER_CONST, UNKNOWN_PLAYER_STATE} from './player-data.model';
 
 const STORAGE_KEY = 'playerData';
 
@@ -57,7 +57,7 @@ export class PlayerSessionStore {
   }
 
   clearPlayerData(): void {
-    this.playerDataInternal.set(INITIAL_PLAYER_STATE);
+    this.playerDataInternal.set(UNKNOWN_PLAYER_STATE);
     this.storage?.removeItem(STORAGE_KEY);
   }
 
@@ -66,19 +66,19 @@ export class PlayerSessionStore {
       const json = sessionStorage.getItem(STORAGE_KEY);
 
       if (!json) {
-        return INITIAL_PLAYER_STATE;
+        return UNKNOWN_PLAYER_STATE;
       }
 
       const storedValue: unknown = JSON.parse(json);
       if (!this.isPlayerData(storedValue)) {
         sessionStorage.removeItem(STORAGE_KEY);
-        return INITIAL_PLAYER_STATE;
+        return UNKNOWN_PLAYER_STATE;
       }
 
       return storedValue;
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
-      return INITIAL_PLAYER_STATE;
+      return UNKNOWN_PLAYER_STATE;
     }
   }
 

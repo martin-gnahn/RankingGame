@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
+import com.example.rankinggame.engine.GameConstants;
 import com.example.rankinggame.usecases.GetSubmittedAnswersService;
 import com.example.rankinggame.usecases.SubmitAnswerService;
 import jakarta.validation.Valid;
@@ -16,18 +17,22 @@ import java.util.UUID;
 public class AnswerController {
     private final SubmitAnswerService submitAnswerService;
     private final GetSubmittedAnswersService getSubmittedAnswersService;
+    private final PlayerSessionService playerSessionService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SubmitAnswerResponse submitAnswer(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
-            @Valid @RequestBody SubmitAnswerRequest request
+            @Valid @RequestBody SubmitAnswerRequest request,
+            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
     ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         SubmitAnswerResult result = submitAnswerService.submitAnswer(new SubmitAnswerCommand(
                 roomCode,
                 roundId,
-                request.playerId(),
+                player.playerId(),
                 request.answerText()
         ));
 
@@ -45,12 +50,14 @@ public class AnswerController {
     public SubmittedAnswersResponse getSubmittedAnswers(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
-            @RequestParam UUID playerId
+            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
     ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         SubmittedAnswersResult result = getSubmittedAnswersService.getSubmittedAnswers(new GetSubmittedAnswersCommand(
                 roomCode,
                 roundId,
-                playerId
+                player.playerId()
         ));
 
         return new SubmittedAnswersResponse(result.answers().stream()

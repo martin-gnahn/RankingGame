@@ -25,10 +25,9 @@ export class GameApiService {
     );
   }
 
-  getSubmittedAnswers(roomCode: RoomCode, roundId: string, playerId: string): Observable<AnswerResponseDto> {
+  getSubmittedAnswers(roomCode: RoomCode, roundId: string): Observable<AnswerResponseDto> {
     return this.http.get<AnswerResponseDto>(
       `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answers`,
-      {params: {playerId}},
     );
   }
 
@@ -43,15 +42,10 @@ export class GameApiService {
     );
   }
 
-  getRankingPositions(
-    roomCode: RoomCode,
-    roundId: string,
-    playerId: string,
-  ): Observable<RankedAnswerListResponse> {
+  getRankingPositions(roomCode: RoomCode, roundId: string): Observable<RankedAnswerListResponse> {
     return this.http
       .get<RankedAnswerListResponse>(
         `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/rounds/${encodeURIComponent(roundId)}/answer/position/all`,
-        {params: {playerId}},
       );
   }
 }
