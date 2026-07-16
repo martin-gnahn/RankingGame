@@ -5,7 +5,6 @@ import com.example.rankinggame.entities.*;
 import com.example.rankinggame.exceptions.ActiveRoundNotFoundException;
 import com.example.rankinggame.exceptions.ActiveRoundQuestionNotFoundException;
 import com.example.rankinggame.exceptions.RoomHasNoActiveGameException;
-import com.example.rankinggame.mapper.GameMapper;
 import com.example.rankinggame.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,42 +41,41 @@ class GetActiveRoundServiceTest {
     @Mock
     private RoundCardAssignmentService roundCardAssignmentService;
 
-    @Mock
-    private JpaPlayerRepository playerRepository;
-
-    @Mock
-    private GameMapper gameMapper;
-
     @InjectMocks
     private GetActiveRoundService service;
 
     @Test
     void returnsQuestionTextForCurrentRound() {
-        UUID roomId = UUID.randomUUID();
-        UUID gameSessionId = UUID.randomUUID();
-        UUID roundId = UUID.randomUUID();
-        UUID questionId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
-        RoomEntity room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
-        GameSession gameSession = gameSession(gameSessionId, roomId, roundId, 0);
-        RoundEntity round = round(roundId, gameSessionId, questionId);
-        QuestionEntity question = question(questionId, "Welche Ausrede funktioniert immer?");
-        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
-        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
-        when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
-        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
-        when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
+        ActiveRoundFixture activeRound = activeRoundFor(playerId);
 
         ActiveRoundResult result = service.loadActiveRoundForPlayer(" abcd12 ", playerId);
 
-        assertThat(result.roomId()).isEqualTo(roomId);
+        assertThat(result.roomId()).isEqualTo(activeRound.roomId());
         assertThat(result.roomCode()).isEqualTo("ABCD12");
-        assertThat(result.gameSessionId()).isEqualTo(gameSessionId);
-        assertThat(result.roundId()).isEqualTo(roundId);
+        assertThat(result.gameSessionId()).isEqualTo(activeRound.gameSessionId());
+        assertThat(result.roundId()).isEqualTo(activeRound.roundId());
         assertThat(result.roundNumber()).isEqualTo(1);
-        assertThat(result.questionId()).isEqualTo(questionId);
+        assertThat(result.questionId()).isEqualTo(activeRound.questionId());
         assertThat(result.questionText()).isEqualTo("Welche Ausrede funktioniert immer?");
         assertThat(result.assignedCardValue()).isEqualTo(7);
+        assertThat(result.currentPlayerSubmitted()).isFalse();
+        assertThat(result.submittedAnswerByPlayer()).isNull();
+    }
+
+    @Test
+    void returnsAnswerInResponseIfUserAlreadyAnswered() {
+        UUID playerId = UUID.randomUUID();
+        ActiveRoundFixture activeRound = activeRoundFor(playerId);
+        String submittedAnswer = "Mit WLAN-Problemen.";
+        when(answerRepository.findByRoundIdAndPlayerId(activeRound.roundId(), playerId))
+                .thenReturn(Optional.of(answer(activeRound.roundId(), playerId, submittedAnswer)));
+
+        ActiveRoundResult result = service.loadActiveRoundForPlayer("ABCD12", playerId);
+
+        assertThat(result.currentPlayerSubmitted()).isTrue();
+        assertThat(result.submittedAnswerByPlayer()).isNotNull();
+        assertThat(result.submittedAnswerByPlayer().value()).isEqualTo(submittedAnswer);
     }
 
     @Test
@@ -174,5 +172,41 @@ class GetActiveRoundServiceTest {
         question.setCategory("test");
         question.setActive(true);
         return question;
+    }
+
+    private AnswerEntity answer(UUID roundId, UUID playerId, String text) {
+        AnswerEntity answer = new AnswerEntity();
+        answer.setId(UUID.randomUUID());
+        answer.setRoundId(roundId);
+        answer.setPlayerId(playerId);
+        answer.setText(text);
+        return answer;
+    }
+
+    private ActiveRoundFixture activeRoundFor(UUID playerId) {
+        UUID roomId = UUID.randomUUID();
+        UUID gameSessionId = UUID.randomUUID();
+        UUID roundId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        RoomEntity room = room(roomId, "ABCD12", RoomStatus.IN_GAME);
+        GameSession gameSession = gameSession(gameSessionId, roomId, roundId, 0);
+        RoundEntity round = round(roundId, gameSessionId, questionId);
+        QuestionEntity question = question(questionId, "Welche Ausrede funktioniert immer?");
+        when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
+        when(gameSessionRepository.findByRoomId(roomId)).thenReturn(Optional.of(gameSession));
+        when(roundRepository.findById(roundId)).thenReturn(Optional.of(round));
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
+        when(roundCardAssignmentService.getCardValue(roomId, roundId, playerId)).thenReturn(7);
+        when(answerRepository.findByRoundIdAndPlayerId(roundId, playerId)).thenReturn(Optional.empty());
+
+        return new ActiveRoundFixture(roomId, gameSessionId, roundId, questionId);
+    }
+
+    private record ActiveRoundFixture(
+            UUID roomId,
+            UUID gameSessionId,
+            UUID roundId,
+            UUID questionId
+    ) {
     }
 }
