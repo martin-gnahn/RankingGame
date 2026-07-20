@@ -41,7 +41,7 @@ public class RoomController {
     @GetMapping("/{roomCode}")
     public RoomResponse getRoom(
             @PathVariable String roomCode,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         AuthenticatedPlayer player =
                 playerSessionService.authenticatePlayer(roomCode, token);

@@ -24,7 +24,7 @@ public class RankAnswerController {
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
             @Valid @RequestBody AddRankingPositionRequest request,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         AuthenticatedPlayer player =
                 playerSessionService.authenticatePlayer(roomCode, token);
@@ -41,7 +41,7 @@ public class RankAnswerController {
     public RankedAnswerListResponse getOrderOfAnswers(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         AuthenticatedPlayer player =
                 playerSessionService.authenticatePlayer(roomCode, token);

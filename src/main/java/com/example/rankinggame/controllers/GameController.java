@@ -27,7 +27,7 @@ public class GameController {
     @ResponseStatus(HttpStatus.CREATED)
     public StartGameResponse startRankingGame(
             @PathVariable String roomCode,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         AuthenticatedPlayer player =
                 playerSessionService.authenticatePlayer(roomCode, token);
@@ -42,7 +42,7 @@ public class GameController {
     @GetMapping("/current-round")
     public ActiveRoundResponse getActiveRound(
             @PathVariable String roomCode,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         AuthenticatedPlayer player =
                 playerSessionService.authenticatePlayer(roomCode, token);
@@ -54,7 +54,7 @@ public class GameController {
     @GetMapping("/current-round/players")
     public List<GameSessionPlayerEntity> getActivePlayers(
             @PathVariable String roomCode,
-            @RequestHeader(GameConstants.PLAYER_SESSION_TOKEN) String token
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         playerSessionService.authenticatePlayer(roomCode, token);
         return startRankingGameService.getActivePlayers(roomCode);
