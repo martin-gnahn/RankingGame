@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
 public class ErrorConstants {
+    public static final String NO_TOKEN = "NO_TOKEN";
     static final String TOKEN_NOT_AUTHORIZED = "TOKEN_NOT_AUTHORIZED";
     static final String TOKEN_EXPIRED = "TOKEN_EXPIRED";
     static final String INVALID_REQUEST = "INVALID_REQUEST";
