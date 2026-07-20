@@ -1,6 +1,7 @@
 package com.example.rankinggame.usecases;
 
 import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -152,7 +153,8 @@ class JoinRoomServiceTest {
                 playerRepository,
                 eventPublisher,
                 new RoomCodeService(),
-                tokenGenerator
+                tokenGenerator,
+                new TokenTimestampProvider()
         );
     }
 }
