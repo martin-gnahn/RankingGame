@@ -41,7 +41,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             UserNotAuthorizedException.class,
-            UserSessionExpiredException.class
+            UserSessionExpiredException.class,
+            UserTokenNotPresentException.class
     })
     public ResponseEntity<ApiError> handleUnauthorized(InvalidTokenException exception) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error(exception.getErrorKey(), exception.getMessage()));
