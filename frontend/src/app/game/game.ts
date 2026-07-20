@@ -10,7 +10,7 @@ import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {GameApiService} from '../core/api/game-api.service';
 import {RankedAnswerDto} from '../core/api/game.models';
 import {RoomApiService} from '../core/api/room-api.service';
-import {ActiveRoundResponse, AnswerDto, ChatMessageResponse} from '../core/api/room.models';
+import {ActiveRoundResponse, AnswerDto, ChatMessageResponse, RoomCode} from '../core/api/room.models';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {notBlankValidator} from '../shared/validators/not-blank.validator';
@@ -20,6 +20,10 @@ import {Question} from './question/question';
 import {RankingAnswer} from './ranking-answer/ranking-answer';
 import {RankingOverview} from './ranking-overview/ranking-overview';
 import {PlayerSessionStore} from '../shared/player-session-store';
+
+interface ErrorKeyContainer {
+  key: string | null;
+}
 
 @Component({
   selector: 'app-game',
@@ -200,25 +204,29 @@ export class Game {
     this.webSocket.sendChatMessage(roomCode, playerId, body);
   }
 
+  isAnswerContextValid(roomCode: RoomCode, activeRound: ActiveRoundResponse | null): ErrorKeyContainer {
+    if (!roomCode) {
+      return {key: 'game.errors.missingRoomCode'};
+    }
+    if (!activeRound) {
+      return {key: 'game.errors.missingRoomCode'};
+    }
+    if (!this.isValidPlayer()) {
+      return {key: 'game.errors.missingPlayerId'};
+    }
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.isValidPlayer()) {
+      return {key: 'game.errors.onlyHostCanRank'};
+    }
+    return {key: null};
+  }
+
   protected rankAnswer(answer: AnswerDto): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
 
-    // TODO: extract to validation method
-    if (!roomCode) {
-      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingRoomCode'));
-      return;
-    }
-    if (!activeRound) {
-      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingRoomCode'));
-      return;
-    }
-    if (!this.isValidPlayer()) {
-      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingPlayerId'));
-      return;
-    }
-    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.isValidPlayer()) {
-      this.rankingErrorMessage.set(this.translate.instant('game.errors.onlyHostCanRank'));
+    const errorKeyContainer = this.isAnswerContextValid(roomCode, activeRound);
+    if (errorKeyContainer.key) {
+      this.rankingErrorMessage.set(this.translate.instant(errorKeyContainer.key));
       return;
     }
 
@@ -230,7 +238,7 @@ export class Game {
     this.rankingSubmittingAnswerId.set(answer.answerId);
 
     this.gameApi
-      .addRankingPosition(roomCode, activeRound.roundId, {
+      .addRankingPosition(roomCode, activeRound!.roundId, {
         answerId: answer.answerId,
       })
       .subscribe({

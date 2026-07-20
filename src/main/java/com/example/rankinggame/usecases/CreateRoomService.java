@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -9,17 +11,15 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionOperations;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+@RequiredArgsConstructor
 @Service
 public class CreateRoomService {
     private static final int MAX_ROOM_CREATION_ATTEMPTS = 5;
@@ -29,29 +29,7 @@ public class CreateRoomService {
     private final RoomCodeGenerator roomCodeGenerator;
     private final TransactionOperations transactionOperations;
     private final TokenGenerator tokenGenerator;
-
-    @Autowired
-    public CreateRoomService(
-            RoomRepository roomRepository,
-            PlayerRepository playerRepository,
-            RoomCodeGenerator roomCodeGenerator,
-            PlatformTransactionManager transactionManager, TokenGenerator tokenGenerator
-    ) {
-        this(roomRepository, playerRepository, roomCodeGenerator, new TransactionTemplate(transactionManager), tokenGenerator);
-    }
-
-    CreateRoomService(
-            RoomRepository roomRepository,
-            PlayerRepository playerRepository,
-            RoomCodeGenerator roomCodeGenerator,
-            TransactionOperations transactionOperations, TokenGenerator tokenGenerator
-    ) {
-        this.roomRepository = roomRepository;
-        this.playerRepository = playerRepository;
-        this.roomCodeGenerator = roomCodeGenerator;
-        this.transactionOperations = transactionOperations;
-        this.tokenGenerator = tokenGenerator;
-    }
+    private final TokenTimestampProvider tokenTimestampProvider;
 
     public CreateRoomResult createRoom(CreateRoomCommand command) {
         String playerName = normalizePlayerName(command);
@@ -93,13 +71,9 @@ public class CreateRoomService {
         hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
         hostPlayer.setTokenHash(hashFromToken);
-        Instant nowInOneHour = getTokenExpirationDate();
+        Instant nowInOneHour = tokenTimestampProvider.getTokenExpirationDate();
         hostPlayer.setSessionExpiresAt(nowInOneHour);
         return hostPlayer;
-    }
-
-    private Instant getTokenExpirationDate() {
-        return Instant.now().plus(10, ChronoUnit.SECONDS);
     }
 
     private RoomEntity saveRoomWithFreshCode(RoomEntity room) {
