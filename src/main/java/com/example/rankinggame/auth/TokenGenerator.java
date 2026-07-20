@@ -1,4 +1,4 @@
-package com.example.rankinggame.usecases;
+package com.example.rankinggame.auth;
 
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import java.util.Base64;
 
 @Service
 public class TokenGenerator {
-    String generateSafeToken() {
+    public String generateSafeToken() {
         byte[] tokenBytes = new byte[32];
         new SecureRandom().nextBytes(tokenBytes);
         // Base64-Encoding für URL-sichere Strings

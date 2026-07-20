@@ -23,8 +23,6 @@ export interface RankedAnswerDto {
   oneBasedPosition: number;
 }
 
-export type ValueObjectResponse = string | { value?: string } | null | undefined;
-
 export interface RankedAnswerListResponse {
   rankings: RankedAnswerDto[];
 }
