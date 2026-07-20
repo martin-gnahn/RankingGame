@@ -222,7 +222,7 @@ export class Lobby {
   private navigateToGame(roomCode: string): void {
     const currentPlayerData = this.currentPlayerData();
     if (currentPlayerData.playerId === UNKNOWN_PLAYER_CONST || currentPlayerData.role === UNKNOWN_ROLE_CONST) {
-      // TODO: navigate to error
+      void this.router.navigate(['/error']);
       return;
     }
 

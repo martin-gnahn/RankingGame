@@ -36,8 +36,6 @@ public class AnswerController {
                 request.answerText()
         ));
 
-
-        // TODO: Are SubmitAnswerResult and SubmitAnswerResponse redundant?
         return new SubmitAnswerResponse(
                 result.answerId(),
                 result.roundId(),

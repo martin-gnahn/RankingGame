@@ -1,10 +1,10 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.auth.TokenGenerator;
 import com.example.rankinggame.entities.PlayerEntity;
 import com.example.rankinggame.entities.RoomEntity;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
-import com.example.rankinggame.usecases.TokenGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

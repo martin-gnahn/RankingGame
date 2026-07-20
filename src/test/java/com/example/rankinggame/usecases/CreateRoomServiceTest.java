@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -191,7 +193,7 @@ class CreateRoomServiceTest {
         TokenGenerator tokenGenerator = mock(TokenGenerator.class);
         when(tokenGenerator.generateSafeToken()).thenReturn("raw-token");
         when(tokenGenerator.generateHashFromToken("raw-token")).thenReturn("hashed-token");
-        return new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION, tokenGenerator);
+        return new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION, tokenGenerator, new TokenTimestampProvider());
     }
 
 }

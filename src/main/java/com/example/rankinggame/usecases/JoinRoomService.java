@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -16,9 +18,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 @RequiredArgsConstructor
 @Service
 public class JoinRoomService {
@@ -27,6 +26,7 @@ public class JoinRoomService {
     private final ApplicationEventPublisher eventPublisher;
     private final RoomCodeService roomCodeService;
     private final TokenGenerator tokenGenerator;
+    private final TokenTimestampProvider tokenTimestampProvider;
 
     @Transactional
     public JoinRoomResult joinRoom(JoinRoomCommand command) {
@@ -55,7 +55,7 @@ public class JoinRoomService {
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
         String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
         player.setTokenHash(hashFromToken);
-        player.setSessionExpiresAt(Instant.now().plus(60, ChronoUnit.MINUTES));
+        player.setSessionExpiresAt(tokenTimestampProvider.getTokenExpirationDate());
 
         PlayerEntity savedPlayer = savePlayerAndVerifyUniqueName(player);
 
