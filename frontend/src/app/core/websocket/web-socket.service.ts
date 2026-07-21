@@ -1,16 +1,10 @@
-import { Injectable, InjectionToken, inject } from '@angular/core';
-import {
-  Client,
-  type IMessage,
-  type IPublishParams,
-  type StompConfig,
-  type StompSubscription,
-} from '@stomp/stompjs';
-import { BehaviorSubject, Observable } from 'rxjs';
+import {inject, Injectable, InjectionToken} from '@angular/core';
+import {Client, type IMessage, type IPublishParams, type StompConfig, type StompSubscription,} from '@stomp/stompjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 
-import { environment } from '../../../environments/environment';
-import { RoomCode } from '../api/room.models';
-import { RealtimeEvent, WebSocketConnectionState } from './web-socket.models';
+import {environment} from '../../../environments/environment';
+import {RoomCode} from '../api/room.models';
+import {EMPTY_EVENT, RealtimeEvent, WebSocketConnectionState} from './web-socket.models';
 
 interface StompClientAdapter {
   active: boolean;
@@ -145,7 +139,7 @@ export class WebSocketService {
 
   private parseMessage(message: IMessage): RealtimeEvent {
     if (!message.body) {
-      return { type: 'EMPTY', payload: null };
+      return {type: EMPTY_EVENT, payload: null};
     }
 
     return JSON.parse(message.body) as RealtimeEvent;

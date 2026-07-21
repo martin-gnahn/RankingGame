@@ -12,8 +12,8 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 @Controller
 public class RoomLiveController {
-    private final LivePlayerSessionRegistry sessionRegistry;
     private final ChatMessageService chatMessageService;
+    private final PlayerPresenceService playerPresenceService;
 
     @MessageMapping("/rooms/{roomCode}/join-live")
     public void joinLive(
@@ -25,7 +25,7 @@ public class RoomLiveController {
             return;
         }
 
-        sessionRegistry.register(sessionId, roomCode, request.playerId());
+        playerPresenceService.markConnected(sessionId, roomCode, request.playerId());
     }
 
     @MessageMapping("/rooms/{roomCode}/chat")
