@@ -65,7 +65,6 @@ export class ErrorComponent {
   );
   private readonly errorKind = computed<ErrorKind>(() => {
     const errorKey = this.errorDataReader.errorKey()?.toUpperCase();
-    debugger;
     if (errorKey && ERROR_KIND_BY_ERROR_KEY[errorKey]) {
       return ERROR_KIND_BY_ERROR_KEY[errorKey];
     }
