@@ -8,12 +8,30 @@ type StoredPlayerData = {
   role: 'host' | 'player';
   playerSessionToken: string | null;
 };
+type ErrorPageExpectation = {
+  title: string;
+  message: string;
+  status: string;
+  detailMessage: string;
+};
 
 const PLAYER_DATA_STORAGE_KEY = 'playerData';
 const PLAYER_SESSION_TOKEN_HEADER = 'X-Player-Session-Token';
 const NO_TOKEN_MESSAGE = 'No user authentication token.';
 const INVALID_TOKEN_MESSAGE = 'User is not authorized to access backend.';
 const ANSWER_TEXT = 'Ich wuerde erst mal die Kaffeemaschine beschuldigen.';
+const NO_TOKEN_ERROR_PAGE: ErrorPageExpectation = {
+  title: t('error.noToken.title'),
+  message: t('error.noToken.message'),
+  status: '401',
+  detailMessage: NO_TOKEN_MESSAGE,
+};
+const INVALID_TOKEN_ERROR_PAGE: ErrorPageExpectation = {
+  title: t('error.invalidToken.title'),
+  message: t('error.invalidToken.message'),
+  status: '401',
+  detailMessage: INVALID_TOKEN_MESSAGE,
+};
 
 test('proves valid REST auth with session token and no playerId in protected URLs or bodies', async ({
                                                                                                        browser,
@@ -54,100 +72,66 @@ test('proves valid REST auth with session token and no playerId in protected URL
   }
 });
 
-test.only('redirects a fresh browser context without local session to the no-token error page', async ({
-                                                                                                    browser,
-                                                                                                    page: hostPage,
-                                                                                                  }) => {
-  const hostName = uniquePlayerName('Host');
+test.describe('REST auth rejection', () => {
+  test('redirects a fresh browser context without local session to the no-token error page', async ({
+                                                                                                      browser,
+                                                                                                      page: hostPage,
+                                                                                                    }) => {
+    await hostPage.goto('/');
+    const roomCode = await createRoom(hostPage, uniquePlayerName('Host'));
 
-  await hostPage.goto('/');
-  const roomCode = await createRoom(hostPage, hostName);
+    const freshContext = await browser.newContext();
+    const freshPage = await freshContext.newPage();
 
-  const freshContext = await browser.newContext();
-  const freshPage = await freshContext.newPage();
-  const protectedRoomRequests: string[] = [];
-  freshPage.on('request', (request) => {
-    if (request.url().includes(`/api/rooms/${roomCode}`)) {
-      protectedRoomRequests.push(request.url());
+    try {
+      const protectedRoomRequests = collectProtectedRoomRequests(freshPage, roomCode);
+
+      await freshPage.goto(`/lobby/${roomCode}`);
+
+      await expectErrorPage(freshPage, NO_TOKEN_ERROR_PAGE);
+      expect(protectedRoomRequests).toEqual([]);
+    } finally {
+      await freshContext.close();
     }
   });
 
-  try {
-    await freshPage.goto(`/lobby/${roomCode}`);
-    await expectErrorPage(freshPage, {
-      title: t('error.noToken.title'),
-      message: t('error.noToken.message'),
-      status: '401',
-      detailMessage: NO_TOKEN_MESSAGE,
-    });
-    expect(protectedRoomRequests).toEqual([]);
-  } finally {
-    await freshContext.close();
-  }
-});
+  test('redirects to the invalid-token error page when a stored token is tampered with', async ({
+                                                                                                  page,
+                                                                                                }) => {
+    await page.goto('/');
+    const roomCode = await createRoom(page, uniquePlayerName('Host'));
 
-test('redirects to the invalid-token error page when a stored token is tampered with', async ({
-                                                                                                page,
-                                                                                              }) => {
-  const hostName = uniquePlayerName('Host');
+    await overwriteStoredToken(page, 'tampered-token');
 
-  await page.goto('/');
-  const roomCode = await createRoom(page, hostName);
-
-  await overwriteStoredToken(page, 'tampered-token');
-
-  const unauthorizedResponsePromise = page.waitForResponse((response) =>
-    response.url().includes(`/api/rooms/${roomCode}`)
-    && response.status() === 401
-  );
-
-  await page.reload();
-  await unauthorizedResponsePromise;
-
-  await expectErrorPage(page, {
-    title: t('error.invalidToken.title'),
-    message: t('error.invalidToken.message'),
-    status: '401',
-    detailMessage: INVALID_TOKEN_MESSAGE,
+    await triggerUnauthorizedRoomRequestAndExpectErrorPage(page, roomCode, () => page.reload());
+    expect(await readStoredPlayerData(page)).toBeNull();
   });
-  expect(await readStoredPlayerData(page)).toBeNull();
-});
 
-test('rejects a token from room A when it is reused against room B', async ({
-                                                                              browser,
-                                                                              page: roomAPage,
-                                                                            }) => {
-  const roomBContext = await browser.newContext();
-  const roomBPage = await roomBContext.newPage();
+  test('rejects a token from room A when it is reused against room B', async ({
+                                                                                browser,
+                                                                                page: roomAPage,
+                                                                              }) => {
+    const roomBContext = await browser.newContext();
+    const roomBPage = await roomBContext.newPage();
 
-  try {
-    await roomAPage.goto('/');
-    await createRoom(roomAPage, uniquePlayerName('RoomA Host'));
-    const roomAToken = (await readStoredPlayerData(roomAPage))?.playerSessionToken;
-    expect(roomAToken).toBeTruthy();
+    try {
+      await roomAPage.goto('/');
+      await createRoom(roomAPage, uniquePlayerName('RoomA Host'));
+      const roomAToken = (await readStoredPlayerData(roomAPage))?.playerSessionToken;
+      expect(roomAToken).toBeTruthy();
 
-    await roomBPage.goto('/');
-    const roomBCode = await createRoom(roomBPage, uniquePlayerName('RoomB Host'));
-    await overwriteStoredToken(roomBPage, roomAToken!);
+      await roomBPage.goto('/');
+      const roomBCode = await createRoom(roomBPage, uniquePlayerName('RoomB Host'));
+      await overwriteStoredToken(roomBPage, roomAToken!);
 
-    const unauthorizedResponsePromise = roomBPage.waitForResponse((response) =>
-      response.url().includes(`/api/rooms/${roomBCode}`)
-      && response.status() === 401
-    );
-
-    await roomBPage.goto(`/lobby/${roomBCode}`);
-    await unauthorizedResponsePromise;
-
-    await expectErrorPage(roomBPage, {
-      title: t('error.invalidToken.title'),
-      message: t('error.invalidToken.message'),
-      status: '401',
-      detailMessage: INVALID_TOKEN_MESSAGE,
-    });
-    expect(await readStoredPlayerData(roomBPage)).toBeNull();
-  } finally {
-    await roomBContext.close();
-  }
+      await triggerUnauthorizedRoomRequestAndExpectErrorPage(roomBPage, roomBCode, () =>
+        roomBPage.goto(`/lobby/${roomBCode}`),
+      );
+      expect(await readStoredPlayerData(roomBPage)).toBeNull();
+    } finally {
+      await roomBContext.close();
+    }
+  });
 });
 
 async function reloadAndAssertProtectedGetUsesSessionTokenOnly(
@@ -158,6 +142,33 @@ async function reloadAndAssertProtectedGetUsesSessionTokenOnly(
   const requestPromise = waitForProtectedRoomGetRequest(page, roomCode, suffix);
   await page.reload();
   assertProtectedGetRequestUsesSessionTokenOnly(await requestPromise, roomCode, suffix);
+}
+
+function collectProtectedRoomRequests(page: Page, roomCode: string): string[] {
+  const protectedRoomRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().includes(`/api/rooms/${roomCode}`)) {
+      protectedRoomRequests.push(request.url());
+    }
+  });
+
+  return protectedRoomRequests;
+}
+
+async function triggerUnauthorizedRoomRequestAndExpectErrorPage(
+  page: Page,
+  roomCode: string,
+  triggerRequest: () => Promise<unknown>,
+): Promise<void> {
+  const unauthorizedResponsePromise = page.waitForResponse((response) =>
+    response.url().includes(`/api/rooms/${roomCode}`)
+    && response.status() === 401
+  );
+
+  await triggerRequest();
+  await unauthorizedResponsePromise;
+  await expectErrorPage(page, INVALID_TOKEN_ERROR_PAGE);
 }
 
 function waitForProtectedRoomGetRequest(page: Page, roomCode: string, suffix: string) {
@@ -239,12 +250,7 @@ async function readStoredPlayerData(page: Page): Promise<StoredPlayerData | null
 
 async function expectErrorPage(
   page: Page,
-  expectation: {
-    title: string;
-    message: string;
-    status: string;
-    detailMessage: string;
-  },
+  expectation: ErrorPageExpectation,
 ): Promise<void> {
   await page.waitForURL(/\/error$/);
   await expect(page.getByRole('heading', {name: expectation.title})).toBeVisible();
