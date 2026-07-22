@@ -11,7 +11,7 @@ public interface AnswerRepository {
 
     AnswerEntity saveAndFlush(AnswerEntity answer);
 
-    boolean existsByRoundIdAndPlayerId(UUID roundId, UUID playerId);
+    Optional<AnswerEntity> findByRoundIdAndPlayerId(UUID roundId, UUID playerId);
 
     int countByRoundId(UUID roundId);
 

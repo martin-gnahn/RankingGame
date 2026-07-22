@@ -1,5 +1,7 @@
 package com.example.rankinggame.dto;
 
+import com.example.rankinggame.engine.AnswerText;
+
 import java.util.UUID;
 
 public record ActiveRoundResponse(
@@ -12,7 +14,9 @@ public record ActiveRoundResponse(
         String questionText,
         int assignedCardValue,
         boolean currentPlayerSubmitted,
-        boolean currentPlayerIsCaptain) {
+        AnswerText submittedAnswerByPlayer,
+        boolean currentPlayerIsCaptain
+) {
     public static ActiveRoundResponse from(ActiveRoundResult result) {
         return new ActiveRoundResponse(
                 result.roomId(),
@@ -24,6 +28,7 @@ public record ActiveRoundResponse(
                 result.questionText(),
                 result.assignedCardValue(),
                 result.currentPlayerSubmitted(),
+                result.submittedAnswerByPlayer(),
                 result.currentPlayerIsCaptain()
         );
     }

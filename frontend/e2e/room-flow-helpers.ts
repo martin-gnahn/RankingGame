@@ -79,7 +79,6 @@ export async function startGame(page: Page): Promise<void> {
 export async function expectGameScreen(page: Page): Promise<void> {
   await page.waitForURL(/\/game\/[A-Z0-9]{4,8}(?:\?.*)?$/);
   let roundTranslated = t('game.roundLabel', {roundNumber: 1});
-  debugger;
   await expect(page.getByText(roundTranslated)).toBeVisible();
   await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toBeVisible();
   await expect(page.getByRole('button', {name: t('game.submit.default')})).toBeVisible();
@@ -88,7 +87,20 @@ export async function expectGameScreen(page: Page): Promise<void> {
 export async function submitAnswer(page: Page, answerText: string): Promise<void> {
   await page.getByRole('textbox', {name: t('game.answer.label')}).fill(answerText);
   await page.getByRole('button', {name: t('game.submit.default')}).click();
-  await expect(page.getByRole('button', {name: t('game.submit.sent')})).toBeVisible();
+  await expectAnswerTextBoxToHaveValue(page, answerText);
+  await expectAnswerButtonToHaveSentState(page);
+}
+
+export async function expectAnswerTextBoxToHaveValue(page: Page, answerText: string): Promise<void> {
+  await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toHaveValue(answerText);
+}
+
+export async function expectAnswerButtonToHaveSentState(page: Page): Promise<void> {
+  const buttonWithDefaultLabel = page.getByRole('button', {name: t('game.submit.default')});
+  await expect(buttonWithDefaultLabel).not.toBeVisible();
+  const buttonWithSentLabel = page.getByRole('button', {name: t('game.submit.sent')});
+  await expect(buttonWithSentLabel).toBeVisible();
+  await expect(buttonWithSentLabel).toBeDisabled();
 }
 
 export async function expectChatReady(page: Page): Promise<void> {
@@ -160,12 +172,17 @@ async function ensureBackendReady(page: Page): Promise<void> {
   backendReady = true;
 }
 
-export async function startGameWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
+export async function createRoomWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
   await hostPage.goto('/');
   const roomCode = await createRoom(hostPage, hostName);
 
   await guestPage.goto('/');
   await joinRoom(guestPage, roomCode, guestName);
+  return roomCode;
+}
+
+export async function startGameWith2Players(hostPage: Page, hostName: string, guestPage: Page, guestName: string) {
+  const roomCode = await createRoomWith2Players(hostPage, hostName, guestPage, guestName);
 
   await startGame(hostPage);
 
