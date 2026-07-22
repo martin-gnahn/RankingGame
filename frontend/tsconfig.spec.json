@@ -4,11 +4,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "resolveJsonModule": true,
     "types": [
-      "jasmine"
+      "jasmine",
+      "node"
     ]
   },
   "include": [
+    "e2e/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.spec.ts"
   ]
