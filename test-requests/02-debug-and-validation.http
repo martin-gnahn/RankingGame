@@ -1,0 +1,66 @@
+@baseUrl = http://localhost:8080
+@roomCode = REPLACE_WITH_ROOM_CODE
+@roundId = REPLACE_WITH_ROUND_ID
+@hostToken = REPLACE_WITH_HOST_PLAYER_SESSION_TOKEN
+@guestToken = REPLACE_WITH_GUEST_PLAYER_SESSION_TOKEN
+@answerId = REPLACE_WITH_ANSWER_ID
+
+### Missing token auth probe
+GET {{baseUrl}}/api/rooms/{{roomCode}}
+Accept: application/json
+
+### Duplicate nickname in the same room should be rejected
+POST {{baseUrl}}/api/rooms/{{roomCode}}/players
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Marta Demo Host"
+}
+
+### Blank player name should fail validation
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "   "
+}
+
+### Starting as a non-host should fail with ACCESS_DENIED
+POST {{baseUrl}}/api/rooms/{{roomCode}}/ranking-game/start
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{guestToken}}
+
+{}
+
+### Blank answer should fail validation
+POST {{baseUrl}}/api/rooms/{{roomCode}}/ranking-game/rounds/{{roundId}}/answers
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{guestToken}}
+
+{
+  "answerText": ""
+}
+
+### Ranking before all players submitted should fail with GAME_STATE_CONFLICT
+POST {{baseUrl}}/api/rooms/{{roomCode}}/ranking-game/rounds/{{roundId}}/answer/position/new
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{
+  "answerId": "{{answerId}}"
+}
+
+### Ranking as guest should fail with ACCESS_DENIED
+POST {{baseUrl}}/api/rooms/{{roomCode}}/ranking-game/rounds/{{roundId}}/answer/position/new
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{guestToken}}
+
+{
+  "answerId": "{{answerId}}"
+}

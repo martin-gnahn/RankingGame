@@ -1,0 +1,188 @@
+@baseUrl = http://localhost:8080
+
+### 1. Create a fresh demo room
+# @name createRoom
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Marta Demo Host"
+}
+
+> {%
+    client.global.set("demoRoomCode", response.body.roomCode);
+    client.global.set("hostPlayerId", response.body.playerId);
+    client.global.set("hostToken", response.body.playerToken);
+%}
+
+### 2. Add Alex
+# @name joinAlex
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/players
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Alex Card Reader"
+}
+
+> {%
+    client.global.set("alexPlayerId", response.body.playerId);
+    client.global.set("alexToken", response.body.playerToken);
+%}
+
+### 3. Add Sam
+# @name joinSam
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/players
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Sam Wildcard"
+}
+
+> {%
+    client.global.set("samPlayerId", response.body.playerId);
+    client.global.set("samToken", response.body.playerToken);
+%}
+
+### 4. Confirm lobby state before starting
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+### 5. Start ranking game as host
+# @name startGame
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/start
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{}
+
+### 6. Debug active game player ids
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/current-round/players
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+### 7. Host current round: captures round id and host card
+# @name hostCurrentRound
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/current-round
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+> {%
+    client.global.set("roundId", response.body.roundId);
+    client.global.set("questionText", response.body.questionText);
+    client.global.set("hostCardValue", response.body.assignedCardValue);
+%}
+
+### 8. Alex current round: captures Alex card
+# @name alexCurrentRound
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/current-round
+Accept: application/json
+X-Player-Session-Token: {{alexToken}}
+
+> {%
+    client.global.set("alexCardValue", response.body.assignedCardValue);
+%}
+
+### 9. Sam current round: captures Sam card
+# @name samCurrentRound
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/current-round
+Accept: application/json
+X-Player-Session-Token: {{samToken}}
+
+> {%
+    client.global.set("samCardValue", response.body.assignedCardValue);
+%}
+
+### 10. Host submits an answer
+# @name hostSubmitAnswer
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answers
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{
+  "answerText": "Marta card {{hostCardValue}}: pretends the Wi-Fi has strong opinions."
+}
+
+> {%
+    client.global.set("hostAnswerId", response.body.answerId);
+%}
+
+### 11. Alex submits an answer
+# @name alexSubmitAnswer
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answers
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{alexToken}}
+
+{
+  "answerText": "Alex card {{alexCardValue}}: brings a spreadsheet to a feelings meeting."
+}
+
+> {%
+    client.global.set("alexAnswerId", response.body.answerId);
+%}
+
+### 12. Sam submits an answer
+# @name samSubmitAnswer
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answers
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{samToken}}
+
+{
+  "answerText": "Sam card {{samCardValue}}: says yes before reading the calendar invite."
+}
+
+> {%
+    client.global.set("samAnswerId", response.body.answerId);
+%}
+
+### 13. Read all submitted answers after the round moves to SORTING
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answers
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+### 14. Rank Alex first
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answer/position/new
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{
+  "answerId": "{{alexAnswerId}}"
+}
+
+### 15. Rank Marta second
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answer/position/new
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{
+  "answerId": "{{hostAnswerId}}"
+}
+
+### 16. Rank Sam third, which should complete the ranking for a three-player round
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answer/position/new
+Content-Type: application/json
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+{
+  "answerId": "{{samAnswerId}}"
+}
+
+### 17. Read final ranking order
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/ranking-game/rounds/{{roundId}}/answer/position/all
+Accept: application/json
+X-Player-Session-Token: {{alexToken}}
+
+### 18. Read room after the game is in progress
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}
+Accept: application/json
+X-Player-Session-Token: {{samToken}}

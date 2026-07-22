@@ -1,0 +1,71 @@
+@baseUrl = http://localhost:8080
+@roomCode = REPLACE_WITH_ROOM_CODE
+@playerToken = REPLACE_WITH_PLAYER_SESSION_TOKEN
+
+### Health check
+GET {{baseUrl}}/health
+Accept: application/json
+
+### OpenAPI contract
+GET {{baseUrl}}/v3/api-docs
+Accept: application/json
+
+### Create room as host
+# @name createRoom
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Marta Demo Host"
+}
+
+> {%
+    client.global.set("demoRoomCode", response.body.roomCode);
+    client.global.set("hostPlayerId", response.body.playerId);
+    client.global.set("hostToken", response.body.playerToken);
+%}
+
+### Join room as second player
+# @name joinAlex
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/players
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Alex Card Reader"
+}
+
+> {%
+    client.global.set("alexPlayerId", response.body.playerId);
+    client.global.set("alexToken", response.body.playerToken);
+%}
+
+### Join room as third player
+# @name joinSam
+POST {{baseUrl}}/api/rooms/{{demoRoomCode}}/players
+Content-Type: application/json
+Accept: application/json
+
+{
+  "playerName": "Sam Wildcard"
+}
+
+> {%
+    client.global.set("samPlayerId", response.body.playerId);
+    client.global.set("samToken", response.body.playerToken);
+%}
+
+### Read lobby with host token
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}
+Accept: application/json
+X-Player-Session-Token: {{hostToken}}
+
+### Read any existing recent chat messages for the room
+GET {{baseUrl}}/api/rooms/{{demoRoomCode}}/chat/messages
+Accept: application/json
+
+### Manual room lookup with copied values
+GET {{baseUrl}}/api/rooms/{{roomCode}}
+Accept: application/json
+X-Player-Session-Token: {{playerToken}}
