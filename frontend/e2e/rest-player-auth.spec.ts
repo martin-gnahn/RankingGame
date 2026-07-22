@@ -104,7 +104,8 @@ test.describe('REST auth rejection', () => {
     await overwriteStoredToken(page, 'tampered-token');
 
     await triggerUnauthorizedRoomRequestAndExpectErrorPage(page, roomCode, () => page.reload());
-    expect(await readStoredPlayerData(page)).toBeNull();
+    const playerData = await readStoredPlayerData(page);
+    expect(playerData).toBeNull();
   });
 
   test('rejects a token from room A when it is reused against room B', async ({

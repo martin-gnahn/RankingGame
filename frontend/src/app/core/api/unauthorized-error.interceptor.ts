@@ -15,6 +15,7 @@ interface ApiErrorResponse {
 export const unauthorizedErrorInterceptor: HttpInterceptorFn = (request, next) => {
   const writingErrorDataService = inject(ErrorDataWriterService);
   const router = inject(Router);
+  const playerSessionStore = inject(PlayerSessionStore);
   return next(request).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
@@ -28,7 +29,7 @@ export const unauthorizedErrorInterceptor: HttpInterceptorFn = (request, next) =
           });
 
           void router.navigate(['/error']);
-          inject(PlayerSessionStore).clearPlayerData();
+          playerSessionStore.clearPlayerData();
         }
       }
 
