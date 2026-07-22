@@ -1,8 +1,0 @@
-###
-@roomCode = ABCDE
-POST http://localhost:8080/api/rooms/{{roomCode}}/rankedAnswer-game/start
-Content-Type: application/json
-
-{
-  "hostPlayerId": "abc"
-}
