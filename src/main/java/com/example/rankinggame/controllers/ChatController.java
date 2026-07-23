@@ -14,12 +14,15 @@ import java.util.List;
 @RequestMapping("/api/rooms/{roomCode}/chat/messages")
 public class ChatController {
     private final ChatMessageService chatMessageService;
+    private final PlayerSessionService playerSessionService;
 
     @GetMapping
     public List<ChatMessageResponse> getRecentMessages(
             @PathVariable String roomCode,
             @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         return chatMessageService.getRecentMessages(roomCode).stream()
                 .map(this::toResponse)
                 .toList();
