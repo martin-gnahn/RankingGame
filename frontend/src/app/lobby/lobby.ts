@@ -98,7 +98,7 @@ export class Lobby {
       });
 
       if (this.isValidPlayer()) {
-        this.webSocket.joinLive(roomCode, this.currentPlayerId());
+        this.webSocket.joinLive(roomCode);
       }
 
       onCleanup(() => {
@@ -145,7 +145,7 @@ export class Lobby {
       return;
     }
 
-    this.webSocket.sendChatMessage(roomCode, this.currentPlayerId(), body);
+    this.webSocket.sendChatMessage(roomCode, body);
   }
 
   protected statusLabelKey(status: string): string {

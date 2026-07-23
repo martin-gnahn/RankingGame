@@ -6,6 +6,7 @@ import {environment} from '../../../environments/environment';
 import {RoomCode} from '../api/room.models';
 import {EMPTY_EVENT, RealtimeEvent, WebSocketConnectionState} from './web-socket.models';
 import {PlayerSessionStore} from '../../shared/player-session-store';
+import {Router} from '@angular/router';
 
 interface StompClientAdapter {
   active: boolean;
@@ -31,6 +32,8 @@ const PLAYER_SESSION_TOKEN_HEADER = 'X-Player-Session-Token';
 export class WebSocketService {
   private readonly clientFactory = inject(STOMP_CLIENT_FACTORY);
   private readonly playerSessionStore = inject(PlayerSessionStore);
+  private readonly router = inject(Router);
+
   private readonly connectionStateSubject = new BehaviorSubject<WebSocketConnectionState>('DISCONNECTED');
   private readonly pendingSubscriptions = new Set<() => void>();
   private readonly client = this.clientFactory({
@@ -63,14 +66,16 @@ export class WebSocketService {
     this.connectionStateSubject.next('DISCONNECTED');
   }
 
-  joinLive(roomCode: RoomCode, playerId: string): void {
-    const token = this.playerSessionStore.playerSessionToken();
+  joinLive(roomCode: RoomCode): void {
+    const token = this.requireExistingToken();
+    if (!token) {
+      return;
+    }
     const publishJoinLive = () => {
       this.client.publish({
         destination: `/app/rooms/${roomCode}/join-live`,
-        body: JSON.stringify({ playerId }),
         headers: {
-          [PLAYER_SESSION_TOKEN_HEADER]: token ?? 'null',
+          [PLAYER_SESSION_TOKEN_HEADER]: token,
         }
       });
     };
@@ -84,11 +89,18 @@ export class WebSocketService {
     this.connect();
   }
 
-  sendChatMessage(roomCode: RoomCode, playerId: string, body: string): void {
+  sendChatMessage(roomCode: RoomCode, body: string): void {
+    const token = this.requireExistingToken();
+    if (!token) {
+      return;
+    }
     const publishChatMessage = () => {
       this.client.publish({
         destination: `/app/rooms/${roomCode}/chat`,
-        body: JSON.stringify({ playerId, body }),
+        body: JSON.stringify({body}),
+        headers: {
+          [PLAYER_SESSION_TOKEN_HEADER]: token,
+        }
       });
     };
 
@@ -99,6 +111,14 @@ export class WebSocketService {
 
     this.pendingSubscriptions.add(publishChatMessage);
     this.connect();
+  }
+
+  private requireExistingToken(): string | null {
+    const playerSessionToken = this.playerSessionStore.playerSessionToken();
+    if (!playerSessionToken) {
+      void this.router.navigate(['/error']);
+    }
+    return playerSessionToken;
   }
 
   subscribeToRoom(roomCode: RoomCode): Observable<RealtimeEvent> {

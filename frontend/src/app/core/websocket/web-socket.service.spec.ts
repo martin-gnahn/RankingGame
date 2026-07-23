@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
-import { type IMessage, type StompConfig, type StompSubscription } from '@stomp/stompjs';
+import {TestBed} from '@angular/core/testing';
+import {type IMessage, type StompConfig, type StompSubscription} from '@stomp/stompjs';
 
-import { RealtimeEvent } from './web-socket.models';
-import { STOMP_CLIENT_FACTORY, WebSocketService } from './web-socket.service';
+import {RealtimeEvent} from './web-socket.models';
+import {STOMP_CLIENT_FACTORY, WebSocketService} from './web-socket.service';
 
 class FakeStompClient {
   active = false;
@@ -115,7 +115,7 @@ describe('WebSocketService', () => {
   });
 
   it('should publish join-live after the STOMP connection opens', () => {
-    service.joinLive('ABCD12', 'player-1');
+    service.joinLive('ABCD12');
 
     expect(fakeClient.activate).toHaveBeenCalled();
     expect(fakeClient.publish).not.toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('WebSocketService', () => {
   it('should publish join-live immediately when already connected', () => {
     fakeClient.connected = true;
 
-    service.joinLive('WXYZ99', 'player-2');
+    service.joinLive('WXYZ99');
 
     expect(fakeClient.activate).not.toHaveBeenCalled();
     expect(fakeClient.publish).toHaveBeenCalledWith({
@@ -142,7 +142,7 @@ describe('WebSocketService', () => {
   });
 
   it('should publish chat messages after the STOMP connection opens', () => {
-    service.sendChatMessage('ABCD12', 'player-1', 'Hallo');
+    service.sendChatMessage('ABCD12', 'Hallo');
 
     expect(fakeClient.activate).toHaveBeenCalled();
     expect(fakeClient.publish).not.toHaveBeenCalled();
