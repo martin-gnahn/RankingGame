@@ -1,9 +1,11 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.controllers.AuthenticatedPlayer;
 import com.example.rankinggame.controllers.PlayerSessionService;
 import com.example.rankinggame.dto.SendChatMessageCommand;
 import com.example.rankinggame.usecases.ChatMessageService;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.UUID;
 
@@ -11,6 +13,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 class RoomLiveControllerTest {
+
+    private static final String PLAYER_TOKEN = "player-token";
+    private static final String ROOM_CODE_UC = "ABCD12";
+    private static final String ROOM_CODE_LC = "abcd12";
+    private static final String CHAT_MESSAGE = "Hallo";
+
     @Test
     void registersPlayerSessionForRoom() {
         ChatMessageService chatMessageService = mock(ChatMessageService.class);
@@ -18,10 +26,13 @@ class RoomLiveControllerTest {
         PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
         RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService, playerSessionService);
         UUID playerId = UUID.randomUUID();
+        Mockito.when(playerSessionService.authenticatePlayer(ROOM_CODE_LC, PLAYER_TOKEN)).thenReturn(
+                new AuthenticatedPlayer(playerId)
+        );
 
-        controller.joinLive("abcd12", "session-1", "player-token");
+        controller.joinLive(ROOM_CODE_LC, "session-1", PLAYER_TOKEN);
 
-        verify(playerPresenceService).markConnected("session-1", "abcd12", playerId);
+        verify(playerPresenceService).markConnected("session-1", ROOM_CODE_LC, playerId);
     }
 
     @Test
@@ -31,9 +42,12 @@ class RoomLiveControllerTest {
         PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
         RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService, playerSessionService);
         UUID playerId = UUID.randomUUID();
+        Mockito.when(playerSessionService.authenticatePlayer(ROOM_CODE_UC, PLAYER_TOKEN)).thenReturn(
+                new AuthenticatedPlayer(playerId)
+        );
 
-        controller.sendChatMessage("ABCD12", new SendChatMessagePayload("Hallo"), "player-token");
+        controller.sendChatMessage(ROOM_CODE_UC, new SendChatMessagePayload(CHAT_MESSAGE), PLAYER_TOKEN);
 
-        verify(chatMessageService).sendMessage(new SendChatMessageCommand("ABCD12", playerId, "Hallo"));
+        verify(chatMessageService).sendMessage(new SendChatMessageCommand(ROOM_CODE_UC, playerId, CHAT_MESSAGE));
     }
 }

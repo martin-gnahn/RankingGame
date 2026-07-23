@@ -12,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JpaGameSessionPlayerRepositoryTest {
     @Container
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    private static final String TOKEN_HASH = "Token-Hash";
 
     @Autowired
     private JpaRoomRepository roomRepository;
@@ -87,6 +90,8 @@ class JpaGameSessionPlayerRepositoryTest {
         player.setRoomId(room.getId());
         player.setNickname(nickname);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        player.setSessionExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        player.setTokenHash(TOKEN_HASH);
         return player;
     }
 }
