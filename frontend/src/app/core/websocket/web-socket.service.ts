@@ -5,6 +5,7 @@ import {BehaviorSubject, Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {RoomCode} from '../api/room.models';
 import {EMPTY_EVENT, RealtimeEvent, WebSocketConnectionState} from './web-socket.models';
+import {PlayerSessionStore} from '../../shared/player-session-store';
 
 interface StompClientAdapter {
   active: boolean;
@@ -22,11 +23,14 @@ export const STOMP_CLIENT_FACTORY = new InjectionToken<StompClientFactory>('STOM
   factory: () => (config: StompConfig) => new Client(config),
 });
 
+const PLAYER_SESSION_TOKEN_HEADER = 'X-Player-Session-Token';
+
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketService {
   private readonly clientFactory = inject(STOMP_CLIENT_FACTORY);
+  private readonly playerSessionStore = inject(PlayerSessionStore);
   private readonly connectionStateSubject = new BehaviorSubject<WebSocketConnectionState>('DISCONNECTED');
   private readonly pendingSubscriptions = new Set<() => void>();
   private readonly client = this.clientFactory({
@@ -60,10 +64,14 @@ export class WebSocketService {
   }
 
   joinLive(roomCode: RoomCode, playerId: string): void {
+    const token = this.playerSessionStore.playerSessionToken();
     const publishJoinLive = () => {
       this.client.publish({
         destination: `/app/rooms/${roomCode}/join-live`,
         body: JSON.stringify({ playerId }),
+        headers: {
+          [PLAYER_SESSION_TOKEN_HEADER]: token ?? 'null',
+        }
       });
     };
 

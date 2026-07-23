@@ -1,5 +1,6 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.controllers.PlayerSessionService;
 import com.example.rankinggame.dto.SendChatMessageCommand;
 import com.example.rankinggame.usecases.ChatMessageService;
 import org.junit.jupiter.api.Test;
@@ -14,10 +15,11 @@ class RoomLiveControllerTest {
     void registersPlayerSessionForRoom() {
         ChatMessageService chatMessageService = mock(ChatMessageService.class);
         PlayerPresenceService playerPresenceService = mock(PlayerPresenceService.class);
-        RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService);
+        PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
+        RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService, playerSessionService);
         UUID playerId = UUID.randomUUID();
 
-        controller.joinLive("abcd12", new JoinLiveRequest(playerId), "session-1");
+        controller.joinLive("abcd12", "session-1", "player-token");
 
         verify(playerPresenceService).markConnected("session-1", "abcd12", playerId);
     }
@@ -26,10 +28,11 @@ class RoomLiveControllerTest {
     void sendsChatMessageForRoom() {
         ChatMessageService chatMessageService = mock(ChatMessageService.class);
         PlayerPresenceService playerPresenceService = mock(PlayerPresenceService.class);
-        RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService);
+        PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
+        RoomLiveController controller = new RoomLiveController(chatMessageService, playerPresenceService, playerSessionService);
         UUID playerId = UUID.randomUUID();
 
-        controller.sendChatMessage("ABCD12", new SendChatMessagePayload(playerId, "Hallo"));
+        controller.sendChatMessage("ABCD12", new SendChatMessagePayload("Hallo"), "player-token");
 
         verify(chatMessageService).sendMessage(new SendChatMessageCommand("ABCD12", playerId, "Hallo"));
     }
