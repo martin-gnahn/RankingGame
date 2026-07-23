@@ -2,7 +2,6 @@ package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
 import com.example.rankinggame.engine.GameConstants;
-import com.example.rankinggame.entities.GameSessionPlayerEntity;
 import com.example.rankinggame.usecases.GetActiveRoundService;
 import com.example.rankinggame.usecases.StartRankingGameService;
 import lombok.RequiredArgsConstructor;
@@ -52,11 +51,11 @@ public class GameController {
     }
 
     @GetMapping("/current-round/players")
-    public List<GameSessionPlayerEntity> getActivePlayers(
+    public List<GamePlayerResponse> getActivePlayers(
             @PathVariable String roomCode,
             @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         playerSessionService.authenticatePlayer(roomCode, token);
-        return startRankingGameService.getActivePlayers(roomCode);
+        return GamePlayerResponse.from(startRankingGameService.getActivePlayers(roomCode));
     }
 }

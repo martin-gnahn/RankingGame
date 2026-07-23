@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
-class PlayerSessionService {
+public class PlayerSessionService {
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
     private final TokenGenerator tokenGenerator;
