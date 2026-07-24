@@ -1,6 +1,9 @@
 package com.example.rankinggame.websocket;
 
+import com.example.rankinggame.controllers.AuthenticatedPlayer;
+import com.example.rankinggame.controllers.PlayerSessionService;
 import com.example.rankinggame.dto.SendChatMessageCommand;
+import com.example.rankinggame.engine.GameConstants;
 import com.example.rankinggame.usecases.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -12,34 +15,36 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 @Controller
 public class RoomLiveController {
-    private final LivePlayerSessionRegistry sessionRegistry;
     private final ChatMessageService chatMessageService;
+    private final PlayerPresenceService playerPresenceService;
+    private final PlayerSessionService playerSessionService;
 
     @MessageMapping("/rooms/{roomCode}/join-live")
     public void joinLive(
             @DestinationVariable String roomCode,
-            @Payload JoinLiveRequest request,
-            @Header("simpSessionId") String sessionId
+            @Header("simpSessionId") String sessionId,
+            @Header(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
-        if (request == null) {
-            return;
-        }
-
-        sessionRegistry.register(sessionId, roomCode, request.playerId());
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
+        playerPresenceService.markConnected(sessionId, roomCode, player.playerId());
     }
 
     @MessageMapping("/rooms/{roomCode}/chat")
     public void sendChatMessage(
             @DestinationVariable String roomCode,
-            @Payload SendChatMessagePayload request
+            @Payload SendChatMessagePayload request,
+            @Header(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
         if (request == null) {
             return;
         }
 
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         SendChatMessageCommand command = new SendChatMessageCommand(
                 roomCode,
-                request.playerId(),
+                player.playerId(),
                 request.body()
         );
         chatMessageService.sendMessage(command);

@@ -10,8 +10,8 @@ import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {GameApiService} from '../core/api/game-api.service';
 import {RankedAnswerDto} from '../core/api/game.models';
 import {RoomApiService} from '../core/api/room-api.service';
-import {ActiveRoundResponse, AnswerDto, ChatMessageResponse} from '../core/api/room.models';
-import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {ActiveRoundResponse, AnswerDto, ChatMessageResponse, RoomCode} from '../core/api/room.models';
+import {ANSWER_RANKED, CHAT_MESSAGE_SENT, RealtimeEvent, SORTING_STARTED} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {notBlankValidator} from '../shared/validators/not-blank.validator';
 import {AnswerForm} from './answer-form/answer-form';
@@ -19,6 +19,11 @@ import {AnswerSubmissionState, RankedAnswerView, ScoreCard} from './game-view.mo
 import {Question} from './question/question';
 import {RankingAnswer} from './ranking-answer/ranking-answer';
 import {RankingOverview} from './ranking-overview/ranking-overview';
+import {PlayerSessionStore} from '../shared/player-session-store';
+
+interface ErrorKeyContainer {
+  key: string | null;
+}
 
 @Component({
   selector: 'app-game',
@@ -40,6 +45,13 @@ export class Game {
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
+  protected readonly isCurrentPlayerCaptain = computed(() => this.currentPlayerRole() === 'host');
+  private readonly playerSessionStore = inject(PlayerSessionStore);
+  protected readonly currentPlayerData = this.playerSessionStore.playerData;
+  protected readonly currentPlayerId = this.playerSessionStore.playerId;
+  protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
+  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+
   protected readonly sortingHintKey = computed(() =>
     this.isCurrentPlayerCaptain()
       ? 'game.ranking.hint.captain'
@@ -48,10 +60,8 @@ export class Game {
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
-  private readonly queryParamMap = toSignal(this.route.queryParamMap);
 
   protected readonly roomCode = computed(() => this.roomCodeParam() ?? '');
-  protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
   protected readonly activeRound = signal<ActiveRoundResponse | null>(null);
   protected readonly loading = signal(false);
   protected readonly submitting = signal(false);
@@ -63,7 +73,6 @@ export class Game {
   protected readonly rankingLoading = signal(false);
   protected readonly rankingSubmittingAnswerId = signal<string | null>(null);
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
-  protected readonly isCurrentPlayerCaptain = signal(false);
   private readonly translate = inject(TranslateService);
   protected readonly allSubmittedAnswers: WritableSignal<AnswerDto[]> = signal([]);
   protected readonly rankingPositions = signal<RankedAnswerDto[]>([]);
@@ -120,7 +129,6 @@ export class Game {
   }));
 
   constructor() {
-
     this.loadActiveRound();
 
     effect((onCleanup) => {
@@ -137,8 +145,8 @@ export class Game {
         next: (event) => this.handleRealtimeEvent(event),
       });
 
-      if (playerId) {
-        this.webSocket.joinLive(roomCode, playerId);
+      if (this.isValidPlayer()) {
+        this.webSocket.joinLive(roomCode);
       }
 
       onCleanup(() => {
@@ -154,14 +162,13 @@ export class Game {
 
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    const playerId = this.currentPlayerId();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    if (!roomCode || !activeRound || !playerId || this.submitting()) {
+    if (!roomCode || !activeRound || !this.isValidPlayer() || this.submitting()) {
       this.submitErrorMessage.set(this.translate.instant('game.errors.submitFailed'));
       return;
     }
@@ -171,7 +178,6 @@ export class Game {
 
     this.roomApi
       .submitAnswer(roomCode, activeRound.roundId, {
-        playerId,
         answerText: this.form.getRawValue().answerText.trim(),
       })
       .subscribe({
@@ -191,20 +197,36 @@ export class Game {
     const roomCode = this.roomCode();
     const playerId = this.currentPlayerId();
 
-    if (!roomCode || !playerId) {
+    if (!roomCode || !this.isValidPlayer()) {
       return;
     }
 
-    this.webSocket.sendChatMessage(roomCode, playerId, body);
+    this.webSocket.sendChatMessage(roomCode, body);
+  }
+
+  isAnswerContextValid(roomCode: RoomCode, activeRound: ActiveRoundResponse | null): ErrorKeyContainer {
+    if (!roomCode) {
+      return {key: 'game.errors.missingRoomCode'};
+    }
+    if (!activeRound) {
+      return {key: 'game.errors.missingRoomCode'};
+    }
+    if (!this.isValidPlayer()) {
+      return {key: 'game.errors.missingPlayerId'};
+    }
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.isValidPlayer()) {
+      return {key: 'game.errors.onlyHostCanRank'};
+    }
+    return {key: null};
   }
 
   protected rankAnswer(answer: AnswerDto): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    const hostId = this.currentPlayerId();
 
-    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !hostId) {
-      this.rankingErrorMessage.set(this.translate.instant('game.errors.onlyHostCanRank'));
+    const errorKeyContainer = this.isAnswerContextValid(roomCode, activeRound);
+    if (errorKeyContainer.key) {
+      this.rankingErrorMessage.set(this.translate.instant(errorKeyContainer.key));
       return;
     }
 
@@ -216,8 +238,7 @@ export class Game {
     this.rankingSubmittingAnswerId.set(answer.answerId);
 
     this.gameApi
-      .addRankingPosition(roomCode, activeRound.roundId, {
-        hostId,
+      .addRankingPosition(roomCode, activeRound!.roundId, {
         answerId: answer.answerId,
       })
       .subscribe({
@@ -251,8 +272,7 @@ export class Game {
       return;
     }
 
-    const playerId = this.currentPlayerId();
-    if (!playerId) {
+    if (!this.isValidPlayer()) {
       this.errorMessage.set(this.translate.instant('game.errors.missingPlayerId'));
       return;
     }
@@ -260,9 +280,10 @@ export class Game {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    this.roomApi.getActiveRound(roomCode, playerId).subscribe({
+    this.roomApi.getActiveRound(roomCode).subscribe({
       next: (activeRound) => {
-        this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
+        // TODO: how to solve this.
+        // this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
         this.activeRound.set(activeRound);
         this.sortingStarted.set(false);
         this.loading.set(false);
@@ -282,12 +303,11 @@ export class Game {
   private loadSubmittedAnswers(): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    const currentPlayerId = this.currentPlayerId();
-    if (!this.sortingStarted() || !roomCode || !activeRound || !currentPlayerId) {
+    if (!this.sortingStarted() || !roomCode || !activeRound || !this.isValidPlayer()) {
       return;
     }
 
-    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId, currentPlayerId)
+    this.gameApi.getSubmittedAnswers(roomCode, activeRound.roundId)
       .subscribe({
         next: (answerResponse) => {
           this.allSubmittedAnswers.set(answerResponse.answers);
@@ -301,13 +321,12 @@ export class Game {
   private refreshRankingPositions(): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    const currentPlayerId = this.currentPlayerId();
-    if (!this.sortingStarted() || !roomCode || !activeRound || !currentPlayerId) {
+    if (!this.sortingStarted() || !roomCode || !activeRound || !this.isValidPlayer()) {
       return;
     }
 
     this.rankingLoading.set(true);
-    this.gameApi.getRankingPositions(roomCode, activeRound.roundId, currentPlayerId)
+    this.gameApi.getRankingPositions(roomCode, activeRound.roundId)
       .subscribe({
         next: (response) => {
           const rankedAnswers = response.rankings;
@@ -372,14 +391,14 @@ export class Game {
 
   private handleRealtimeEvent(event: RealtimeEvent): void {
     const payload = event.payload;
-    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
+    if (event.type === CHAT_MESSAGE_SENT && this.isChatMessage(payload)) {
       this.chatMessages.update((messages) => [...messages, payload]);
       return;
     }
 
     // TODO: extract to dedicated method and maybe dedicated service. The realtime event handling.
     // To make this service here thinner.
-    if (event.type === 'SORTING_STARTED' && this.isSortingStartedPayload(payload)) {
+    if (event.type === SORTING_STARTED && this.isSortingStartedPayload(payload)) {
       if (!this.isEventForActiveRound(payload)) {
         return;
       }
@@ -388,7 +407,7 @@ export class Game {
       return;
     }
 
-    if (event.type === 'ANSWER_RANKED' && this.isEventForActiveRound(payload)) {
+    if (event.type === ANSWER_RANKED && this.isEventForActiveRound(payload)) {
       this.refreshRankingPositions();
     }
   }

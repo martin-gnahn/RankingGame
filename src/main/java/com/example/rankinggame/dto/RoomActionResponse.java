@@ -7,6 +7,7 @@ public record RoomActionResponse(
         UUID roomId,
         UUID playerId,
         String nickname,
+        String playerToken,
         boolean host
 ) {
 }

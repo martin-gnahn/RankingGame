@@ -9,6 +9,7 @@ import {ActiveRoundResponse} from '../core/api/room.models';
 import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
+import {PlayerSessionStore} from '../shared/player-session-store';
 import {Game} from './game';
 
 describe('Game', () => {
@@ -16,6 +17,7 @@ describe('Game', () => {
   let roomApi: jasmine.SpyObj<RoomApiService>;
   let gameApi: jasmine.SpyObj<GameApiService>;
   let webSocket: jasmine.SpyObj<WebSocketService>;
+  let playerSessionStore: PlayerSessionStore;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let realtimeEvents: Subject<RealtimeEvent>;
@@ -50,6 +52,8 @@ describe('Game', () => {
   ];
 
   beforeEach(async () => {
+    sessionStorage.clear();
+
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
       'getActiveRound',
       'getRecentChatMessages',
@@ -101,6 +105,13 @@ describe('Game', () => {
         },
       ],
     }).compileComponents();
+
+    playerSessionStore = TestBed.inject(PlayerSessionStore);
+    storePlayerSession('player-1', 'player');
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   function createComponent(roundResponse: ActiveRoundResponse = activeRound): void {
@@ -112,6 +123,14 @@ describe('Game', () => {
     fixture.detectChanges();
   }
 
+  function storePlayerSession(playerId: string, role: 'host' | 'player'): void {
+    playerSessionStore.storePlayerData({
+      playerId,
+      role,
+      playerSessionToken: `${playerId}-token`,
+    });
+  }
+
   function textContent(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
@@ -119,10 +138,10 @@ describe('Game', () => {
   it('should render the active round question', () => {
     createComponent();
 
-    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
+    expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12');
     expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
-    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12');
     expect(textContent()).toContain('Runde 1');
     expect(textContent()).toContain('Welche Ausrede funktioniert immer?');
     expect(textContent()).toContain('Antwort');
@@ -153,7 +172,6 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(roomApi.submitAnswer).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
-      playerId: 'player-1',
       answerText: 'Mit WLAN-Problemen.',
     });
     expect(textContent()).toContain('Antwort gespeichert');
@@ -178,7 +196,7 @@ describe('Game', () => {
   });
 
   it('should show the captain sorting hint for the host player', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    storePlayerSession('player-1', 'host');
     createComponent({...activeRound, currentPlayerIsCaptain: true});
 
     realtimeEvents.next({
@@ -191,7 +209,7 @@ describe('Game', () => {
   });
 
   it('should render submitted answers as host ranking cards', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    storePlayerSession('player-1', 'host');
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     createComponent({...activeRound, currentPlayerIsCaptain: true});
 
@@ -201,8 +219,8 @@ describe('Game', () => {
     });
     fixture.detectChanges();
 
-    expect(gameApi.getSubmittedAnswers).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
-    expect(gameApi.getRankingPositions).toHaveBeenCalledOnceWith('ABCD12', 'round-1', 'player-1');
+    expect(gameApi.getSubmittedAnswers).toHaveBeenCalledOnceWith('ABCD12', 'round-1');
+    expect(gameApi.getRankingPositions).toHaveBeenCalledOnceWith('ABCD12', 'round-1');
     expect(textContent()).toContain('Mit WLAN-Problemen.');
     expect(textContent()).toContain('Im Aufzug stecken geblieben.');
     expect(textContent()).toContain('Hier ablegen');
@@ -210,7 +228,7 @@ describe('Game', () => {
   });
 
   it('should add a ranking position when the host chooses an answer', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'host-1', role: 'host'}));
+    storePlayerSession('host-1', 'host');
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     gameApi.getRankingPositions.and.returnValues(
       of({rankings: []}),
@@ -239,7 +257,6 @@ describe('Game', () => {
     fixture.detectChanges();
 
     expect(gameApi.addRankingPosition).toHaveBeenCalledOnceWith('ABCD12', 'round-1', {
-      hostId: 'host-1',
       answerId: 'answer-1',
     });
     expect(gameApi.getRankingPositions).toHaveBeenCalledTimes(2);
@@ -341,11 +358,7 @@ describe('Game', () => {
       .querySelector<HTMLFormElement>('.chat-form')!
       .dispatchEvent(new Event('submit'));
 
-    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith(
-      'ABCD12',
-      'player-1',
-      'Antwort ist unterwegs',
-    );
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'Antwort ist unterwegs');
 
     realtimeEvents.next({
       type: 'CHAT_MESSAGE_SENT',

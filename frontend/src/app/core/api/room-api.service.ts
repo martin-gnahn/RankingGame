@@ -11,7 +11,6 @@ import {
   RoomActionResponse,
   RoomCode,
   RoomResponse,
-  StartGameRequest,
   StartGameResponse,
   SubmitAnswerRequest,
   SubmitAnswerResponse,
@@ -46,18 +45,15 @@ export class RoomApiService {
     );
   }
 
-  startRankingGame(roomCode: RoomCode, request: StartGameRequest): Observable<StartGameResponse> {
+  startRankingGame(roomCode: RoomCode): Observable<StartGameResponse> {
     return this.http.post<StartGameResponse>(
-      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/start`,
-      request,
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/start`, {}
     );
   }
 
-  // TODO: follow this
-  getActiveRound(roomCode: RoomCode, playerId: string): Observable<ActiveRoundResponse> {
+  getActiveRound(roomCode: RoomCode): Observable<ActiveRoundResponse> {
     return this.http.get<ActiveRoundResponse>(
-      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round`,
-      { params: { playerId } },
+      `${this.roomsUrl}/${encodeURIComponent(roomCode)}/ranking-game/current-round`
     );
   }
 

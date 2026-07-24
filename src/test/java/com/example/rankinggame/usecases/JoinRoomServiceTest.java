@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.JoinRoomCommand;
 import com.example.rankinggame.dto.JoinRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -16,6 +18,7 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +48,7 @@ class JoinRoomServiceTest {
             return player;
         });
 
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
+        JoinRoomService service = createService(roomRepository, playerRepository, eventPublisher);
 
         JoinRoomResult result = service.joinRoom(new JoinRoomCommand(" abcd12 ", "  Alex  "));
 
@@ -61,6 +64,8 @@ class JoinRoomServiceTest {
                     assertThat(player.getRoomId()).isEqualTo(roomId);
                     assertThat(player.getNickname()).isEqualTo("Alex");
                     assertThat(player.getConnectionStatus()).isEqualTo(PlayerConnectionStatus.CONNECTED);
+                    assertThat(player.getTokenHash()).isEqualTo("hashed-token");
+                    assertThat(player.getSessionExpiresAt()).isAfter(Instant.now());
                 });
 
         ArgumentCaptor<PlayerJoinedRoomEvent> eventCaptor = ArgumentCaptor.forClass(PlayerJoinedRoomEvent.class);
@@ -80,7 +85,7 @@ class JoinRoomServiceTest {
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
         when(roomRepository.findByCode("MISS1")).thenReturn(Optional.empty());
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
+        JoinRoomService service = createService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("MISS1", "Alex")))
                 .isInstanceOf(RoomNotFoundException.class)
@@ -104,7 +109,7 @@ class JoinRoomServiceTest {
 
         when(roomRepository.findByCode("ABCD12")).thenReturn(Optional.of(room));
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of(existingPlayer));
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
+        JoinRoomService service = createService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "alex")))
                 .isInstanceOf(PlayerNameAlreadyTakenException.class)
@@ -128,10 +133,28 @@ class JoinRoomServiceTest {
         when(playerRepository.findByRoomId(roomId)).thenReturn(List.of());
         when(playerRepository.save(ArgumentMatchers.any(PlayerEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doThrow(new DataIntegrityViolationException("duplicate nickname")).when(playerRepository).flush();
-        JoinRoomService service = new JoinRoomService(roomRepository, playerRepository, eventPublisher, new RoomCodeService());
+        JoinRoomService service = createService(roomRepository, playerRepository, eventPublisher);
 
         assertThatThrownBy(() -> service.joinRoom(new JoinRoomCommand("ABCD12", "Alex")))
                 .isInstanceOf(PlayerNameAlreadyTakenException.class)
                 .hasMessage("Player name is already taken");
+    }
+
+    private JoinRoomService createService(
+            RoomRepository roomRepository,
+            PlayerRepository playerRepository,
+            ApplicationEventPublisher eventPublisher
+    ) {
+        TokenGenerator tokenGenerator = mock(TokenGenerator.class);
+        when(tokenGenerator.generateSafeToken()).thenReturn("raw-token");
+        when(tokenGenerator.generateHashFromToken("raw-token")).thenReturn("hashed-token");
+        return new JoinRoomService(
+                roomRepository,
+                playerRepository,
+                eventPublisher,
+                new RoomCodeService(),
+                tokenGenerator,
+                new TokenTimestampProvider()
+        );
     }
 }

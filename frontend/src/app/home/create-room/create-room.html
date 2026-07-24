@@ -13,8 +13,8 @@
         }
       </mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit" [disabled]="disabled">
-        @if (loading) {
+      <button [disabled]="disabled()" color="primary" mat-flat-button type="submit">
+        @if (loading()) {
           <mat-spinner diameter="18" />
         } @else {
           {{ 'createRoom.submit' | translate }}

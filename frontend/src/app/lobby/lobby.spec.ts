@@ -8,6 +8,7 @@ import {RoomResponse} from '../core/api/room.models';
 import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
+import {PlayerSessionStore} from '../shared/player-session-store';
 import {Lobby} from './lobby';
 
 describe('Lobby', () => {
@@ -15,6 +16,7 @@ describe('Lobby', () => {
   let roomApi: jasmine.SpyObj<RoomApiService>;
   let webSocket: jasmine.SpyObj<WebSocketService>;
   let router: Router;
+  let playerSessionStore: PlayerSessionStore;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let realtimeEvents: Subject<RealtimeEvent>;
@@ -42,6 +44,8 @@ describe('Lobby', () => {
   };
 
   beforeEach(async () => {
+    sessionStorage.clear();
+
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
       'getRecentChatMessages',
       'getRoom',
@@ -78,12 +82,26 @@ describe('Lobby', () => {
     }).compileComponents();
 
     router = TestBed.inject(Router);
+    playerSessionStore = TestBed.inject(PlayerSessionStore);
+    storePlayerSession('host-1', 'host');
     spyOn(router, 'navigate').and.resolveTo(true);
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   function createComponent(): void {
     fixture = TestBed.createComponent(Lobby);
     fixture.detectChanges();
+  }
+
+  function storePlayerSession(playerId: string, role: 'host' | 'player'): void {
+    playerSessionStore.storePlayerData({
+      playerId,
+      role,
+      playerSessionToken: `${playerId}-token`,
+    });
   }
 
   function textContent(): string {
@@ -106,7 +124,7 @@ describe('Lobby', () => {
     expect(roomApi.getRoom).toHaveBeenCalledOnceWith('ABCD12');
     expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
-    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'host-1');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12');
     expect(textContent()).toContain('ABCD12');
   });
 
@@ -131,7 +149,7 @@ describe('Lobby', () => {
 
     expect(textContent()).toContain('Spiel starten');
 
-    queryParamMap.next(convertToParamMap({ playerId: 'player-2', role: 'player' }));
+    storePlayerSession('player-2', 'player');
     fixture.detectChanges();
 
     expect(textContent()).not.toContain('Spiel starten');
@@ -152,10 +170,8 @@ describe('Lobby', () => {
       ?.click();
     fixture.detectChanges();
 
-    expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12', { hostPlayerId: 'host-1' });
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
-      queryParams: { playerId: 'host-1', role: 'host' },
-    });
+    expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12');
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12']);
   });
 
   it('should disable start when no other player is online', () => {
@@ -281,9 +297,7 @@ describe('Lobby', () => {
     fixture.detectChanges();
 
     expect(roomApi.getRoom).toHaveBeenCalledTimes(1);
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12'], {
-      queryParams: { playerId: 'host-1', role: 'host' },
-    });
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12']);
   });
 
   it('should render and send chat messages', () => {
@@ -310,7 +324,7 @@ describe('Lobby', () => {
       .querySelector<HTMLFormElement>('.chat-form')!
       .dispatchEvent(new Event('submit'));
 
-    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'host-1', 'Bereit?');
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'Bereit?');
 
     realtimeEvents.next({
       type: 'CHAT_MESSAGE_SENT',

@@ -32,4 +32,10 @@ public class PlayerEntity {
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
+
+    @Column(name = "session_token_hash", nullable = false, updatable = false)
+    private String tokenHash;
+
+    @Column(name = "session_expires_at", nullable = false, updatable = false)
+    private Instant sessionExpiresAt;
 }

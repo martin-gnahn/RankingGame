@@ -2,7 +2,7 @@ import {expect, Locator, Page} from '@playwright/test';
 
 import {t} from './i18n';
 
-const backendHealthUrl = process.env.E2E_BACKEND_HEALTH_URL ?? 'http://localhost:8080/health';
+const backendHealthUrl = process.env['E2E_BACKEND_HEALTH_URL'] ?? 'http://localhost:8080/health';
 let backendReady = false;
 const connectionStatusTranslationKeys = {
   disconnected: 'lobby.connection.disconnected',
@@ -79,7 +79,6 @@ export async function startGame(page: Page): Promise<void> {
 export async function expectGameScreen(page: Page): Promise<void> {
   await page.waitForURL(/\/game\/[A-Z0-9]{4,8}(?:\?.*)?$/);
   let roundTranslated = t('game.roundLabel', {roundNumber: 1});
-  debugger;
   await expect(page.getByText(roundTranslated)).toBeVisible();
   await expect(page.getByRole('textbox', {name: t('game.answer.label')})).toBeVisible();
   await expect(page.getByRole('button', {name: t('game.submit.default')})).toBeVisible();

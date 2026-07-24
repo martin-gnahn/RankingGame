@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -9,15 +11,15 @@ import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.repositories.PlayerRepository;
 import com.example.rankinggame.repositories.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionOperations;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
 import java.util.UUID;
 
+@RequiredArgsConstructor
 @Service
 public class CreateRoomService {
     private static final int MAX_ROOM_CREATION_ATTEMPTS = 5;
@@ -26,28 +28,8 @@ public class CreateRoomService {
     private final PlayerRepository playerRepository;
     private final RoomCodeGenerator roomCodeGenerator;
     private final TransactionOperations transactionOperations;
-
-    @Autowired
-    public CreateRoomService(
-            RoomRepository roomRepository,
-            PlayerRepository playerRepository,
-            RoomCodeGenerator roomCodeGenerator,
-            PlatformTransactionManager transactionManager
-    ) {
-        this(roomRepository, playerRepository, roomCodeGenerator, new TransactionTemplate(transactionManager));
-    }
-
-    CreateRoomService(
-            RoomRepository roomRepository,
-            PlayerRepository playerRepository,
-            RoomCodeGenerator roomCodeGenerator,
-            TransactionOperations transactionOperations
-    ) {
-        this.roomRepository = roomRepository;
-        this.playerRepository = playerRepository;
-        this.roomCodeGenerator = roomCodeGenerator;
-        this.transactionOperations = transactionOperations;
-    }
+    private final TokenGenerator tokenGenerator;
+    private final TokenTimestampProvider tokenTimestampProvider;
 
     public CreateRoomResult createRoom(CreateRoomCommand command) {
         String playerName = normalizePlayerName(command);
@@ -65,22 +47,33 @@ public class CreateRoomService {
     }
 
     private CreateRoomResult createRoomInTransaction(String playerName) {
+        String playerToken = tokenGenerator.generateSafeToken();
+
         RoomEntity room = new RoomEntity();
         room.setId(UUID.randomUUID());
         room.setCode(roomCodeGenerator.generateUniqueCode());
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
-        PlayerEntity hostPlayer = new PlayerEntity();
-        hostPlayer.setRoomId(savedRoom.getId());
-        hostPlayer.setNickname(playerName);
-        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        PlayerEntity hostPlayer = getPlayerEntity(playerName, savedRoom, playerToken);
         PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
 
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
         roomRepository.save(savedRoom);
 
-        return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname());
+        return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname(), playerToken);
+    }
+
+    private PlayerEntity getPlayerEntity(String playerName, RoomEntity savedRoom, String playerToken) {
+        PlayerEntity hostPlayer = new PlayerEntity();
+        hostPlayer.setRoomId(savedRoom.getId());
+        hostPlayer.setNickname(playerName);
+        hostPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        String hashFromToken = tokenGenerator.generateHashFromToken(playerToken);
+        hostPlayer.setTokenHash(hashFromToken);
+        Instant nowInOneHour = tokenTimestampProvider.getTokenExpirationDate();
+        hostPlayer.setSessionExpiresAt(nowInOneHour);
+        return hostPlayer;
     }
 
     private RoomEntity saveRoomWithFreshCode(RoomEntity room) {

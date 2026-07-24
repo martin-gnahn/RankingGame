@@ -12,6 +12,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class RoomRealtimeEventPublisher {
     public static final String PLAYER_JOINED = "PLAYER_JOINED";
     public static final String PLAYER_LEFT = "PLAYER_LEFT";
+    public static final String PLAYER_REJOINED = "PLAYER_REJOINED";
     public static final String GAME_STARTED = "GAME_STARTED";
     public static final String ANSWER_SUBMITTED = "ANSWER_SUBMITTED";
     public static final String SORTING_STARTED = "SORTING_STARTED";
@@ -35,6 +36,15 @@ public class RoomRealtimeEventPublisher {
                 new PlayerLeftPayload(event.playerId())
         ));
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishPlayerRejoined(PlayerRejoinedRoomEvent event) {
+        publish(event.roomCode(), new RoomRealtimeEvent(
+                PLAYER_REJOINED,
+                new PlayerRejoinedPayload(event.playerId())
+        ));
+    }
+
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishGameStarted(GameStartedRoomEvent event) {

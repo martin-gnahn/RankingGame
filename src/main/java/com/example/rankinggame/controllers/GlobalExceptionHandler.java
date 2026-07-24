@@ -40,6 +40,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
+            UserNotAuthorizedException.class,
+            UserSessionExpiredException.class,
+            UserTokenNotPresentException.class
+    })
+    public ResponseEntity<ApiError> handleUnauthorized(InvalidTokenException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error(exception.getErrorKey(), exception.getMessage()));
+    }
+
+    @ExceptionHandler({
             OnlyHostCanStartGame.class,
             OnlyHostCanQueryAnswers.class,
             OnlyHostCanSortAnswers.class,
@@ -140,7 +149,7 @@ public class GlobalExceptionHandler {
                 .body(error(ErrorConstants.INTERNAL_ERROR, "An unexpected error occurred"));
     }
 
-    private ApiError error(String code, String message) {
-        return new ApiError(code, message);
+    private ApiError error(String errorKey, String message) {
+        return new ApiError(errorKey, message);
     }
 }

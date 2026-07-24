@@ -1,5 +1,7 @@
 package com.example.rankinggame.usecases;
 
+import com.example.rankinggame.auth.TokenGenerator;
+import com.example.rankinggame.auth.TokenTimestampProvider;
 import com.example.rankinggame.dto.CreateRoomCommand;
 import com.example.rankinggame.dto.CreateRoomResult;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
@@ -51,7 +53,7 @@ class CreateRoomServiceTest {
             return player;
         });
 
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+        CreateRoomService service = createService(roomRepository, playerRepository, roomCodeGenerator);
 
         CreateRoomResult result = service.createRoom(new CreateRoomCommand("  Marta  "));
 
@@ -104,7 +106,7 @@ class CreateRoomServiceTest {
             return player;
         });
 
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+        CreateRoomService service = createService(roomRepository, playerRepository, roomCodeGenerator);
 
         CreateRoomResult result = service.createRoom(new CreateRoomCommand("Marta"));
 
@@ -135,7 +137,7 @@ class CreateRoomServiceTest {
         });
         doThrow(new DataIntegrityViolationException("duplicate code")).when(roomRepository).flush();
 
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+        CreateRoomService service = createService(roomRepository, playerRepository, roomCodeGenerator);
 
         assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("Marta")))
                 .isInstanceOf(RoomCodeUnavailableException.class)
@@ -157,7 +159,7 @@ class CreateRoomServiceTest {
         doThrow(new DataIntegrityViolationException("player constraint"))
                 .when(playerRepository).save(ArgumentMatchers.any(PlayerEntity.class));
 
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+        CreateRoomService service = createService(roomRepository, playerRepository, roomCodeGenerator);
 
         assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("Marta")))
                 .isInstanceOf(DataIntegrityViolationException.class)
@@ -172,7 +174,7 @@ class CreateRoomServiceTest {
         RoomRepository roomRepository = mock(RoomRepository.class);
         PlayerRepository playerRepository = mock(PlayerRepository.class);
         RoomCodeGenerator roomCodeGenerator = mock(RoomCodeGenerator.class);
-        CreateRoomService service = new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION);
+        CreateRoomService service = createService(roomRepository, playerRepository, roomCodeGenerator);
 
         assertThatThrownBy(() -> service.createRoom(new CreateRoomCommand("   ")))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -181,6 +183,17 @@ class CreateRoomServiceTest {
         verify(roomCodeGenerator, never()).generateUniqueCode();
         verify(roomRepository, never()).save(ArgumentMatchers.any(RoomEntity.class));
         verify(playerRepository, never()).save(ArgumentMatchers.any(PlayerEntity.class));
+    }
+
+    private CreateRoomService createService(
+            RoomRepository roomRepository,
+            PlayerRepository playerRepository,
+            RoomCodeGenerator roomCodeGenerator
+    ) {
+        TokenGenerator tokenGenerator = mock(TokenGenerator.class);
+        when(tokenGenerator.generateSafeToken()).thenReturn("raw-token");
+        when(tokenGenerator.generateHashFromToken("raw-token")).thenReturn("hashed-token");
+        return new CreateRoomService(roomRepository, playerRepository, roomCodeGenerator, NO_TRANSACTION, tokenGenerator, new TokenTimestampProvider());
     }
 
 }

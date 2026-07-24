@@ -12,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,8 +55,8 @@ class JpaGameSessionPlayerRepositoryTest {
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = roomRepository.saveAndFlush(room);
 
-        PlayerEntity host = player(savedRoom, "Host");
-        PlayerEntity guest = player(savedRoom, "Guest");
+        PlayerEntity host = player(savedRoom, "Host", "Host-Token-Hash");
+        PlayerEntity guest = player(savedRoom, "Guest", "Guest-Token-Hash");
         PlayerEntity savedHost = playerRepository.saveAndFlush(host);
         PlayerEntity savedGuest = playerRepository.saveAndFlush(guest);
 
@@ -82,11 +84,13 @@ class JpaGameSessionPlayerRepositoryTest {
                 .containsExactly(savedHost.getId(), savedGuest.getId());
     }
 
-    private PlayerEntity player(RoomEntity room, String nickname) {
+    private PlayerEntity player(RoomEntity room, String nickname, String tokenHash) {
         PlayerEntity player = new PlayerEntity();
         player.setRoomId(room.getId());
         player.setNickname(nickname);
         player.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        player.setSessionExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        player.setTokenHash(tokenHash);
         return player;
     }
 }

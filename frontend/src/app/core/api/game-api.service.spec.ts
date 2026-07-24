@@ -47,7 +47,7 @@ describe('GameApiService', () => {
     request.flush(response);
   });
 
-  it('should load submitted answers for the current round and player', () => {
+  it('should load submitted answers for the current round', () => {
     const response = {
       answers: [
         {
@@ -60,19 +60,19 @@ describe('GameApiService', () => {
       ],
     };
 
-    service.getSubmittedAnswers('A/B1', 'round-1', 'player-1').subscribe((result) => {
+    service.getSubmittedAnswers('A/B1', 'round-1').subscribe((result) => {
       expect(result).toEqual(response);
     });
 
     const request = httpTesting.expectOne(
-      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answers?playerId=player-1`,
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answers`,
     );
     expect(request.request.method).toBe('GET');
 
     request.flush(response);
   });
 
-  it('should add a ranking position with the host and answer ids', () => {
+  it('should add a ranking position with the answer id', () => {
     const response: RankAnswerResultResponse = {
       roundId: 'round-1',
       playerId: 'player-2',
@@ -83,7 +83,6 @@ describe('GameApiService', () => {
 
     service
       .addRankingPosition('A/B1', 'round-1', {
-        hostId: 'host-1',
         answerId: 'answer-1',
       })
       .subscribe((result) => {
@@ -95,7 +94,6 @@ describe('GameApiService', () => {
     );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
-      hostId: 'host-1',
       answerId: 'answer-1',
     });
 
@@ -115,12 +113,12 @@ describe('GameApiService', () => {
       ],
     };
 
-    service.getRankingPositions('A/B1', 'round-1', 'player-1').subscribe((result) => {
+    service.getRankingPositions('A/B1', 'round-1').subscribe((result) => {
       expect(result).toEqual(response);
     });
 
     const request = httpTesting.expectOne(
-      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answer/position/all?playerId=player-1`,
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/rounds/round-1/answer/position/all`,
     );
     expect(request.request.method).toBe('GET');
 
