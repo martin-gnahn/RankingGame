@@ -141,7 +141,7 @@ describe('Game', () => {
     expect(roomApi.getActiveRound).toHaveBeenCalledOnceWith('ABCD12');
     expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
-    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'player-1');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12');
     expect(textContent()).toContain('Runde 1');
     expect(textContent()).toContain('Welche Ausrede funktioniert immer?');
     expect(textContent()).toContain('Antwort');
@@ -358,11 +358,7 @@ describe('Game', () => {
       .querySelector<HTMLFormElement>('.chat-form')!
       .dispatchEvent(new Event('submit'));
 
-    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith(
-      'ABCD12',
-      'player-1',
-      'Antwort ist unterwegs',
-    );
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'Antwort ist unterwegs');
 
     realtimeEvents.next({
       type: 'CHAT_MESSAGE_SENT',
