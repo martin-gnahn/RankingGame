@@ -94,8 +94,37 @@ class JpaPlayerRepositoryTest {
         duplicatePlayer.setRoomId(savedRoom.getId());
         duplicatePlayer.setNickname("alex");
         duplicatePlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        duplicatePlayer.setSessionExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        duplicatePlayer.setTokenHash("Different-Token-Hash");
 
         assertThatThrownBy(() -> playerRepository.saveAndFlush(duplicatePlayer))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void rejectsDuplicateSessionTokenHashInSameRoom() {
+        RoomEntity room = new RoomEntity();
+        room.setId(java.util.UUID.randomUUID());
+        room.setCode("DUP2");
+        room.setStatus(RoomStatus.LOBBY);
+        RoomEntity savedRoom = roomRepository.saveAndFlush(room);
+
+        PlayerEntity firstPlayer = new PlayerEntity();
+        firstPlayer.setSessionExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        firstPlayer.setTokenHash(TOKEN_HASH);
+        firstPlayer.setRoomId(savedRoom.getId());
+        firstPlayer.setNickname("Alex");
+        firstPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+        playerRepository.saveAndFlush(firstPlayer);
+
+        PlayerEntity duplicateTokenPlayer = new PlayerEntity();
+        duplicateTokenPlayer.setSessionExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        duplicateTokenPlayer.setTokenHash(TOKEN_HASH);
+        duplicateTokenPlayer.setRoomId(savedRoom.getId());
+        duplicateTokenPlayer.setNickname("Marta");
+        duplicateTokenPlayer.setConnectionStatus(PlayerConnectionStatus.CONNECTED);
+
+        assertThatThrownBy(() -> playerRepository.saveAndFlush(duplicateTokenPlayer))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

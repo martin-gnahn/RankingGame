@@ -124,7 +124,7 @@ describe('Lobby', () => {
     expect(roomApi.getRoom).toHaveBeenCalledOnceWith('ABCD12');
     expect(roomApi.getRecentChatMessages).toHaveBeenCalledOnceWith('ABCD12');
     expect(webSocket.subscribeToRoom).toHaveBeenCalledOnceWith('ABCD12');
-    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12', 'host-1');
+    expect(webSocket.joinLive).toHaveBeenCalledOnceWith('ABCD12');
     expect(textContent()).toContain('ABCD12');
   });
 
@@ -324,7 +324,7 @@ describe('Lobby', () => {
       .querySelector<HTMLFormElement>('.chat-form')!
       .dispatchEvent(new Event('submit'));
 
-    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'host-1', 'Bereit?');
+    expect(webSocket.sendChatMessage).toHaveBeenCalledOnceWith('ABCD12', 'Bereit?');
 
     realtimeEvents.next({
       type: 'CHAT_MESSAGE_SENT',

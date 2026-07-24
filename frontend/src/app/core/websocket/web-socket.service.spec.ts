@@ -1,6 +1,8 @@
 import {TestBed} from '@angular/core/testing';
+import {Router} from '@angular/router';
 import {type IMessage, type StompConfig, type StompSubscription} from '@stomp/stompjs';
 
+import {PlayerSessionStore} from '../../shared/player-session-store';
 import {RealtimeEvent} from './web-socket.models';
 import {STOMP_CLIENT_FACTORY, WebSocketService} from './web-socket.service';
 
@@ -38,14 +40,20 @@ class FakeStompClient {
 describe('WebSocketService', () => {
   let service: WebSocketService;
   let fakeClient: FakeStompClient;
+  let playerSessionStore: PlayerSessionStore;
   let stompConfig: StompConfig;
+  let router: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
+    sessionStorage.clear();
     fakeClient = new FakeStompClient();
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    router.navigate.and.returnValue(Promise.resolve(true));
 
     TestBed.configureTestingModule({
       providers: [
         WebSocketService,
+        {provide: Router, useValue: router},
         {
           provide: STOMP_CLIENT_FACTORY,
           useValue: (config: StompConfig) => {
@@ -56,7 +64,13 @@ describe('WebSocketService', () => {
       ],
     });
 
+    playerSessionStore = TestBed.inject(PlayerSessionStore);
     service = TestBed.inject(WebSocketService);
+    playerSessionStore.storePlayerData({
+      playerId: 'player-1',
+      role: 'player',
+      playerSessionToken: 'token-1',
+    });
   });
 
   it('should configure the STOMP client for the backend websocket endpoint', () => {
@@ -125,19 +139,28 @@ describe('WebSocketService', () => {
 
     expect(fakeClient.publish).toHaveBeenCalledWith({
       destination: '/app/rooms/ABCD12/join-live',
-      body: JSON.stringify({ playerId: 'player-1' }),
+      headers: {
+        'X-Player-Session-Token': 'token-1',
+      },
     });
   });
 
   it('should publish join-live immediately when already connected', () => {
     fakeClient.connected = true;
+    playerSessionStore.storePlayerData({
+      playerId: 'player-2',
+      role: 'player',
+      playerSessionToken: 'token-2',
+    });
 
     service.joinLive('WXYZ99');
 
     expect(fakeClient.activate).not.toHaveBeenCalled();
     expect(fakeClient.publish).toHaveBeenCalledWith({
       destination: '/app/rooms/WXYZ99/join-live',
-      body: JSON.stringify({ playerId: 'player-2' }),
+      headers: {
+        'X-Player-Session-Token': 'token-2',
+      },
     });
   });
 
@@ -152,8 +175,23 @@ describe('WebSocketService', () => {
 
     expect(fakeClient.publish).toHaveBeenCalledWith({
       destination: '/app/rooms/ABCD12/chat',
-      body: JSON.stringify({ playerId: 'player-1', body: 'Hallo' }),
+      body: JSON.stringify({body: 'Hallo'}),
+      headers: {
+        'X-Player-Session-Token': 'token-1',
+      },
     });
+  });
+
+  it('should navigate to the error page instead of publishing without a token', () => {
+    playerSessionStore.clearPlayerData();
+
+    service.joinLive('ABCD12');
+    service.sendChatMessage('ABCD12', 'Hallo');
+
+    expect(fakeClient.activate).not.toHaveBeenCalled();
+    expect(fakeClient.publish).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledTimes(2);
+    expect(router.navigate).toHaveBeenCalledWith(['/error']);
   });
 
   it('should remove pending room subscriptions when unsubscribed before connection', () => {

@@ -29,3 +29,6 @@ ALTER TABLE players
 
 -- Step 4: Drop the now-redundant CHECK constraint
 ALTER TABLE players DROP CONSTRAINT session_expires_not_null;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_players_room_session_token_hash
+    ON players (room_id, session_token_hash);
