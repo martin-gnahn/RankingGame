@@ -1,30 +1,39 @@
 package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.NegativePenaltyPointsException;
+import lombok.Getter;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-public record RankingAssessment(
-        int penaltyPoints,
-        boolean complete
-) {
-    public RankingAssessment {
+@Getter
+public class RankingAssessment {
+    public int numberOfRankings;
+    public int penaltyPoints;
+    public boolean complete;
+
+    private RankingAssessment(int numberOfRankings, int penaltyPoints, boolean complete) {
         if (penaltyPoints < 0) {
             throw new NegativePenaltyPointsException(penaltyPoints);
         }
+        this.numberOfRankings = numberOfRankings;
+        this.penaltyPoints = penaltyPoints;
+        this.complete = complete;
     }
 
     public boolean isPerfect() {
         return complete && penaltyPoints == 0;
     }
 
-    public boolean isComplete() {
-        return complete;
+    public boolean isEmpty() {
+        return numberOfRankings == 0;
     }
 
     public static RankingAssessment from(RevealedRanking revealedRanking) {
         return new RankingAssessment(
-                countDescendingSteps(revealedRanking.answers()),
+                revealedRanking.getAnswers().size(),
+                countDescendingSteps(revealedRanking.getAnswers()),
                 isComplete(revealedRanking)
         );
     }
@@ -32,7 +41,9 @@ public record RankingAssessment(
     private static int countDescendingSteps(List<RevealedRankedAnswer> revealedAnswers) {
         int penaltyPoints = 0;
         for (int index = 1; index < revealedAnswers.size(); index++) {
-            if (cardValueAt(revealedAnswers, index) < cardValueAt(revealedAnswers, index - 1)) {
+            int previousCardValue = cardValueAt(revealedAnswers, index - 1);
+            int currentCardValue = cardValueAt(revealedAnswers, index);
+            if (previousCardValue > currentCardValue) {
                 penaltyPoints++;
             }
         }
@@ -40,15 +51,14 @@ public record RankingAssessment(
     }
 
     private static int cardValueAt(List<RevealedRankedAnswer> revealedAnswers, int index) {
-        return revealedAnswers.get(index).cardNumber().value();
+        return revealedAnswers.get(index).getCardNumber().value();
     }
 
     private static boolean isComplete(RevealedRanking revealedRanking) {
-        long rankedPlayerCount = revealedRanking.answers().stream()
-                .map(RevealedRankedAnswer::answer)
+        Set<PlayerId> rankedPlayerIds = revealedRanking.getAnswers().stream()
+                .map(RevealedRankedAnswer::getAnswer)
                 .map(SubmittedAnswer::playerId)
-                .distinct()
-                .count();
-        return rankedPlayerCount == revealedRanking.expectedAnswerCount();
+                .collect(Collectors.toUnmodifiableSet());
+        return rankedPlayerIds.equals(revealedRanking.getExpectedPlayerIds());
     }
 }

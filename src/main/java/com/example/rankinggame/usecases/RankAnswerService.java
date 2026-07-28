@@ -96,7 +96,7 @@ public class RankAnswerService {
 
     private Round getDomainRound(AnswerRankingContext context) {
         var allAnswersInRound = answerRepository.findByRoundIdOrderBySubmittedAtAsc(context.round().getId());
-        var allRankingsInRound = rankingRepository.findByRoundIdOrderByPositionAsc(context.round().getId());
+        var allRankingsInRound = rankingRepository.findByRoundIdOrderByOneBasedPositionAsc(context.round().getId());
         log.info("Constructing domain round from round entity with id '{}'...", context.round().getId());
         return roundMapper.toDomain(context.round(), context.captainPlayer(), allAnswersInRound, allRankingsInRound);
     }

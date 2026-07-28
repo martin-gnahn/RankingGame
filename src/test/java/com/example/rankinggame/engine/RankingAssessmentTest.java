@@ -3,7 +3,6 @@ package com.example.rankinggame.engine;
 import com.example.rankinggame.engine.exceptions.DuplicateCardValueInfoForPlayerException;
 import com.example.rankinggame.engine.exceptions.InvalidRankingPositionException;
 import com.example.rankinggame.engine.exceptions.MissingCardValueForRankedAnswerException;
-import com.example.rankinggame.engine.exceptions.NegativePenaltyPointsException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,7 +23,7 @@ class RankingAssessmentTest {
 
         assertThat(assessment.isPerfect()).isTrue();
         assertThat(assessment.isComplete()).isTrue();
-        assertThat(assessment.penaltyPoints()).isZero();
+        assertThat(assessment.getPenaltyPoints()).isZero();
     }
 
     @Test
@@ -33,7 +32,7 @@ class RankingAssessmentTest {
 
         assertThat(assessment.isPerfect()).isFalse();
         assertThat(assessment.isComplete()).isTrue();
-        assertThat(assessment.penaltyPoints()).isEqualTo(1);
+        assertThat(assessment.getPenaltyPoints()).isEqualTo(1);
     }
 
     @Test
@@ -42,11 +41,11 @@ class RankingAssessmentTest {
 
         assertThat(assessment.isPerfect()).isFalse();
         assertThat(assessment.isComplete()).isTrue();
-        assertThat(assessment.penaltyPoints()).isEqualTo(2);
+        assertThat(assessment.getPenaltyPoints()).isEqualTo(2);
     }
 
     @Test
-    void evaluatesRankingByOneBasedPositionBeforeCheckingPenaltyPoints() {
+    void evaluatesRankingByOneBasedPositionBeforeCheckinggetPenaltyPoints() {
         List<RankedAnswer> shuffledRankedAnswers = List.of(
                 rankedAnswer(2, playerWithCard2),
                 rankedAnswer(1, playerWithCard1),
@@ -57,7 +56,7 @@ class RankingAssessmentTest {
 
         assertThat(assessment.isPerfect()).isTrue();
         assertThat(assessment.isComplete()).isTrue();
-        assertThat(assessment.penaltyPoints()).isZero();
+        assertThat(assessment.getPenaltyPoints()).isZero();
     }
 
     @Test
@@ -69,7 +68,7 @@ class RankingAssessmentTest {
 
         assertThat(assessment.isComplete()).isFalse();
         assertThat(assessment.isPerfect()).isFalse();
-        assertThat(assessment.penaltyPoints()).isZero();
+        assertThat(assessment.getPenaltyPoints()).isZero();
     }
 
     @Test
@@ -83,11 +82,11 @@ class RankingAssessmentTest {
     @Test
     void rejectsDuplicateCardValueInfoForSamePlayer() {
         List<CardValueInfo> duplicatePlayerCardValues = List.of(
-                new CardValueInfo(roundId, playerWithCard1, CardNumber.of(1)),
-                new CardValueInfo(roundId, playerWithCard1, CardNumber.of(2))
+                new CardValueInfo(playerWithCard1, CardNumber.of(1)),
+                new CardValueInfo(playerWithCard1, CardNumber.of(2))
         );
 
-        assertThatThrownBy(() -> RevealedRanking.from(duplicatePlayerCardValues, rankedAnswers(playerWithCard1, playerWithCard2, playerWithCard3)))
+        assertThatThrownBy(() -> RevealedRanking.reveal(duplicatePlayerCardValues, rankedAnswers(playerWithCard1, playerWithCard2, playerWithCard3)))
                 .isInstanceOf(DuplicateCardValueInfoForPlayerException.class);
     }
 
@@ -97,25 +96,19 @@ class RankingAssessmentTest {
                 .isInstanceOf(InvalidRankingPositionException.class);
     }
 
-    @Test
-    void rankingAssessmentRejectsNegativePenaltyPoints() {
-        assertThatThrownBy(() -> new RankingAssessment(-1, true))
-                .isInstanceOf(NegativePenaltyPointsException.class);
-    }
-
     private RankingAssessment assess(List<RankedAnswer> rankedAnswers) {
         return RankingAssessment.from(reveal(rankedAnswers));
     }
 
     private RevealedRanking reveal(List<RankedAnswer> rankedAnswers) {
-        return RevealedRanking.from(cardValues(), rankedAnswers);
+        return RevealedRanking.reveal(cardValues(), rankedAnswers);
     }
 
     private List<CardValueInfo> cardValues() {
         return List.of(
-                new CardValueInfo(roundId, playerWithCard1, CardNumber.of(1)),
-                new CardValueInfo(roundId, playerWithCard2, CardNumber.of(2)),
-                new CardValueInfo(roundId, playerWithCard3, CardNumber.of(3))
+                new CardValueInfo(playerWithCard1, CardNumber.of(1)),
+                new CardValueInfo(playerWithCard2, CardNumber.of(2)),
+                new CardValueInfo(playerWithCard3, CardNumber.of(3))
         );
     }
 

@@ -50,6 +50,10 @@ public class Round {
         return newRankedAnswer;
     }
 
+    RankingAssessment assessRanking(List<CardValueInfo> cardValueInfos) {
+        return RevealedRanking.reveal(cardValueInfos, rankedAnswers).assess();
+    }
+
     private SubmittedAnswer ensureAnswerExistsInRound(AnswerId newAnswerId) {
         if (newAnswerId == null) {
             throw new AnswerNotFoundException();

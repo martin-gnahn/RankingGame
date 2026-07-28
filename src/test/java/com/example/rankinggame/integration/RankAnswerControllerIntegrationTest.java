@@ -56,7 +56,7 @@ class RankAnswerControllerIntegrationTest extends BackendIntegrationTest {
         assertThat(allRankings).hasSize(1);
         RankedAnswerEntity persistedRanking = allRankings.getFirst();
         assertThat(persistedRanking.getAnswer().getId()).isEqualTo(round.hostAnswerId());
-        assertThat(persistedRanking.getPosition()).isEqualTo(1);
+        assertThat(persistedRanking.getOneBasedPosition()).isEqualTo(1);
     }
 
     @Test
