@@ -1,5 +1,6 @@
 package com.example.rankinggame.engine.ranking;
 
+import com.example.rankinggame.engine.CardNumber;
 import com.example.rankinggame.engine.PlayerId;
 import com.example.rankinggame.engine.exceptions.NegativePenaltyPointsException;
 import com.example.rankinggame.engine.SubmittedAnswer;
@@ -11,9 +12,9 @@ import java.util.stream.Collectors;
 
 @Getter
 public class RankingAssessment {
-    public int numberOfRankings;
-    public int penaltyPoints;
-    public boolean complete;
+    private final int numberOfRankings;
+    private final int penaltyPoints;
+    private final boolean complete;
 
     private RankingAssessment(int numberOfRankings, int penaltyPoints, boolean complete) {
         if (penaltyPoints < 0) {
@@ -33,27 +34,13 @@ public class RankingAssessment {
     }
 
     public static RankingAssessment from(RevealedRanking revealedRanking) {
+        List<CardNumber> allCardNumbers =
+                revealedRanking.getAnswers().stream().map(RevealedRankedAnswer::getCardNumber).toList();
         return new RankingAssessment(
                 revealedRanking.getAnswers().size(),
-                countDescendingSteps(revealedRanking.getAnswers()),
+                RankingRules.countPenaltyPoints(allCardNumbers),
                 isComplete(revealedRanking)
         );
-    }
-
-    private static int countDescendingSteps(List<RevealedRankedAnswer> revealedAnswers) {
-        int penaltyPoints = 0;
-        for (int index = 1; index < revealedAnswers.size(); index++) {
-            int previousCardValue = cardValueAt(revealedAnswers, index - 1);
-            int currentCardValue = cardValueAt(revealedAnswers, index);
-            if (previousCardValue > currentCardValue) {
-                penaltyPoints++;
-            }
-        }
-        return penaltyPoints;
-    }
-
-    private static int cardValueAt(List<RevealedRankedAnswer> revealedAnswers, int index) {
-        return revealedAnswers.get(index).getCardNumber().value();
     }
 
     private static boolean isComplete(RevealedRanking revealedRanking) {
