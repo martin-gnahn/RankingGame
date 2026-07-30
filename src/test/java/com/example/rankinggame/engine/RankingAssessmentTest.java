@@ -3,6 +3,10 @@ package com.example.rankinggame.engine;
 import com.example.rankinggame.engine.exceptions.DuplicateCardValueInfoForPlayerException;
 import com.example.rankinggame.engine.exceptions.InvalidRankingPositionException;
 import com.example.rankinggame.engine.exceptions.MissingCardValueForRankedAnswerException;
+import com.example.rankinggame.engine.ranking.CardValueInfo;
+import com.example.rankinggame.engine.ranking.RankingAssessment;
+import com.example.rankinggame.engine.ranking.RevealedRankedAnswer;
+import com.example.rankinggame.engine.ranking.RevealedRanking;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

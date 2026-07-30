@@ -1,5 +1,6 @@
-package com.example.rankinggame.engine;
+package com.example.rankinggame.engine.ranking;
 
+import com.example.rankinggame.engine.*;
 import com.example.rankinggame.engine.exceptions.RankingAssessmentInput;
 import com.example.rankinggame.engine.exceptions.RankingAssessmentInputRequiredException;
 import lombok.AccessLevel;

@@ -1,6 +1,8 @@
 package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
+import com.example.rankinggame.engine.ranking.CardValueInfo;
+import com.example.rankinggame.engine.ranking.RankingAssessment;
 import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
 import com.example.rankinggame.usecases.AnswerNotPartOfRequestedRoundException;
 import com.example.rankinggame.usecases.OnlyHostCanSortAnswers;

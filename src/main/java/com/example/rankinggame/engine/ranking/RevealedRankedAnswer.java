@@ -1,5 +1,7 @@
-package com.example.rankinggame.engine;
+package com.example.rankinggame.engine.ranking;
 
+import com.example.rankinggame.engine.CardNumber;
+import com.example.rankinggame.engine.SubmittedAnswer;
 import com.example.rankinggame.engine.exceptions.IncompleteRevealedRankedAnswerException;
 import com.example.rankinggame.engine.exceptions.InvalidRankingPositionException;
 import com.example.rankinggame.engine.exceptions.RevealedRankedAnswerField;
