@@ -9,9 +9,9 @@ import lombok.Getter;
 
 @Getter
 public class RevealedRankedAnswer {
-    int oneBasedPosition;
-    SubmittedAnswer answer;
-    CardNumber cardNumber;
+    private final int oneBasedPosition;
+    private final SubmittedAnswer answer;
+    private final CardNumber cardNumber;
 
     public RevealedRankedAnswer(int oneBasedPosition, SubmittedAnswer answer, CardNumber cardNumber) {
         if (oneBasedPosition < 1) {

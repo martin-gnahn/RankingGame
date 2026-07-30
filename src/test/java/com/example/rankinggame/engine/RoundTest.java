@@ -142,6 +142,7 @@ class RoundTest {
         assertThat(rankingAssessment.getPenaltyPoints()).isEqualTo(0);
         assertThat(rankingAssessment.isComplete()).isTrue();
         assertThat(rankingAssessment.isEmpty()).isTrue();
+        assertThat(rankingAssessment.isPerfect()).isFalse();
     }
 
     @Test

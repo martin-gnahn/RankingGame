@@ -26,7 +26,7 @@ public class RankingAssessment {
     }
 
     public boolean isPerfect() {
-        return complete && penaltyPoints == 0;
+        return !isEmpty() && complete && penaltyPoints == 0;
     }
 
     public boolean isEmpty() {

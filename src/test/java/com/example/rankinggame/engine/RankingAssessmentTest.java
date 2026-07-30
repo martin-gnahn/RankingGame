@@ -1,8 +1,12 @@
 package com.example.rankinggame.engine;
 
+import com.example.rankinggame.engine.exceptions.DuplicateCardValueInfoForCardNumberException;
 import com.example.rankinggame.engine.exceptions.DuplicateCardValueInfoForPlayerException;
+import com.example.rankinggame.engine.exceptions.DuplicateRankedAnswerForPlayerException;
+import com.example.rankinggame.engine.exceptions.DuplicateRankingPositionException;
 import com.example.rankinggame.engine.exceptions.InvalidRankingPositionException;
 import com.example.rankinggame.engine.exceptions.MissingCardValueForRankedAnswerException;
+import com.example.rankinggame.engine.exceptions.UnexpectedRankingPositionException;
 import com.example.rankinggame.engine.ranking.CardValueInfo;
 import com.example.rankinggame.engine.ranking.RankingAssessment;
 import com.example.rankinggame.engine.ranking.RevealedRankedAnswer;
@@ -16,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RankingAssessmentTest {
-    private final RoundId roundId = new RoundId(UUID.randomUUID());
     private final PlayerId playerWithCard1 = new PlayerId(UUID.randomUUID());
     private final PlayerId playerWithCard2 = new PlayerId(UUID.randomUUID());
     private final PlayerId playerWithCard3 = new PlayerId(UUID.randomUUID());
@@ -49,7 +52,7 @@ class RankingAssessmentTest {
     }
 
     @Test
-    void evaluatesRankingByOneBasedPositionBeforeCheckinggetPenaltyPoints() {
+    void evaluatesAnswersInRankingPositionOrder() {
         List<RankedAnswer> shuffledRankedAnswers = List.of(
                 rankedAnswer(2, playerWithCard2),
                 rankedAnswer(1, playerWithCard1),
@@ -92,6 +95,50 @@ class RankingAssessmentTest {
 
         assertThatThrownBy(() -> RevealedRanking.reveal(duplicatePlayerCardValues, rankedAnswers(playerWithCard1, playerWithCard2, playerWithCard3)))
                 .isInstanceOf(DuplicateCardValueInfoForPlayerException.class);
+    }
+
+    @Test
+    void rejectsDuplicateCardNumberAssignments() {
+        List<CardValueInfo> duplicateCardNumbers = List.of(
+                new CardValueInfo(playerWithCard1, CardNumber.of(1)),
+                new CardValueInfo(playerWithCard2, CardNumber.of(1))
+        );
+
+        assertThatThrownBy(() -> RevealedRanking.reveal(duplicateCardNumbers, List.of()))
+                .isInstanceOf(DuplicateCardValueInfoForCardNumberException.class);
+    }
+
+    @Test
+    void rejectsDuplicateRankingPositions() {
+        List<RankedAnswer> duplicatePositions = List.of(
+                rankedAnswer(1, playerWithCard1),
+                rankedAnswer(1, playerWithCard2)
+        );
+
+        assertThatThrownBy(() -> reveal(duplicatePositions))
+                .isInstanceOf(DuplicateRankingPositionException.class);
+    }
+
+    @Test
+    void rejectsMultipleRankedAnswersForSamePlayer() {
+        List<RankedAnswer> duplicatePlayerAnswers = List.of(
+                rankedAnswer(1, playerWithCard1),
+                rankedAnswer(2, playerWithCard1)
+        );
+
+        assertThatThrownBy(() -> reveal(duplicatePlayerAnswers))
+                .isInstanceOf(DuplicateRankedAnswerForPlayerException.class);
+    }
+
+    @Test
+    void rejectsGapsBetweenRankingPositions() {
+        List<RankedAnswer> positionsWithGap = List.of(
+                rankedAnswer(1, playerWithCard1),
+                rankedAnswer(3, playerWithCard2)
+        );
+
+        assertThatThrownBy(() -> reveal(positionsWithGap))
+                .isInstanceOf(UnexpectedRankingPositionException.class);
     }
 
     @Test
