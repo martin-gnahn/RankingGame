@@ -119,7 +119,7 @@ export class Lobby {
     this.startErrorMessage.set('');
     this.gameIsInStartingProcess.set(true);
 
-    this.roomApi.startRankingGame(roomCode, {hostPlayerId: this.currentPlayerId()}).subscribe({
+    this.roomApi.startRankingGame(roomCode).subscribe({
       next: () => {
         this.gameIsInStartingProcess.set(false);
         this.navigateToGame(roomCode);
@@ -222,7 +222,7 @@ export class Lobby {
   private navigateToGame(roomCode: string): void {
     const currentPlayerData = this.currentPlayerData();
     if (currentPlayerData.playerId === UNKNOWN_PLAYER_CONST || currentPlayerData.role === UNKNOWN_ROLE_CONST) {
-      // TODO: navigate to error
+      void this.router.navigate(['/error']);
       return;
     }
 

@@ -1,5 +1,8 @@
 package com.example.rankinggame.controllers.errors;
 
+import com.example.rankinggame.controllers.InvalidTokenException;
+import com.example.rankinggame.controllers.UserNotAuthorizedException;
+import com.example.rankinggame.controllers.UserSessionExpiredException;
 import com.example.rankinggame.dto.ApiError;
 import com.example.rankinggame.engine.exceptions.*;
 import com.example.rankinggame.exceptions.*;
@@ -37,6 +40,15 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ApiError> handleRequiredRequestValue(RuntimeException exception) {
         return ResponseEntity.badRequest().body(error(ErrorConstants.INVALID_REQUEST, exception.getMessage()));
+    }
+
+    @ExceptionHandler({
+            UserNotAuthorizedException.class,
+            UserSessionExpiredException.class,
+            UserTokenNotPresentException.class
+    })
+    public ResponseEntity<ApiError> handleUnauthorized(InvalidTokenException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error(exception.getErrorKey(), exception.getMessage()));
     }
 
     @ExceptionHandler({
@@ -146,7 +158,7 @@ public class GlobalExceptionHandler {
                 .body(error(ErrorConstants.INTERNAL_ERROR, "An unexpected error occurred"));
     }
 
-    private ApiError error(String code, String message) {
-        return new ApiError(code, message);
+    private ApiError error(String errorKey, String message) {
+        return new ApiError(errorKey, message);
     }
 }

@@ -1,0 +1,11 @@
+package com.example.rankinggame.controllers;
+
+import com.example.rankinggame.controllers.errors.ErrorConstants;
+import lombok.Getter;
+
+@Getter
+public class UserSessionExpiredException extends InvalidTokenException {
+    public UserSessionExpiredException() {
+        super(ErrorConstants.TOKEN_EXPIRED, "User session is expired.");
+    }
+}

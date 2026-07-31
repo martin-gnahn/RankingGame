@@ -1,21 +1,12 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.dto.*;
 import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomStatus;
-import com.example.rankinggame.dto.CreateRoomCommand;
-import com.example.rankinggame.dto.CreateRoomResult;
-import com.example.rankinggame.usecases.CreateRoomService;
-import com.example.rankinggame.usecases.GetRoomService;
-import com.example.rankinggame.dto.JoinRoomCommand;
-import com.example.rankinggame.dto.JoinRoomResult;
-import com.example.rankinggame.usecases.JoinRoomService;
-import com.example.rankinggame.dto.PlayerDetailsResult;
-import com.example.rankinggame.dto.RoomDetailsResult;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;
 import com.example.rankinggame.exceptions.RoomNotFoundException;
-import com.example.rankinggame.usecases.PlayerNameAlreadyTakenException;
-import com.example.rankinggame.usecases.RoomCodeRequiredException;
+import com.example.rankinggame.usecases.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -29,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,7 +37,7 @@ class RoomControllerTest {
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(createRoomService.createRoom(any(CreateRoomCommand.class)))
-                .thenReturn(new CreateRoomResult("ABCD12", roomId, playerId, "Marta", "player-token"));
+                .thenReturn(new CreateRoomResult("ABCD12", roomId, playerId, "Marta", "Token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
@@ -69,7 +61,11 @@ class RoomControllerTest {
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
         GetRoomService getRoomService = mock(GetRoomService.class);
         when(createRoomService.createRoom(any(CreateRoomCommand.class)))
-                .thenReturn(new CreateRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Marta", "player-token"));
+                .thenReturn(
+                        new CreateRoomResult(
+                                "ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Marta", "Token"
+                        )
+                );
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
@@ -94,7 +90,7 @@ class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"   \"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errorKey").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("Player name is required"));
     }
 
@@ -109,7 +105,7 @@ class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST_BODY"))
+                .andExpect(jsonPath("$.errorKey").value("INVALID_REQUEST_BODY"))
                 .andExpect(jsonPath("$.message").value("Invalid request body"));
     }
 
@@ -126,7 +122,7 @@ class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"Marta\"}"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.code").value("ROOM_CODE_UNAVAILABLE"))
+                .andExpect(jsonPath("$.errorKey").value("ROOM_CODE_UNAVAILABLE"))
                 .andExpect(jsonPath("$.message").value("Unable to allocate a unique room code"));
     }
 
@@ -138,7 +134,7 @@ class RoomControllerTest {
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
-                .thenReturn(new JoinRoomResult("ABCD12", roomId, playerId, "Alex", "player-token"));
+                .thenReturn(new JoinRoomResult("ABCD12", roomId, playerId, "Alex", "Token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/ABCD12/players")
@@ -163,7 +159,7 @@ class RoomControllerTest {
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
         GetRoomService getRoomService = mock(GetRoomService.class);
         when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
-                .thenReturn(new JoinRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Alex", "player-token"));
+                .thenReturn(new JoinRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Alex", "Token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/abcd12/players")
@@ -190,7 +186,7 @@ class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"Alex\"}"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("ROOM_NOT_FOUND"))
+                .andExpect(jsonPath("$.errorKey").value("ROOM_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Room not found: MISS1"));
     }
 
@@ -207,7 +203,7 @@ class RoomControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"playerName\":\"Alex\"}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("PLAYER_NAME_ALREADY_TAKEN"))
+                .andExpect(jsonPath("$.errorKey").value("PLAYER_NAME_ALREADY_TAKEN"))
                 .andExpect(jsonPath("$.message").value("Player name is already taken"));
     }
 
@@ -224,7 +220,7 @@ class RoomControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerName\":\"Alex\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.errorKey").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("Room code is required"));
     }
 
@@ -249,7 +245,8 @@ class RoomControllerTest {
         ));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
-        mockMvc.perform(get("/api/rooms/ABCD12"))
+        mockMvc.perform(get("/api/rooms/ABCD12")
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
@@ -272,9 +269,10 @@ class RoomControllerTest {
         when(getRoomService.getRoom("MISS1")).thenThrow(new RoomNotFoundException("MISS1"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
-        mockMvc.perform(get("/api/rooms/MISS1"))
+        mockMvc.perform(get("/api/rooms/MISS1")
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("ROOM_NOT_FOUND"))
+                .andExpect(jsonPath("$.errorKey").value("ROOM_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Room not found: MISS1"));
     }
 
@@ -286,9 +284,10 @@ class RoomControllerTest {
         when(getRoomService.getRoom("ABCD12")).thenThrow(new RuntimeException("database unavailable"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
-        mockMvc.perform(get("/api/rooms/ABCD12"))
+        mockMvc.perform(get("/api/rooms/ABCD12")
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.errorKey").value("INTERNAL_ERROR"))
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
     }
 
@@ -301,7 +300,7 @@ class RoomControllerTest {
 
         mockMvc.perform(get("/missing"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.errorKey").value("RESOURCE_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Resource not found"));
     }
 
@@ -310,10 +309,15 @@ class RoomControllerTest {
             JoinRoomService joinRoomService,
             GetRoomService getRoomService
     ) {
+        PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
+        when(playerSessionService.authenticatePlayer(anyString(), anyString()))
+                .thenReturn(new AuthenticatedPlayer(UUID.randomUUID()));
+
         return MockMvcBuilders.standaloneSetup(new RoomController(
                         createRoomService,
                         joinRoomService,
-                        getRoomService
+                        getRoomService,
+                        playerSessionService
                 ))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

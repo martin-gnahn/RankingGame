@@ -170,7 +170,7 @@ describe('Lobby', () => {
       ?.click();
     fixture.detectChanges();
 
-    expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12', { hostPlayerId: 'host-1' });
+    expect(roomApi.startRankingGame).toHaveBeenCalledOnceWith('ABCD12');
     expect(router.navigate).toHaveBeenCalledOnceWith(['/game', 'ABCD12']);
   });
 

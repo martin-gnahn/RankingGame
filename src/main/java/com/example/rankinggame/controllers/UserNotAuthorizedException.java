@@ -1,0 +1,9 @@
+package com.example.rankinggame.controllers;
+
+import com.example.rankinggame.controllers.errors.ErrorConstants;
+
+public class UserNotAuthorizedException extends InvalidTokenException {
+    public UserNotAuthorizedException() {
+        super(ErrorConstants.TOKEN_NOT_AUTHORIZED, "User is not authorized to access backend.");
+    }
+}

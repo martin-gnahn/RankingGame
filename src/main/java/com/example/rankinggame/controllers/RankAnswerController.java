@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
+import com.example.rankinggame.engine.GameConstants;
 import com.example.rankinggame.usecases.RankAnswerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,17 +17,21 @@ import java.util.UUID;
 @RequestMapping("/api/rooms/{roomCode}/ranking-game/rounds/{roundId}/answer/position")
 public class RankAnswerController {
     private final RankAnswerService rankAnswerService;
+    private final PlayerSessionService playerSessionService;
 
     @PostMapping("/new")
     public HttpEntity<RankAnswerResponse> addRankingPosition(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
-            @Valid @RequestBody AddRankingPositionRequest request
+            @Valid @RequestBody AddRankingPositionRequest request,
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         RankAnswerResult rankAnswerResult = rankAnswerService.addRankingPosition(new AddRankingPositionCommand(
                 roomCode,
                 roundId,
-                request.hostId(),
+                player.playerId(),
                 request.answerId()
         ));
         return ResponseEntity.ok(RankAnswerResponse.from(rankAnswerResult));
@@ -36,12 +41,14 @@ public class RankAnswerController {
     public RankedAnswerListResponse getOrderOfAnswers(
             @PathVariable String roomCode,
             @PathVariable UUID roundId,
-            @RequestParam UUID playerId
+            @RequestHeader(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         List<RankedAnswerDto> rankingPositions = rankAnswerService.getRankingPositions(new GetRankingPositionsCommand(
                 roomCode,
                 roundId,
-                playerId
+                player.playerId()
         ));
         return new RankedAnswerListResponse(rankingPositions);
     }
