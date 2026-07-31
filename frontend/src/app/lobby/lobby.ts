@@ -8,7 +8,7 @@ import {map, Subscription} from 'rxjs';
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {RoomApiService} from '../core/api/room-api.service';
 import {ChatMessageResponse, RoomResponse} from '../core/api/room.models';
-import {RealtimeEvent} from '../core/websocket/web-socket.models';
+import {PLAYER_REJOINED, RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
 import {UNKNOWN_PLAYER_CONST, UNKNOWN_ROLE_CONST} from '../shared/player-data.model';
 import {PlayerSessionStore} from '../shared/player-session-store';
@@ -202,7 +202,8 @@ export class Lobby {
   private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
     if (
       event.type === 'PLAYER_JOINED' ||
-      event.type === 'PLAYER_LEFT'
+      event.type === 'PLAYER_LEFT' ||
+      event.type === PLAYER_REJOINED
     ) {
       this.refreshRoom(roomCode);
       return;

@@ -44,6 +44,20 @@ class RoomRealtimeEventPublisherTest {
     }
 
     @Test
+    void publishesPlayerRejoinedToRoomTopic() {
+        SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+        RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);
+        UUID playerId = UUID.randomUUID();
+
+        publisher.publishPlayerRejoined(new PlayerRejoinedRoomEvent("ABCD12", playerId));
+
+        ArgumentCaptor<RoomRealtimeEvent> eventCaptor = ArgumentCaptor.forClass(RoomRealtimeEvent.class);
+        verify(messagingTemplate).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/rooms/ABCD12"), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().type()).isEqualTo(RoomRealtimeEventPublisher.PLAYER_REJOINED);
+        assertThat(eventCaptor.getValue().payload()).isEqualTo(new PlayerRejoinedPayload(playerId));
+    }
+
+    @Test
     void publishesGameStartedToRoomTopic() {
         SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
         RoomRealtimeEventPublisher publisher = new RoomRealtimeEventPublisher(messagingTemplate);

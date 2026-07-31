@@ -15,8 +15,8 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 @Controller
 public class RoomLiveController {
-    private final LivePlayerSessionRegistry sessionRegistry;
     private final ChatMessageService chatMessageService;
+    private final PlayerPresenceService playerPresenceService;
     private final PlayerSessionService playerSessionService;
 
     @MessageMapping("/rooms/{roomCode}/join-live")
@@ -25,8 +25,9 @@ public class RoomLiveController {
             @Header("simpSessionId") String sessionId,
             @Header(value = GameConstants.PLAYER_SESSION_TOKEN, required = false) String token
     ) {
-        AuthenticatedPlayer player = playerSessionService.authenticatePlayer(roomCode, token);
-        sessionRegistry.register(sessionId, roomCode, player.playerId());
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
+        playerPresenceService.markConnected(sessionId, roomCode, player.playerId());
     }
 
     @MessageMapping("/rooms/{roomCode}/chat")
@@ -39,7 +40,8 @@ public class RoomLiveController {
             return;
         }
 
-        AuthenticatedPlayer player = playerSessionService.authenticatePlayer(roomCode, token);
+        AuthenticatedPlayer player =
+                playerSessionService.authenticatePlayer(roomCode, token);
         SendChatMessageCommand command = new SendChatMessageCommand(
                 roomCode,
                 player.playerId(),
