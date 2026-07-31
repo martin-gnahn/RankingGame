@@ -28,7 +28,7 @@ public class RankingMapper {
         return RankedAnswer.builder()
                 .id(new RankingId(rankedAnswerEntity.getId()))
                 .answer(answerMapper.toSubmittedAnswer(rankedAnswerEntity.getAnswer()))
-                .oneBasedPosition(rankedAnswerEntity.getPosition())
+                .oneBasedPosition(rankedAnswerEntity.getOneBasedPosition())
                 .build();
     }
 

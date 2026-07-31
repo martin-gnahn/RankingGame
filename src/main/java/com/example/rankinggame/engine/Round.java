@@ -2,6 +2,9 @@ package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.engine.exceptions.AnswersNotAcceptedException;
+import com.example.rankinggame.engine.ranking.CardValueInfo;
+import com.example.rankinggame.engine.ranking.RankingAssessment;
+import com.example.rankinggame.engine.ranking.RevealedRanking;
 import com.example.rankinggame.usecases.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,6 +51,10 @@ public class Round {
         RankedAnswer newRankedAnswer = new RankedAnswer(rankingId, newAnswer, oneBasedPosition);
         rankedAnswers.add(newRankedAnswer);
         return newRankedAnswer;
+    }
+
+    RankingAssessment assessRanking(List<CardValueInfo> cardValueInfos) {
+        return RevealedRanking.reveal(cardValueInfos, rankedAnswers).assess();
     }
 
     private SubmittedAnswer ensureAnswerExistsInRound(AnswerId newAnswerId) {

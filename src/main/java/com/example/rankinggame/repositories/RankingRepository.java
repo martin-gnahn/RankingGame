@@ -12,5 +12,5 @@ public interface RankingRepository {
 
     int countByRoundId(UUID roundId);
 
-    List<RankedAnswerEntity> findByRoundIdOrderByPositionAsc(UUID roundId);
+    List<RankedAnswerEntity> findByRoundIdOrderByOneBasedPositionAsc(UUID roundId);
 }

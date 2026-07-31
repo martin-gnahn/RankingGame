@@ -1,6 +1,8 @@
 package com.example.rankinggame.engine;
 
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
+import com.example.rankinggame.engine.ranking.CardValueInfo;
+import com.example.rankinggame.engine.ranking.RankingAssessment;
 import com.example.rankinggame.usecases.AnswerAlreadyRankedException;
 import com.example.rankinggame.usecases.AnswerNotPartOfRequestedRoundException;
 import com.example.rankinggame.usecases.OnlyHostCanSortAnswers;
@@ -18,8 +20,8 @@ class RoundTest {
 
     private static final String CAPTAIN_PLAYER_NAME = "Player1";
     private static final String GUEST_PLAYER_NAME = "Player2";
-    private static final UUID CAPTAIN_PLAYER_ID = UUID.randomUUID();
-    private static final UUID GUEST_PLAYER_ID = UUID.randomUUID();
+    private static final PlayerId CAPTAIN_PLAYER_ID = new PlayerId(UUID.randomUUID());
+    private static final PlayerId GUEST_PLAYER_ID = new PlayerId(UUID.randomUUID());
     private static final UUID QUESTION_ID = UUID.randomUUID();
     private static final String QUESTION_TEXT = "Is Java good?";
     private static final String QUESTION_CATEGORY = "default";
@@ -80,7 +82,7 @@ class RoundTest {
     void samePlayerCannotSubmitTwoAnswers() {
         RoundTestContext context = newRoundContext(true);
         assertThatExceptionOfType(AnswerAlreadySubmittedException.class)
-                .isThrownBy(() -> context.round().submitAnswer(new PlayerId(CAPTAIN_PLAYER_ID), "Answer3"));
+                .isThrownBy(() -> context.round().submitAnswer(CAPTAIN_PLAYER_ID, "Answer3"));
     }
 
     @Test
@@ -129,6 +131,62 @@ class RoundTest {
                 .isThrownBy(() -> context.round().rankAnswer(context.captain().playerId(), unknownAnswer.answerId()));
     }
 
+    @Test
+    void emptyRoundRankingIsAssessedCorrectly() {
+        RoundTestContext context = newRoundContext(true);
+
+        var roundWithoutRanking = context.round();
+        List<CardValueInfo> cardValueInfos = List.of();
+        RankingAssessment rankingAssessment = roundWithoutRanking.assessRanking(cardValueInfos);
+
+        assertThat(rankingAssessment.getPenaltyPoints()).isEqualTo(0);
+        assertThat(rankingAssessment.isComplete()).isTrue();
+        assertThat(rankingAssessment.isEmpty()).isTrue();
+        assertThat(rankingAssessment.isPerfect()).isFalse();
+    }
+
+    @Test
+    void incompleteRoundRankingIsAssessedCorrectly() {
+        RoundTestContext context = newRoundContext(true);
+
+        var roundWithoutRankedAnswers = context.round();
+        startRanking(context);
+
+        SubmittedAnswer firstAnswer = context.answerTestContext().submittedAnswers().getFirst();
+        AnswerId firstAnswerId = firstAnswer.answerId();
+        roundWithoutRankedAnswers.rankAnswer(CAPTAIN_PLAYER_ID, firstAnswerId);
+
+        CardValueInfo captainWithCard1 = new CardValueInfo(CAPTAIN_PLAYER_ID, new CardNumber(1));
+        CardValueInfo guestPlayerWithCard2 = new CardValueInfo(GUEST_PLAYER_ID, new CardNumber(2));
+        List<CardValueInfo> cardValueInfos = List.of(captainWithCard1, guestPlayerWithCard2);
+        RankingAssessment rankingAssessment = roundWithoutRankedAnswers.assessRanking(cardValueInfos);
+
+        assertThat(rankingAssessment.isEmpty()).isFalse();
+        assertThat(rankingAssessment.isComplete()).isFalse();
+    }
+
+    @Test
+    void roundRankingWithRightOrderIsAssessedAsPerfect() {
+        RoundTestContext context = newRoundContext(true);
+
+        var roundWithoutRankedAnswers = context.round();
+        startRanking(context);
+
+        SubmittedAnswer firstAnswer = context.answerTestContext().submittedAnswers().getFirst();
+        SubmittedAnswer secondAnswer = context.answerTestContext().submittedAnswers().get(1);
+        AnswerId firstAnswerId = firstAnswer.answerId();
+        AnswerId secondAnswerId = secondAnswer.answerId();
+        roundWithoutRankedAnswers.rankAnswer(CAPTAIN_PLAYER_ID, firstAnswerId);
+        roundWithoutRankedAnswers.rankAnswer(CAPTAIN_PLAYER_ID, secondAnswerId);
+
+        CardValueInfo captainWithCard1 = new CardValueInfo(CAPTAIN_PLAYER_ID, new CardNumber(1));
+        CardValueInfo guestPlayerWithCard2 = new CardValueInfo(GUEST_PLAYER_ID, new CardNumber(2));
+        List<CardValueInfo> cardValueInfos = List.of(captainWithCard1, guestPlayerWithCard2);
+        RankingAssessment rankingAssessment = roundWithoutRankedAnswers.assessRanking(cardValueInfos);
+
+        assertThat(rankingAssessment.isPerfect()).isTrue();
+    }
+
     private void startRanking(RoundTestContext context) {
         int submittedAnswerCount = context.answerTestContext().submittedAnswers().size();
         int requiredAnswerCount = List.of(context.captain(), context.guest()).size();
@@ -136,8 +194,8 @@ class RoundTest {
     }
 
     private RoundTestContext newRoundContext(boolean submitAnswers) {
-        GameParticipant captain = new GameParticipant(new PlayerId(CAPTAIN_PLAYER_ID), CAPTAIN_PLAYER_NAME);
-        GameParticipant guest = new GameParticipant(new PlayerId(GUEST_PLAYER_ID), GUEST_PLAYER_NAME);
+        GameParticipant captain = new GameParticipant(CAPTAIN_PLAYER_ID, CAPTAIN_PLAYER_NAME);
+        GameParticipant guest = new GameParticipant(GUEST_PLAYER_ID, GUEST_PLAYER_NAME);
         Question firstQuestion = new Question(new QuestionId(QUESTION_ID), QUESTION_TEXT, QUESTION_CATEGORY);
         Round round = Round.start(captain, firstQuestion);
 

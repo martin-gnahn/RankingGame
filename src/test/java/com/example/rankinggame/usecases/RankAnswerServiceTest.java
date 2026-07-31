@@ -77,7 +77,7 @@ class RankAnswerServiceTest {
         RankedAnswerEntity addedRanking = rankingCaptor.getValue();
         assertThat(addedRanking.getRoundId()).isEqualTo(ROUND_ID);
         assertThat(addedRanking.getAnswer().getId()).isEqualTo(fixture.answer().getId());
-        assertThat(addedRanking.getPosition()).isEqualTo(1);
+        assertThat(addedRanking.getOneBasedPosition()).isEqualTo(1);
         assertThat(fixture.round().getState()).isEqualTo(RoundState.RESULT);
         verify(roundRepository).findByIdForUpdate(ROUND_ID);
         verify(roundRepository).updateStateIfCurrent(ROUND_ID, RoundState.SORTING, RoundState.RESULT);
@@ -165,7 +165,7 @@ class RankAnswerServiceTest {
         }
         if (params.alreadyRanked()) {
             RankedAnswerEntity rankedAnswerEntity = new RankedAnswerEntity(UUID.randomUUID(), fixture.answer(), ROUND_ID, 1);
-            when(rankingRepository.findByRoundIdOrderByPositionAsc(ROUND_ID))
+            when(rankingRepository.findByRoundIdOrderByOneBasedPositionAsc(ROUND_ID))
                     .thenReturn(List.of(rankedAnswerEntity));
         }
     }

@@ -27,5 +27,5 @@ public class RankedAnswerEntity {
     private UUID roundId;
 
     @Column(name = "position", nullable = false)
-    private Integer position;
+    private Integer oneBasedPosition;
 }
