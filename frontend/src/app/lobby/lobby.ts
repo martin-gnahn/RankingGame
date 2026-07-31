@@ -44,7 +44,7 @@ export class Lobby {
   protected readonly currentPlayerData = this.playerSessionStore.playerData;
   protected readonly currentPlayerId = this.playerSessionStore.playerId;
   protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
-  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+  protected readonly hasValidPlayerId = this.playerSessionStore.hasValidPlayerId;
 
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
@@ -97,7 +97,7 @@ export class Lobby {
           this.refreshErrorMessage.set(this.translate.instant('lobby.errors.liveUpdateReadFailed')),
       });
 
-      if (this.isValidPlayer()) {
+      if (this.hasValidPlayerId()) {
         this.webSocket.joinLive(roomCode);
       }
 
@@ -118,7 +118,7 @@ export class Lobby {
   protected startGame(): void {
     const roomCode = this.roomCode();
 
-    if (!roomCode || !this.isValidPlayer() || this.gameIsInStartingProcess()) {
+    if (!roomCode || !this.hasValidPlayerId() || this.gameIsInStartingProcess()) {
       this.startErrorMessage.set(this.translate.instant('lobby.errors.startFailed'));
       return;
     }
@@ -141,7 +141,7 @@ export class Lobby {
   protected sendChatMessage(body: string): void {
     const roomCode = this.roomCode();
 
-    if (!roomCode || !this.isValidPlayer()) {
+    if (!roomCode || !this.hasValidPlayerId()) {
       return;
     }
 
@@ -229,7 +229,7 @@ export class Lobby {
 
   private navigateToGame(roomCode: string): void {
     const currentPlayerData = this.currentPlayerData();
-    if (currentPlayerData.playerId === UNKNOWN_PLAYER_CONST || currentPlayerData.role === UNKNOWN_ROLE_CONST) {
+    if (!this.playerSessionStore.hasAllData(currentPlayerData)) {
       void this.router.navigate(['/error']);
       return;
     }

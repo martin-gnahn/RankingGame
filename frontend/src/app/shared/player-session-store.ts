@@ -1,4 +1,4 @@
-import {computed, effect, Injectable, signal} from '@angular/core';
+import {computed, effect, Injectable, Signal, signal} from '@angular/core';
 import {PlayerData, UNKNOWN_PLAYER_CONST, UNKNOWN_PLAYER_STATE} from './player-data.model';
 
 const STORAGE_KEY = 'playerData';
@@ -9,28 +9,26 @@ const STORAGE_KEY = 'playerData';
 export class PlayerSessionStore {
   private readonly storage = sessionStorage;
   readonly playerId = computed(
-    () => this.playerData().playerId
+    () => this.playerData()?.playerId ?? null
   );
   readonly playerRole = computed(
-    () => this.playerData().role,
+    () => this.playerData()?.role ?? null
   );
   readonly playerSessionToken = computed(
-    () => this.playerData().playerSessionToken
+    () => this.playerData()?.playerSessionToken ?? null
   );
-  readonly isValidPlayer = computed(
-    () => this.hasText(this.playerId()) && this.playerId() !== UNKNOWN_PLAYER_CONST
+  readonly hasValidPlayerId: Signal<boolean> = computed(
+    () => {
+      const playerId = this.playerId();
+      return !!playerId && this.hasText(playerId);
+    }
   );
 
-  readonly hasSession = computed(() => {
-    const state = this.playerData();
-    return state.playerId !== null && state.role !== null;
-  });
-  readonly isHost = computed(() => {
-    const state = this.playerData();
-    return state.role === 'host';
-  });
-  private readonly playerDataInternal = signal<PlayerData>(this.loadFromStorage());
-  // readonly playerData = this.playerDataInternal.asReadonly();
+  hasAllData(playerData: PlayerData | null): playerData is PlayerData {
+    return !!playerData && !!playerData.playerId && !!playerData.playerSessionToken && !!playerData.role;
+  }
+
+  private readonly playerDataInternal = signal<PlayerData | null>(this.loadFromStorage());
   readonly playerData = computed(
     () => this.playerDataInternal()
   );
@@ -39,8 +37,9 @@ export class PlayerSessionStore {
     effect(() => {
       const state = this.playerData();
 
-      if (!state.playerId || !state.role) {
+      if (!this.hasAllData(state)) {
         sessionStorage.removeItem(STORAGE_KEY);
+        this.clearPlayerData();
         return;
       }
 
@@ -96,7 +95,7 @@ export class PlayerSessionStore {
       );
   }
 
-  private hasText(val: string): boolean {
-    return !!val && val.trim().length > 0;
+  private hasText(val: string): val is string {
+    return !!val && val.trim().length > 0 && typeof val === 'string';
   }
 }

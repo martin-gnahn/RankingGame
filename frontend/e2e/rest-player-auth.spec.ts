@@ -95,7 +95,7 @@ test.describe('REST auth rejection', () => {
     }
   });
 
-  test.only('redirects to the invalid-token error page when a stored token is tampered with', async ({
+  test('redirects to the invalid-token error page when a stored token is tampered with', async ({
                                                                                                   page,
                                                                                                 }) => {
     await page.goto('/');
@@ -254,6 +254,7 @@ async function expectErrorPage(
   expectation: ErrorPageExpectation,
 ): Promise<void> {
   await page.waitForURL(/\/error$/);
+  // debugger
   await expect(page.getByRole('heading', {name: expectation.title})).toBeVisible();
   await expect(page.locator('.message')).toContainText(expectation.message);
   await expect(page.locator('.details')).toContainText(expectation.status);

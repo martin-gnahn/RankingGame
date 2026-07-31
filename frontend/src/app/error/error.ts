@@ -66,7 +66,6 @@ export class ErrorComponent implements OnDestroy {
     this.toDisplayValue(this.errorDataReader.errorMessage()) ?? ''
   );
   private readonly errorKind = computed<ErrorKind>(() => {
-    debugger;
     const errorKey = this.errorDataReader.errorKey()?.toUpperCase();
     if (errorKey && ERROR_KIND_BY_ERROR_KEY[errorKey]) {
       return ERROR_KIND_BY_ERROR_KEY[errorKey];

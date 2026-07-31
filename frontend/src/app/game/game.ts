@@ -50,7 +50,7 @@ export class Game {
   protected readonly currentPlayerData = this.playerSessionStore.playerData;
   protected readonly currentPlayerId = this.playerSessionStore.playerId;
   protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
-  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+  protected readonly hasValidPlayerId = this.playerSessionStore.hasValidPlayerId;
 
   protected readonly sortingHintKey = computed(() =>
     this.isCurrentPlayerCaptain()
@@ -145,7 +145,7 @@ export class Game {
         next: (event) => this.handleRealtimeEvent(event),
       });
 
-      if (this.isValidPlayer()) {
+      if (this.hasValidPlayerId()) {
         this.webSocket.joinLive(roomCode);
       }
 
@@ -168,7 +168,7 @@ export class Game {
       return;
     }
 
-    if (!roomCode || !activeRound || !this.isValidPlayer() || this.submitting()) {
+    if (!roomCode || !activeRound || !this.hasValidPlayerId() || this.submitting()) {
       this.submitErrorMessage.set(this.translate.instant('game.errors.submitFailed'));
       return;
     }
@@ -197,7 +197,7 @@ export class Game {
     const roomCode = this.roomCode();
     const playerId = this.currentPlayerId();
 
-    if (!roomCode || !this.isValidPlayer()) {
+    if (!roomCode || !this.hasValidPlayerId()) {
       return;
     }
 
@@ -211,10 +211,10 @@ export class Game {
     if (!activeRound) {
       return {key: 'game.errors.missingRoomCode'};
     }
-    if (!this.isValidPlayer()) {
+    if (!this.hasValidPlayerId()) {
       return {key: 'game.errors.missingPlayerId'};
     }
-    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.isValidPlayer()) {
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.hasValidPlayerId()) {
       return {key: 'game.errors.onlyHostCanRank'};
     }
     return {key: null};
@@ -272,7 +272,7 @@ export class Game {
       return;
     }
 
-    if (!this.isValidPlayer()) {
+    if (!this.hasValidPlayerId()) {
       this.errorMessage.set(this.translate.instant('game.errors.missingPlayerId'));
       return;
     }
@@ -303,7 +303,7 @@ export class Game {
   private loadSubmittedAnswers(): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    if (!this.sortingStarted() || !roomCode || !activeRound || !this.isValidPlayer()) {
+    if (!this.sortingStarted() || !roomCode || !activeRound || !this.hasValidPlayerId()) {
       return;
     }
 
@@ -321,7 +321,7 @@ export class Game {
   private refreshRankingPositions(): void {
     const roomCode = this.roomCode();
     const activeRound = this.activeRound();
-    if (!this.sortingStarted() || !roomCode || !activeRound || !this.isValidPlayer()) {
+    if (!this.sortingStarted() || !roomCode || !activeRound || !this.hasValidPlayerId()) {
       return;
     }
 
