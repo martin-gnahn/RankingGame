@@ -17,7 +17,6 @@ import {
   RealtimeEvent
 } from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
-import {UNKNOWN_PLAYER_CONST, UNKNOWN_ROLE_CONST} from '../shared/player-data.model';
 import {PlayerSessionStore} from '../shared/player-session-store';
 
 @Component({

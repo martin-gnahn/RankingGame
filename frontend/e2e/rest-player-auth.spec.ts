@@ -254,7 +254,6 @@ async function expectErrorPage(
   expectation: ErrorPageExpectation,
 ): Promise<void> {
   await page.waitForURL(/\/error$/);
-  // debugger
   await expect(page.getByRole('heading', {name: expectation.title})).toBeVisible();
   await expect(page.locator('.message')).toContainText(expectation.message);
   await expect(page.locator('.details')).toContainText(expectation.status);
