@@ -1,7 +1,8 @@
-import {Component, computed, inject} from '@angular/core';
+import {Component, computed, inject, OnDestroy} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {TranslatePipe} from '@ngx-translate/core';
 import {ErrorDataReaderService} from '../error-data-reader-service';
+import {ErrorDataWriterService} from '../error-data-writer-service';
 
 type ErrorKind = 'tokenExpired' | 'invalidToken' | 'noToken' | 'notFound' | 'serverUnavailable' | 'generic';
 
@@ -53,9 +54,10 @@ const ERROR_KIND_BY_ERROR_KEY: Record<string, ErrorKind> = {
   templateUrl: './error.html',
   styleUrl: './error.scss',
 })
-export class ErrorComponent {
+export class ErrorComponent implements OnDestroy {
   protected readonly homeLink = '/';
   private readonly errorDataReader = inject(ErrorDataReaderService);
+  private readonly errorDataWriter = inject(ErrorDataWriterService);
 
   protected readonly displayStatus = computed(() =>
     this.toDisplayValue(this.errorDataReader.errorStatus()) ?? DEFAULT_STATUS
@@ -64,6 +66,7 @@ export class ErrorComponent {
     this.toDisplayValue(this.errorDataReader.errorMessage()) ?? ''
   );
   private readonly errorKind = computed<ErrorKind>(() => {
+    debugger;
     const errorKey = this.errorDataReader.errorKey()?.toUpperCase();
     if (errorKey && ERROR_KIND_BY_ERROR_KEY[errorKey]) {
       return ERROR_KIND_BY_ERROR_KEY[errorKey];
@@ -82,6 +85,10 @@ export class ErrorComponent {
   });
   protected readonly titleKey = computed(() => ERROR_COPY_KEYS[this.errorKind()].title);
   protected readonly messageKey = computed(() => ERROR_COPY_KEYS[this.errorKind()].message);
+
+  ngOnDestroy(): void {
+    this.errorDataWriter.clearError();
+  }
 
   private toDisplayValue(value: string | number | null | undefined): string | null {
     if (value === null || value === undefined) {

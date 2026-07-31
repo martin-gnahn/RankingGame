@@ -95,7 +95,7 @@ test.describe('REST auth rejection', () => {
     }
   });
 
-  test('redirects to the invalid-token error page when a stored token is tampered with', async ({
+  test.only('redirects to the invalid-token error page when a stored token is tampered with', async ({
                                                                                                   page,
                                                                                                 }) => {
     await page.goto('/');

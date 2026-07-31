@@ -11,4 +11,6 @@ export class ErrorDataReaderService {
   errorKey = computed(() => this.errorData()?.errorKey);
   errorStatus = computed(() => this.errorData()?.status);
   errorMessage = computed(() => this.errorData()?.message);
+
+  hasError = computed(() => !!this.errorData());
 }

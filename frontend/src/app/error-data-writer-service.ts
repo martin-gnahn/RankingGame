@@ -11,4 +11,8 @@ export interface ErrorData {
 })
 export class ErrorDataWriterService {
   errorData = signal<ErrorData | null>(null);
+
+  clearError() {
+    this.errorData.set(null);
+  }
 }
