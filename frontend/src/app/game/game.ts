@@ -19,6 +19,7 @@ import {AnswerSubmissionState, RankedAnswerView, ScoreCard} from './game-view.mo
 import {Question} from './question/question';
 import {RankingAnswer} from './ranking-answer/ranking-answer';
 import {RankingOverview} from './ranking-overview/ranking-overview';
+import {PlayerSessionStore} from '../shared/player-session-store';
 
 @Component({
   selector: 'app-game',
@@ -40,6 +41,13 @@ export class Game {
   private readonly webSocket = inject(WebSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
+  protected readonly isCurrentPlayerCaptain = computed(() => this.currentPlayerRole() === 'host');
+  private readonly playerSessionStore = inject(PlayerSessionStore);
+  protected readonly currentPlayerData = this.playerSessionStore.playerData;
+  protected readonly currentPlayerId = this.playerSessionStore.playerId;
+  protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
+  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+
   protected readonly sortingHintKey = computed(() =>
     this.isCurrentPlayerCaptain()
       ? 'game.ranking.hint.captain'
@@ -48,10 +56,8 @@ export class Game {
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
   );
-  private readonly queryParamMap = toSignal(this.route.queryParamMap);
 
   protected readonly roomCode = computed(() => this.roomCodeParam() ?? '');
-  protected readonly currentPlayerId = computed(() => this.queryParamMap()?.get('playerId') ?? '');
   protected readonly activeRound = signal<ActiveRoundResponse | null>(null);
   protected readonly loading = signal(false);
   protected readonly submitting = signal(false);
@@ -63,7 +69,6 @@ export class Game {
   protected readonly rankingLoading = signal(false);
   protected readonly rankingSubmittingAnswerId = signal<string | null>(null);
   protected readonly chatMessages = signal<ChatMessageResponse[]>([]);
-  protected readonly isCurrentPlayerCaptain = signal(false);
   private readonly translate = inject(TranslateService);
   protected readonly allSubmittedAnswers: WritableSignal<AnswerDto[]> = signal([]);
   protected readonly rankingPositions = signal<RankedAnswerDto[]>([]);
@@ -120,7 +125,6 @@ export class Game {
   }));
 
   constructor() {
-
     this.loadActiveRound();
 
     effect((onCleanup) => {
@@ -137,7 +141,7 @@ export class Game {
         next: (event) => this.handleRealtimeEvent(event),
       });
 
-      if (playerId) {
+      if (this.isValidPlayer()) {
         this.webSocket.joinLive(roomCode, playerId);
       }
 
@@ -161,7 +165,7 @@ export class Game {
       return;
     }
 
-    if (!roomCode || !activeRound || !playerId || this.submitting()) {
+    if (!roomCode || !activeRound || !this.isValidPlayer() || this.submitting()) {
       this.submitErrorMessage.set(this.translate.instant('game.errors.submitFailed'));
       return;
     }
@@ -191,7 +195,7 @@ export class Game {
     const roomCode = this.roomCode();
     const playerId = this.currentPlayerId();
 
-    if (!roomCode || !playerId) {
+    if (!roomCode || !this.isValidPlayer()) {
       return;
     }
 
@@ -203,7 +207,20 @@ export class Game {
     const activeRound = this.activeRound();
     const hostId = this.currentPlayerId();
 
-    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !hostId) {
+    // TODO: extract to validation method
+    if (!roomCode) {
+      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingRoomCode'));
+      return;
+    }
+    if (!activeRound) {
+      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingRoomCode'));
+      return;
+    }
+    if (!this.isValidPlayer()) {
+      this.rankingErrorMessage.set(this.translate.instant('game.errors.missingPlayerId'));
+      return;
+    }
+    if (!this.isCurrentPlayerCaptain() || !roomCode || !activeRound || !this.isValidPlayer()) {
       this.rankingErrorMessage.set(this.translate.instant('game.errors.onlyHostCanRank'));
       return;
     }
@@ -262,7 +279,8 @@ export class Game {
 
     this.roomApi.getActiveRound(roomCode, playerId).subscribe({
       next: (activeRound) => {
-        this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
+        // TODO: how to solve this.
+        // this.isCurrentPlayerCaptain.set(activeRound.currentPlayerIsCaptain);
         this.activeRound.set(activeRound);
         this.sortingStarted.set(false);
         this.loading.set(false);

@@ -8,6 +8,8 @@ import {RoomApiService} from '../core/api/room-api.service';
 import {CreateRoomRequest, RoomActionResponse} from '../core/api/room.models';
 import {CreateRoom} from './create-room/create-room';
 import {JoinRoom, JoinRoomRequestPayload} from './join-room/join-room';
+import {PlayerSessionStore} from '../shared/player-session-store';
+import {PlayerData, PlayerRole} from '../shared/player-data.model';
 
 @Component({
   selector: 'app-home',
@@ -19,6 +21,7 @@ export class Home {
   private readonly roomApi = inject(RoomApiService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  private playerSessionStore = inject(PlayerSessionStore);
 
   protected pendingAction: 'create' | 'join' | null = null;
   protected errorMessage = '';
@@ -57,15 +60,20 @@ export class Home {
       });
   }
 
-  private navigateToLobby(response: RoomActionResponse, role: 'host' | 'player'): void {
+  private navigateToLobby(response: RoomActionResponse, role: PlayerRole): void {
     if (!response.roomCode) {
       this.errorMessage = this.translate.instant('home.errors.missingRoomCode');
       return;
     }
+    if (!response.playerId) {
+      this.errorMessage = this.translate.instant('home.errors.missingPlayerId');
+      return;
+    }
 
-    const queryParams = response.playerId ? { playerId: response.playerId, role } : { role };
+    const playerData: PlayerData = {playerId: response.playerId, role: role, playerSessionToken: response.playerToken};
+    this.playerSessionStore.storePlayerData(playerData);
 
-    void this.router.navigate(['/lobby', response.roomCode], { queryParams });
+    void this.router.navigate(['/lobby', response.roomCode]);
   }
 
   private showError(error: unknown): void {

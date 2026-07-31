@@ -9,6 +9,7 @@ import {ActiveRoundResponse} from '../core/api/room.models';
 import {provideTestingTranslations} from '../core/i18n/translate-testing.providers';
 import {RealtimeEvent} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
+import {PlayerSessionStore} from '../shared/player-session-store';
 import {Game} from './game';
 
 describe('Game', () => {
@@ -16,6 +17,7 @@ describe('Game', () => {
   let roomApi: jasmine.SpyObj<RoomApiService>;
   let gameApi: jasmine.SpyObj<GameApiService>;
   let webSocket: jasmine.SpyObj<WebSocketService>;
+  let playerSessionStore: PlayerSessionStore;
   let paramMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let realtimeEvents: Subject<RealtimeEvent>;
@@ -50,6 +52,8 @@ describe('Game', () => {
   ];
 
   beforeEach(async () => {
+    sessionStorage.clear();
+
     roomApi = jasmine.createSpyObj<RoomApiService>('RoomApiService', [
       'getActiveRound',
       'getRecentChatMessages',
@@ -101,6 +105,13 @@ describe('Game', () => {
         },
       ],
     }).compileComponents();
+
+    playerSessionStore = TestBed.inject(PlayerSessionStore);
+    storePlayerSession('player-1', 'player');
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   function createComponent(roundResponse: ActiveRoundResponse = activeRound): void {
@@ -110,6 +121,14 @@ describe('Game', () => {
     );
     fixture = TestBed.createComponent(Game);
     fixture.detectChanges();
+  }
+
+  function storePlayerSession(playerId: string, role: 'host' | 'player'): void {
+    playerSessionStore.storePlayerData({
+      playerId,
+      role,
+      playerSessionToken: `${playerId}-token`,
+    });
   }
 
   function textContent(): string {
@@ -178,7 +197,7 @@ describe('Game', () => {
   });
 
   it('should show the captain sorting hint for the host player', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    storePlayerSession('player-1', 'host');
     createComponent({...activeRound, currentPlayerIsCaptain: true});
 
     realtimeEvents.next({
@@ -191,7 +210,7 @@ describe('Game', () => {
   });
 
   it('should render submitted answers as host ranking cards', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'player-1', role: 'host'}));
+    storePlayerSession('player-1', 'host');
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     createComponent({...activeRound, currentPlayerIsCaptain: true});
 
@@ -210,7 +229,7 @@ describe('Game', () => {
   });
 
   it('should add a ranking position when the host chooses an answer', () => {
-    queryParamMap.next(convertToParamMap({playerId: 'host-1', role: 'host'}));
+    storePlayerSession('host-1', 'host');
     gameApi.getSubmittedAnswers.and.returnValue(of({answers: submittedAnswers}));
     gameApi.getRankingPositions.and.returnValues(
       of({rankings: []}),
