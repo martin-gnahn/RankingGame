@@ -146,7 +146,7 @@ export class Game {
       });
 
       if (this.isValidPlayer()) {
-        this.webSocket.joinLive(roomCode, playerId);
+        this.webSocket.joinLive(roomCode);
       }
 
       onCleanup(() => {
@@ -201,7 +201,7 @@ export class Game {
       return;
     }
 
-    this.webSocket.sendChatMessage(roomCode, playerId, body);
+    this.webSocket.sendChatMessage(roomCode, body);
   }
 
   isAnswerContextValid(roomCode: RoomCode, activeRound: ActiveRoundResponse | null): ErrorKeyContainer {
