@@ -44,7 +44,7 @@ class RoomControllerTest {
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(createRoomService.createRoom(any(CreateRoomCommand.class)))
-                .thenReturn(new CreateRoomResult("ABCD12", roomId, playerId, "Marta"));
+                .thenReturn(new CreateRoomResult("ABCD12", roomId, playerId, "Marta", "player-token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
@@ -68,7 +68,7 @@ class RoomControllerTest {
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
         GetRoomService getRoomService = mock(GetRoomService.class);
         when(createRoomService.createRoom(any(CreateRoomCommand.class)))
-                .thenReturn(new CreateRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Marta"));
+                .thenReturn(new CreateRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Marta", "player-token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms")
@@ -137,7 +137,7 @@ class RoomControllerTest {
         UUID roomId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
-                .thenReturn(new JoinRoomResult("ABCD12", roomId, playerId, "Alex"));
+                .thenReturn(new JoinRoomResult("ABCD12", roomId, playerId, "Alex", "player-token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/ABCD12/players")
@@ -162,7 +162,7 @@ class RoomControllerTest {
         JoinRoomService joinRoomService = mock(JoinRoomService.class);
         GetRoomService getRoomService = mock(GetRoomService.class);
         when(joinRoomService.joinRoom(any(JoinRoomCommand.class)))
-                .thenReturn(new JoinRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Alex"));
+                .thenReturn(new JoinRoomResult("ABCD12", UUID.randomUUID(), UUID.randomUUID(), "Alex", "player-token"));
         MockMvc mockMvc = mockMvc(createRoomService, joinRoomService, getRoomService);
 
         mockMvc.perform(post("/api/rooms/abcd12/players")

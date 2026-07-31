@@ -103,4 +103,48 @@ class FlywayMigrationIntegrationTest extends BackendIntegrationTest {
         assertThat(columnCount).isNotNull();
         assertThat(columnCount.intValue()).isOne();
     }
+
+    @Test
+    void playersHaveSessionTokenInvariants() {
+        Number tokenHashColumnCount = jdbcTemplate.queryForObject("""
+                SELECT count(*)
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'players'
+                  AND column_name = 'session_token_hash'
+                  AND is_nullable = 'NO'
+                """, Number.class);
+
+        Number sessionExpiryColumnCount = jdbcTemplate.queryForObject("""
+                SELECT count(*)
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'players'
+                  AND column_name = 'session_expires_at'
+                  AND is_nullable = 'NO'
+                """, Number.class);
+
+        Number tokenHashIndexCount = jdbcTemplate.queryForObject("""
+                SELECT count(*)
+                FROM pg_indexes
+                WHERE schemaname = 'public'
+                  AND indexname = 'ux_players_room_session_token_hash'
+                """, Number.class);
+
+        Number helperFunctionCount = jdbcTemplate.queryForObject("""
+                SELECT count(*)
+                FROM pg_proc
+                WHERE pronamespace = 'public'::regnamespace
+                  AND proname = 'get_token_hash'
+                """, Number.class);
+
+        assertThat(tokenHashColumnCount).isNotNull();
+        assertThat(tokenHashColumnCount.intValue()).isOne();
+        assertThat(sessionExpiryColumnCount).isNotNull();
+        assertThat(sessionExpiryColumnCount.intValue()).isOne();
+        assertThat(tokenHashIndexCount).isNotNull();
+        assertThat(tokenHashIndexCount.intValue()).isOne();
+        assertThat(helperFunctionCount).isNotNull();
+        assertThat(helperFunctionCount.intValue()).isZero();
+    }
 }
