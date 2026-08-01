@@ -11,6 +11,8 @@ import java.util.Base64;
 
 @Service
 public class TokenGenerator {
+    private static final String SHA_256_IS_NOT_AVAILABLE = "SHA-256 is not available";
+
     public String generateSafeToken() {
         byte[] tokenBytes = new byte[32];
         new SecureRandom().nextBytes(tokenBytes);
@@ -30,7 +32,7 @@ public class TokenGenerator {
 
             return hex.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new HashGenerationNotPossibleException("SHA-256 is not available");
+            throw new HashGenerationNotPossibleException(SHA_256_IS_NOT_AVAILABLE);
         }
     }
 }

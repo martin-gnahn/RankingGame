@@ -13,4 +13,5 @@ public class ErrorConstants {
     static final String RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND";
     static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     static final String QUESTION_UNAVAILABLE = "QUESTION_UNAVAILABLE";
+    static final String HASH_GENERATION_FAILED = "HASH_GENERATION_FAILED";
 }

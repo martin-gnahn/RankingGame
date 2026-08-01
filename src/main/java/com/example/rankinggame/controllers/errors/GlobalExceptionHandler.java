@@ -90,6 +90,12 @@ public class GlobalExceptionHandler {
                 .body(error(ErrorConstants.GAME_STATE_CONFLICT, exception.getMessage()));
     }
 
+    @ExceptionHandler(HashGenerationNotPossibleException.class)
+    public ResponseEntity<ApiError> handleHashGenerationError(HashGenerationNotPossibleException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error(ErrorConstants.HASH_GENERATION_FAILED, exception.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
