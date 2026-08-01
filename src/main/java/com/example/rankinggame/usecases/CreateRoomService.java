@@ -55,7 +55,7 @@ public class CreateRoomService {
         room.setStatus(RoomStatus.LOBBY);
         RoomEntity savedRoom = saveRoomWithFreshCode(room);
 
-        PlayerEntity hostPlayer = getPlayerEntity(playerName, savedRoom, playerToken);
+        PlayerEntity hostPlayer = createNewPlayerEntity(playerName, savedRoom, playerToken);
         PlayerEntity savedHostPlayer = playerRepository.save(hostPlayer);
 
         savedRoom.setHostPlayerId(savedHostPlayer.getId());
@@ -64,7 +64,7 @@ public class CreateRoomService {
         return new CreateRoomResult(savedRoom.getCode(), savedRoom.getId(), savedHostPlayer.getId(), savedHostPlayer.getNickname(), playerToken);
     }
 
-    private PlayerEntity getPlayerEntity(String playerName, RoomEntity savedRoom, String playerToken) {
+    private PlayerEntity createNewPlayerEntity(String playerName, RoomEntity savedRoom, String playerToken) {
         PlayerEntity hostPlayer = new PlayerEntity();
         hostPlayer.setRoomId(savedRoom.getId());
         hostPlayer.setNickname(playerName);
