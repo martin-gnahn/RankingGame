@@ -1,5 +1,6 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
 import com.example.rankinggame.dto.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.*;
@@ -18,7 +19,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
-import static com.example.rankinggame.controllers.ErrorConstants.VALIDATION_ERROR;
+import static com.example.rankinggame.controllers.errors.ErrorConstants.VALIDATION_ERROR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;

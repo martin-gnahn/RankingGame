@@ -1,5 +1,6 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;

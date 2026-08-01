@@ -1,4 +1,4 @@
-package com.example.rankinggame.controllers;
+package com.example.rankinggame.controllers.errors;
 
 import com.example.rankinggame.dto.ApiError;
 import com.example.rankinggame.engine.exceptions.*;
