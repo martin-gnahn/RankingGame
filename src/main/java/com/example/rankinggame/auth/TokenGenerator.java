@@ -1,5 +1,6 @@
 package com.example.rankinggame.auth;
 
+import com.example.rankinggame.exceptions.HashGenerationNotPossibleException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -29,7 +30,7 @@ public class TokenGenerator {
 
             return hex.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available", e);
+            throw new HashGenerationNotPossibleException("SHA-256 is not available");
         }
     }
 }

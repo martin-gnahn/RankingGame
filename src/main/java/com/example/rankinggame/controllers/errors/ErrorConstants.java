@@ -1,9 +1,9 @@
-package com.example.rankinggame.controllers;
+package com.example.rankinggame.controllers.errors;
 
 public class ErrorConstants {
     static final String INVALID_REQUEST = "INVALID_REQUEST";
     static final String ROOM_NOT_FOUND = "ROOM_NOT_FOUND";
-    static final String VALIDATION_ERROR = "VALIDATION_ERROR";
+    public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     static final String INVALID_REQUEST_BODY = "INVALID_REQUEST_BODY";
     static final String ACCESS_DENIED = "ACCESS_DENIED";
     static final String PLAYER_NAME_ALREADY_TAKEN = "PLAYER_NAME_ALREADY_TAKEN";
