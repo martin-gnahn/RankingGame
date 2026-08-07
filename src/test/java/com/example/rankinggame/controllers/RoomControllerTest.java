@@ -1,5 +1,7 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.auth.AuthenticatedPlayer;
+import com.example.rankinggame.auth.PlayerSessionService;
 import com.example.rankinggame.dto.*;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomStatus;

@@ -1,7 +1,7 @@
 package com.example.rankinggame.websocket;
 
-import com.example.rankinggame.controllers.AuthenticatedPlayer;
-import com.example.rankinggame.controllers.PlayerSessionService;
+import com.example.rankinggame.auth.AuthenticatedPlayer;
+import com.example.rankinggame.auth.PlayerSessionService;
 import com.example.rankinggame.dto.SendChatMessageCommand;
 import com.example.rankinggame.engine.GameConstants;
 import com.example.rankinggame.usecases.ChatMessageService;

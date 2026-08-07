@@ -1,5 +1,7 @@
 package com.example.rankinggame.controllers;
 
+import com.example.rankinggame.auth.AuthenticatedPlayer;
+import com.example.rankinggame.auth.PlayerSessionService;
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
