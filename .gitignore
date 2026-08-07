@@ -44,3 +44,5 @@ build/
 /frontend/playwright-report/
 /frontend/test-results/
 /frontend/blob-report/
+/tmp/pdfs/*
+/output/pdf/*
