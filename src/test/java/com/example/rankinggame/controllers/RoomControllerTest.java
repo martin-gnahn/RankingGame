@@ -1,7 +1,6 @@
 package com.example.rankinggame.controllers;
 
 import com.example.rankinggame.dto.*;
-import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
 import com.example.rankinggame.entities.PlayerConnectionStatus;
 import com.example.rankinggame.entities.RoomStatus;
 import com.example.rankinggame.exceptions.RoomCodeUnavailableException;

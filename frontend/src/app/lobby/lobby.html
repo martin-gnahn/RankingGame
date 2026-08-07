@@ -85,11 +85,15 @@
       }
     </section>
 
-    <app-chat-sidebar
-      [messages]="chatMessages()"
-      [currentPlayerId]="currentPlayerId()"
-      [disabled]="!isValidPlayer()"
-      (sendMessage)="sendChatMessage($event)"
-    />
+    @if (currentPlayerId(); as playerId) {
+      @if (hasValidPlayerId()) {
+        <app-chat-sidebar
+          [messages]="chatMessages()"
+          [currentPlayerId]="playerId"
+          [disabled]="!currentPlayerId()"
+          (sendMessage)="sendChatMessage($event)"
+        />
+      }
+    }
   </div>
 </main>

@@ -1,5 +1,5 @@
-import {computed, effect, Injectable, signal} from '@angular/core';
-import {INITIAL_PLAYER_STATE, PlayerData} from './player-data.model';
+import {computed, effect, Injectable, Signal, signal} from '@angular/core';
+import {PlayerData} from './player-data.model';
 
 const STORAGE_KEY = 'playerData';
 
@@ -9,28 +9,26 @@ const STORAGE_KEY = 'playerData';
 export class PlayerSessionStore {
   private readonly storage = sessionStorage;
   readonly playerId = computed(
-    () => this.playerData().playerId
+    () => this.playerData()?.playerId ?? null
   );
   readonly playerRole = computed(
-    () => this.playerData().role,
+    () => this.playerData()?.role ?? null
   );
   readonly playerSessionToken = computed(
-    () => this.playerData().playerSessionToken
+    () => this.playerData()?.playerSessionToken ?? null
   );
-  readonly isValidPlayer = computed(
-    () => this.hasText(this.playerId())
+  readonly hasValidPlayerId: Signal<boolean> = computed(
+    () => {
+      const playerId = this.playerId();
+      return !!playerId && this.hasText(playerId);
+    }
   );
 
-  readonly hasSession = computed(() => {
-    const state = this.playerData();
-    return this.hasText(state.playerId) && this.hasText(state.role);
-  });
-  readonly isHost = computed(() => {
-    const state = this.playerData();
-    return state.role === 'host';
-  });
-  private readonly playerDataInternal = signal<PlayerData>(this.loadFromStorage());
-  // readonly playerData = this.playerDataInternal.asReadonly();
+  hasAllData(playerData: PlayerData | null): playerData is PlayerData {
+    return !!playerData && !!playerData.playerId && !!playerData.playerSessionToken && !!playerData.role;
+  }
+
+  private readonly playerDataInternal = signal<PlayerData | null>(this.loadFromStorage());
   readonly playerData = computed(
     () => this.playerDataInternal()
   );
@@ -39,8 +37,9 @@ export class PlayerSessionStore {
     effect(() => {
       const state = this.playerData();
 
-      if (!state.playerId || !state.role) {
+      if (!this.hasAllData(state)) {
         sessionStorage.removeItem(STORAGE_KEY);
+        this.clearPlayerData();
         return;
       }
 
@@ -57,28 +56,28 @@ export class PlayerSessionStore {
   }
 
   clearPlayerData(): void {
-    this.playerDataInternal.set(INITIAL_PLAYER_STATE);
+    this.playerDataInternal.set(null);
     this.storage?.removeItem(STORAGE_KEY);
   }
 
-  private loadFromStorage(): PlayerData {
+  private loadFromStorage(): PlayerData | null{
     try {
       const json = sessionStorage.getItem(STORAGE_KEY);
 
       if (!json) {
-        return INITIAL_PLAYER_STATE;
+        return null;
       }
 
       const storedValue: unknown = JSON.parse(json);
       if (!this.isPlayerData(storedValue)) {
         sessionStorage.removeItem(STORAGE_KEY);
-        return INITIAL_PLAYER_STATE;
+        return null;
       }
 
       return storedValue;
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
-      return INITIAL_PLAYER_STATE;
+      return null;
     }
   }
 
@@ -96,7 +95,7 @@ export class PlayerSessionStore {
       );
   }
 
-  private hasText(val: string): boolean {
-    return !!val && val.trim().length > 0;
+  private hasText(val: string): val is string {
+    return !!val && val.trim().length > 0 && typeof val === 'string';
   }
 }

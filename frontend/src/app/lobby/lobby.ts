@@ -8,9 +8,15 @@ import {map, Subscription} from 'rxjs';
 import {ChatSidebar} from '../chat-sidebar/chat-sidebar';
 import {RoomApiService} from '../core/api/room-api.service';
 import {ChatMessageResponse, RoomResponse} from '../core/api/room.models';
-import {PLAYER_REJOINED, RealtimeEvent} from '../core/websocket/web-socket.models';
+import {
+  CHAT_MESSAGE_SENT,
+  GAME_STARTED,
+  PLAYER_JOINED,
+  PLAYER_LEFT,
+  PLAYER_REJOINED,
+  RealtimeEvent
+} from '../core/websocket/web-socket.models';
 import {WebSocketService} from '../core/websocket/web-socket.service';
-import {UNKNOWN_PLAYER_CONST, UNKNOWN_ROLE_CONST} from '../shared/player-data.model';
 import {PlayerSessionStore} from '../shared/player-session-store';
 
 @Component({
@@ -37,7 +43,7 @@ export class Lobby {
   protected readonly currentPlayerData = this.playerSessionStore.playerData;
   protected readonly currentPlayerId = this.playerSessionStore.playerId;
   protected readonly currentPlayerRole = this.playerSessionStore.playerRole;
-  protected readonly isValidPlayer = this.playerSessionStore.isValidPlayer;
+  protected readonly hasValidPlayerId = this.playerSessionStore.hasValidPlayerId;
 
   private readonly roomCodeParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('roomCode'))),
@@ -90,7 +96,7 @@ export class Lobby {
           this.refreshErrorMessage.set(this.translate.instant('lobby.errors.liveUpdateReadFailed')),
       });
 
-      if (this.isValidPlayer()) {
+      if (this.hasValidPlayerId()) {
         this.webSocket.joinLive(roomCode);
       }
 
@@ -111,7 +117,7 @@ export class Lobby {
   protected startGame(): void {
     const roomCode = this.roomCode();
 
-    if (!roomCode || !this.isValidPlayer() || this.gameIsInStartingProcess()) {
+    if (!roomCode || !this.hasValidPlayerId() || this.gameIsInStartingProcess()) {
       this.startErrorMessage.set(this.translate.instant('lobby.errors.startFailed'));
       return;
     }
@@ -134,7 +140,7 @@ export class Lobby {
   protected sendChatMessage(body: string): void {
     const roomCode = this.roomCode();
 
-    if (!roomCode || !this.isValidPlayer()) {
+    if (!roomCode || !this.hasValidPlayerId()) {
       return;
     }
 
@@ -201,28 +207,28 @@ export class Lobby {
 
   private handleRealtimeEvent(roomCode: string, event: RealtimeEvent): void {
     if (
-      event.type === 'PLAYER_JOINED' ||
-      event.type === 'PLAYER_LEFT' ||
+      event.type === PLAYER_JOINED ||
+      event.type === PLAYER_LEFT ||
       event.type === PLAYER_REJOINED
     ) {
       this.refreshRoom(roomCode);
       return;
     }
 
-    if (event.type === 'GAME_STARTED') {
+    if (event.type === GAME_STARTED) {
       this.navigateToGame(roomCode);
       return;
     }
 
     const payload = event.payload;
-    if (event.type === 'CHAT_MESSAGE_SENT' && this.isChatMessage(payload)) {
+    if (event.type === CHAT_MESSAGE_SENT && this.isChatMessage(payload)) {
       this.chatMessages.update((messages) => [...messages, payload]);
     }
   }
 
   private navigateToGame(roomCode: string): void {
     const currentPlayerData = this.currentPlayerData();
-    if (currentPlayerData.playerId === UNKNOWN_PLAYER_CONST || currentPlayerData.role === UNKNOWN_ROLE_CONST) {
+    if (!this.playerSessionStore.hasAllData(currentPlayerData)) {
       void this.router.navigate(['/error']);
       return;
     }

@@ -1,8 +1,6 @@
-package com.example.rankinggame.controllers.errors;
+package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.controllers.InvalidTokenException;
-import com.example.rankinggame.controllers.UserNotAuthorizedException;
-import com.example.rankinggame.controllers.UserSessionExpiredException;
+import com.example.rankinggame.controllers.errors.ErrorConstants;
 import com.example.rankinggame.dto.ApiError;
 import com.example.rankinggame.engine.exceptions.*;
 import com.example.rankinggame.exceptions.*;

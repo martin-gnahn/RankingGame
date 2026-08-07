@@ -1,7 +1,7 @@
 package com.example.rankinggame.exceptions;
 
-import com.example.rankinggame.controllers.InvalidTokenException;
 import com.example.rankinggame.controllers.errors.ErrorConstants;
+import com.example.rankinggame.controllers.InvalidTokenException;
 
 public class UserTokenNotPresentException extends InvalidTokenException {
     public UserTokenNotPresentException() {
