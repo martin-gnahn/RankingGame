@@ -16,7 +16,8 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 @Component
 public class PlayerPresenceService {
-    private static final long DISCONNECT_GRACE_PERIOD_SECONDS = 3L;
+    // STOMP reconnects after five seconds. Keep presence alive long enough for that reconnect to join again.
+    private static final long DISCONNECT_GRACE_PERIOD_SECONDS = 6L;
 
     private final LivePlayerSessionRegistry sessionRegistry;
     private final PlayerRepository playerRepository;

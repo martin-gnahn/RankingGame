@@ -164,6 +164,28 @@ describe('WebSocketService', () => {
     });
   });
 
+  it('should restore room subscription and live presence after reconnecting', () => {
+    service.subscribeToRoom('ABCD12').subscribe();
+    service.joinLive('ABCD12');
+
+    fakeClient.connected = true;
+    stompConfig.onConnect?.({} as never);
+
+    fakeClient.connected = false;
+    stompConfig.onWebSocketClose?.({} as never);
+    fakeClient.connected = true;
+    stompConfig.onConnect?.({} as never);
+
+    expect(fakeClient.subscribe).toHaveBeenCalledTimes(2);
+    expect(fakeClient.publish).toHaveBeenCalledTimes(2);
+    expect(fakeClient.publish).toHaveBeenCalledWith({
+      destination: '/app/rooms/ABCD12/join-live',
+      headers: {
+        'X-Player-Session-Token': 'token-1',
+      },
+    });
+  });
+
   it('should publish chat messages after the STOMP connection opens', () => {
     service.sendChatMessage('ABCD12', 'Hallo');
 

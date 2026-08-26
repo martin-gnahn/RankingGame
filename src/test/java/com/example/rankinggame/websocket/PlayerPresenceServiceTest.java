@@ -42,7 +42,7 @@ class PlayerPresenceServiceTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(scheduledFuture).when(executor).schedule(any(Runnable.class), eq(3L), eq(TimeUnit.SECONDS));
+        doReturn(scheduledFuture).when(executor).schedule(any(Runnable.class), eq(6L), eq(TimeUnit.SECONDS));
     }
 
     @Test
@@ -66,7 +66,7 @@ class PlayerPresenceServiceTest {
 
         service.markSessionDisconnected("session-1");
 
-        verify(executor).schedule(any(Runnable.class), eq(3L), eq(TimeUnit.SECONDS));
+        verify(executor).schedule(any(Runnable.class), eq(6L), eq(TimeUnit.SECONDS));
         verify(playerRepository, never()).findById(playerId);
     }
 
@@ -94,7 +94,7 @@ class PlayerPresenceServiceTest {
 
         service.markSessionDisconnected("session-1");
 
-        verify(executor, never()).schedule(any(Runnable.class), eq(3L), eq(TimeUnit.SECONDS));
+        verify(executor, never()).schedule(any(Runnable.class), eq(6L), eq(TimeUnit.SECONDS));
         verify(playerRepository, never()).findById(playerId);
     }
 
@@ -116,7 +116,7 @@ class PlayerPresenceServiceTest {
 
     private Runnable scheduledDisconnect() {
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(executor).schedule(runnableCaptor.capture(), eq(3L), eq(TimeUnit.SECONDS));
+        verify(executor).schedule(runnableCaptor.capture(), eq(6L), eq(TimeUnit.SECONDS));
         return runnableCaptor.getValue();
     }
 

@@ -33,6 +33,7 @@ build/
 .vscode/
 /Plans/
 /PROJECT_PLAN__OLD.md
+/learnings/
 *.md
 !README.md
 !docs/ticket-workflow.md
