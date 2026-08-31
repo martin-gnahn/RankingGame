@@ -1,16 +1,12 @@
-import { Injectable, InjectionToken, inject } from '@angular/core';
-import {
-  Client,
-  type IMessage,
-  type IPublishParams,
-  type StompConfig,
-  type StompSubscription,
-} from '@stomp/stompjs';
-import { BehaviorSubject, Observable } from 'rxjs';
+import {inject, Injectable, InjectionToken} from '@angular/core';
+import {Client, type IMessage, type IPublishParams, type StompConfig, type StompSubscription,} from '@stomp/stompjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 
-import { environment } from '../../../environments/environment';
-import { RoomCode } from '../api/room.models';
-import { RealtimeEvent, WebSocketConnectionState } from './web-socket.models';
+import {environment} from '../../../environments/environment';
+import {RoomCode} from '../api/room.models';
+import {EMPTY_EVENT, RealtimeEvent, WebSocketConnectionState} from './web-socket.models';
+import {PlayerSessionStore} from '../../shared/player-session-store';
+import {Router} from '@angular/router';
 
 interface StompClientAdapter {
   active: boolean;
@@ -28,13 +24,20 @@ export const STOMP_CLIENT_FACTORY = new InjectionToken<StompClientFactory>('STOM
   factory: () => (config: StompConfig) => new Client(config),
 });
 
+const PLAYER_SESSION_TOKEN_HEADER = 'X-Player-Session-Token';
+
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketService {
   private readonly clientFactory = inject(STOMP_CLIENT_FACTORY);
+  private readonly playerSessionStore = inject(PlayerSessionStore);
+  private readonly router = inject(Router);
+
   private readonly connectionStateSubject = new BehaviorSubject<WebSocketConnectionState>('DISCONNECTED');
-  private readonly pendingSubscriptions = new Set<() => void>();
+  private readonly pendingActions = new Set<() => void>();
+  private readonly roomSubscriptionActions = new Set<() => void>();
+  private readonly liveRooms = new Set<RoomCode>();
   private readonly client = this.clientFactory({
     brokerURL: this.resolveBrokerUrl(environment.webSocketUrl),
     reconnectDelay: 5000,
@@ -60,33 +63,40 @@ export class WebSocketService {
   }
 
   disconnect(): void {
-    this.pendingSubscriptions.clear();
+    this.pendingActions.clear();
+    this.roomSubscriptionActions.clear();
+    this.liveRooms.clear();
     void this.client.deactivate();
     this.connectionStateSubject.next('DISCONNECTED');
   }
 
-  joinLive(roomCode: RoomCode, playerId: string): void {
-    const publishJoinLive = () => {
-      this.client.publish({
-        destination: `/app/rooms/${roomCode}/join-live`,
-        body: JSON.stringify({ playerId }),
-      });
-    };
-
-    if (this.client.connected) {
-      publishJoinLive();
+  joinLive(roomCode: RoomCode): void {
+    if (!this.requireExistingToken()) {
       return;
     }
 
-    this.pendingSubscriptions.add(publishJoinLive);
+    this.liveRooms.add(roomCode);
+
+    if (this.client.connected) {
+      this.publishJoinLive(roomCode);
+      return;
+    }
+
     this.connect();
   }
 
-  sendChatMessage(roomCode: RoomCode, playerId: string, body: string): void {
+  sendChatMessage(roomCode: RoomCode, body: string): void {
+    const token = this.requireExistingToken();
+    if (!token) {
+      return;
+    }
     const publishChatMessage = () => {
       this.client.publish({
         destination: `/app/rooms/${roomCode}/chat`,
-        body: JSON.stringify({ playerId, body }),
+        body: JSON.stringify({body}),
+        headers: {
+          [PLAYER_SESSION_TOKEN_HEADER]: token,
+        }
       });
     };
 
@@ -95,8 +105,16 @@ export class WebSocketService {
       return;
     }
 
-    this.pendingSubscriptions.add(publishChatMessage);
+    this.pendingActions.add(publishChatMessage);
     this.connect();
+  }
+
+  private requireExistingToken(): string | null {
+    const playerSessionToken = this.playerSessionStore.playerSessionToken();
+    if (!playerSessionToken) {
+      void this.router.navigate(['/error']);
+    }
+    return playerSessionToken;
   }
 
   subscribeToRoom(roomCode: RoomCode): Observable<RealtimeEvent> {
@@ -115,15 +133,16 @@ export class WebSocketService {
         });
       };
 
+      this.roomSubscriptionActions.add(subscribeWhenConnected);
+
       if (this.client.connected) {
         subscribeWhenConnected();
       } else {
-        this.pendingSubscriptions.add(subscribeWhenConnected);
         this.connect();
       }
 
       return () => {
-        this.pendingSubscriptions.delete(subscribeWhenConnected);
+        this.roomSubscriptionActions.delete(subscribeWhenConnected);
         subscription?.unsubscribe();
       };
     });
@@ -132,11 +151,34 @@ export class WebSocketService {
   private handleConnected(): void {
     this.connectionStateSubject.next('CONNECTED');
 
-    for (const subscribe of this.pendingSubscriptions) {
-      subscribe();
+    for (const subscribeToRoom of this.roomSubscriptionActions) {
+      subscribeToRoom();
     }
 
-    this.pendingSubscriptions.clear();
+    for (const roomCode of this.liveRooms) {
+      this.publishJoinLive(roomCode);
+    }
+
+    for (const action of this.pendingActions) {
+      action();
+    }
+
+    this.pendingActions.clear();
+  }
+
+  private publishJoinLive(roomCode: RoomCode): void {
+    const token = this.requireExistingToken();
+    if (!token) {
+      this.liveRooms.delete(roomCode);
+      return;
+    }
+
+    this.client.publish({
+      destination: `/app/rooms/${roomCode}/join-live`,
+      headers: {
+        [PLAYER_SESSION_TOKEN_HEADER]: token,
+      }
+    });
   }
 
   private handleDisconnected(): void {
@@ -145,7 +187,7 @@ export class WebSocketService {
 
   private parseMessage(message: IMessage): RealtimeEvent {
     if (!message.body) {
-      return { type: 'EMPTY', payload: null };
+      return {type: EMPTY_EVENT, payload: null};
     }
 
     return JSON.parse(message.body) as RealtimeEvent;

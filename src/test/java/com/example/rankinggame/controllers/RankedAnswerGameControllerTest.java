@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
+import com.example.rankinggame.auth.AuthenticatedPlayer;
+import com.example.rankinggame.auth.PlayerSessionService;
 import com.example.rankinggame.dto.ActiveRoundResult;
 import com.example.rankinggame.dto.StartGameResult;
 import com.example.rankinggame.dto.StartRankingGameCommand;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,11 +50,12 @@ class RankedAnswerGameControllerTest {
                         1,
                         questionId
                 ));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, hostPlayerId);
 
         mockMvc.perform(post("/api/rooms/abcd12/ranking-game/start")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + hostPlayerId + "\"}"))
+                        .content("{}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
                 .andExpect(jsonPath("$.roomId").doesNotExist())
@@ -66,15 +69,27 @@ class RankedAnswerGameControllerTest {
     }
 
     @Test
-    void rejectsMissingStartGameHostPlayerId() throws Exception {
-        MockMvc mockMvc = mockMvc(mock(StartRankingGameService.class), mock(GetActiveRoundService.class));
+    void startsRankingGameWithoutRequestBodyIdentity() throws Exception {
+        StartRankingGameService startRankingGameService = mock(StartRankingGameService.class);
+        GetActiveRoundService getActiveRoundService = mock(GetActiveRoundService.class);
+        UUID playerId = UUID.randomUUID();
+        when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
+                .thenReturn(new StartGameResult(
+                        UUID.randomUUID(),
+                        "ABCD12",
+                        UUID.randomUUID(),
+                        GameType.RANKING_GAME,
+                        UUID.randomUUID(),
+                        1,
+                        UUID.randomUUID()
+                ));
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Host player id is required"));
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -84,13 +99,14 @@ class RankedAnswerGameControllerTest {
         UUID playerId = UUID.randomUUID();
         when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
                 .thenThrow(new OnlyHostCanStartGame());
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + playerId + "\"}"))
+                        .content("{}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.errorKey").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only the host can start the game"));
     }
 
@@ -101,13 +117,14 @@ class RankedAnswerGameControllerTest {
         UUID playerId = UUID.randomUUID();
         when(startRankingGameService.startGame(any(StartRankingGameCommand.class)))
                 .thenThrow(new RoomNotInLobbyException("ABCD12"));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playerId\":\"" + playerId + "\"}"))
+                        .content("{}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.errorKey").value("GAME_STATE_CONFLICT"))
                 .andExpect(jsonPath("$.message").value("Room 'ABCD12' is not in lobby."));
     }
 
@@ -132,10 +149,10 @@ class RankedAnswerGameControllerTest {
                 7,
                 false,
                 currentPlayerIsCaptain));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")
-                        .param("playerId", playerId.toString()))
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
@@ -154,23 +171,29 @@ class RankedAnswerGameControllerTest {
         UUID playerId = UUID.randomUUID();
         when(getActiveRoundService.loadActiveRoundForPlayer("ABCD12", playerId))
                 .thenThrow(new RoomHasNoActiveGameException("ABCD12"));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService);
+        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")
-                        .param("playerId", playerId.toString()))
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.errorKey").value("GAME_STATE_CONFLICT"))
                 .andExpect(jsonPath("$.message").value("Room 'ABCD12' has no active game."));
     }
 
     private MockMvc mockMvc(
             StartRankingGameService startRankingGameService,
-            GetActiveRoundService getActiveRoundService
+            GetActiveRoundService getActiveRoundService,
+            UUID authenticatedPlayerId
     ) {
+        PlayerSessionService playerSessionService = mock(PlayerSessionService.class);
+        when(playerSessionService.authenticatePlayer(anyString(), anyString()))
+                .thenReturn(new AuthenticatedPlayer(authenticatedPlayerId));
+
         return MockMvcBuilders.standaloneSetup(new GameController(
                         new ObjectMapper(),
                         startRankingGameService,
-                        getActiveRoundService
+                        getActiveRoundService,
+                        playerSessionService
                 ))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

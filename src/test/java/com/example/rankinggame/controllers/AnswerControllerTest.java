@@ -1,6 +1,7 @@
 package com.example.rankinggame.controllers;
 
-import com.example.rankinggame.controllers.errors.GlobalExceptionHandler;
+import com.example.rankinggame.auth.AuthenticatedPlayer;
+import com.example.rankinggame.auth.PlayerSessionService;
 import com.example.rankinggame.dto.*;
 import com.example.rankinggame.engine.exceptions.AnswerAlreadySubmittedException;
 import com.example.rankinggame.usecases.*;
@@ -36,6 +37,9 @@ class AnswerControllerTest {
     @Mock
     private GetSubmittedAnswersService getSubmittedAnswersService;
 
+    @Mock
+    private PlayerSessionService playerSessionService;
+
     @InjectMocks
     private AnswerController answerController;
 
@@ -56,10 +60,11 @@ class AnswerControllerTest {
         UUID playerId = UUID.randomUUID();
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, " ")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(VALIDATION_ERROR));
+                .andExpect(jsonPath("$.errorKey").value(VALIDATION_ERROR));
     }
 
     @Test
@@ -67,10 +72,13 @@ class AnswerControllerTest {
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         UUID answerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(playerId));
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenReturn(new SubmitAnswerResult(answerId, roundId, playerId, true));
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isCreated())
@@ -91,14 +99,17 @@ class AnswerControllerTest {
     void returnsConflictWhenAnswerWasAlreadySubmitted() throws Exception {
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(playerId));
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenThrow(new AnswerAlreadySubmittedException());
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("ANSWER_ALREADY_SUBMITTED"))
+                .andExpect(jsonPath("$.errorKey").value("ANSWER_ALREADY_SUBMITTED"))
                 .andExpect(jsonPath("$.message").value("Player already submitted an answer for this round"));
     }
 
@@ -106,14 +117,17 @@ class AnswerControllerTest {
     void returnsForbiddenWhenSubmittingPlayerIsOutsideRoom() throws Exception {
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(playerId));
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenThrow(new PlayerNotInRoomException());
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.errorKey").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Player is not part of this room"));
     }
 
@@ -121,14 +135,17 @@ class AnswerControllerTest {
     void returnsConflictWhenSubmittingToRoundOutsideActiveGame() throws Exception {
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(playerId));
         when(submitAnswerService.submitAnswer(any(SubmitAnswerCommand.class)))
                 .thenThrow(new RoundNotPartOfActiveGameException());
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
+                        .header("X-Player-Session-Token", "token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(submitAnswerRequest(playerId, "Mit WLAN-Problemen.")))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("GAME_STATE_CONFLICT"))
+                .andExpect(jsonPath("$.errorKey").value("GAME_STATE_CONFLICT"))
                 .andExpect(jsonPath("$.message").value("Round is not part of the active game"));
     }
 
@@ -138,6 +155,8 @@ class AnswerControllerTest {
         UUID hostPlayerId = UUID.randomUUID();
         UUID answerId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(hostPlayerId));
         when(getSubmittedAnswersService.getSubmittedAnswers(any(GetSubmittedAnswersCommand.class)))
                 .thenReturn(new SubmittedAnswersResult(List.of(new SubmittedAnswerResult(
                         answerId,
@@ -147,7 +166,7 @@ class AnswerControllerTest {
                 ))));
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
-                        .param("playerId", hostPlayerId.toString()))
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answers[0].answerId").value(answerId.toString()))
                 .andExpect(jsonPath("$.answers[0].playerId").value(playerId.toString()))
@@ -165,17 +184,20 @@ class AnswerControllerTest {
     void returnsForbiddenWhenNonRoomPlayerQueriesSubmittedAnswers() throws Exception {
         UUID roundId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
+        when(playerSessionService.authenticatePlayer("ABCD12", "token"))
+                .thenReturn(new AuthenticatedPlayer(playerId));
         when(getSubmittedAnswersService.getSubmittedAnswers(any(GetSubmittedAnswersCommand.class)))
                 .thenThrow(new OnlyRoomPlayersCanQueryAnswers());
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/rounds/" + roundId + "/answers")
-                        .param("playerId", playerId.toString()))
+                        .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.errorKey").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.message").value("Only players in this room can query submitted answers"));
     }
 
     private String submitAnswerRequest(UUID playerId, String answerText) {
-        return objectMapper.writeValueAsString(new SubmitAnswerRequest(playerId, answerText));
+        return objectMapper.writeValueAsString(new SubmitAnswerRequest(answerText));
     }
 }
+

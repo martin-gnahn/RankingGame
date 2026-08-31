@@ -1,7 +1,7 @@
-// @ts-ignore
 import de from '../public/i18n/de.json';
 
-type TranslationKey = keyof typeof de;
+type TranslationDictionary = Record<string, unknown>;
+type TranslationKey = string;
 type TranslationParams = Record<string, string | number>;
 
 const placeholderPattern = /\{\{\s*(\w+)\s*}}/g;
@@ -27,5 +27,34 @@ function renderTranslation(
 }
 
 function translationTemplate(key: TranslationKey): string {
-  return de[key];
+  const value = findTranslation(key);
+
+  if (typeof value !== 'string') {
+    throw new Error(`Missing translation for key "${key}"`);
+  }
+
+  return value;
+}
+
+function findTranslation(key: TranslationKey): unknown {
+  const translations = de as TranslationDictionary;
+
+  if (Object.prototype.hasOwnProperty.call(translations, key)) {
+    return translations[key];
+  }
+
+  let current: unknown = translations;
+  for (const segment of key.split('.')) {
+    if (!isTranslationDictionary(current)) {
+      return undefined;
+    }
+
+    current = current[segment];
+  }
+
+  return current;
+}
+
+function isTranslationDictionary(value: unknown): value is TranslationDictionary {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

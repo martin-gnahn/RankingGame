@@ -24,7 +24,7 @@ describe('RoomApiService', () => {
   });
 
   it('should create a room with the expected URL and payload', () => {
-    const response = { roomCode: 'ABCD', playerId: '7' };
+    const response = {roomCode: 'ABCD', playerId: '7', playerToken: 'token-7'};
 
     service.createRoom({ playerName: 'Marta' }).subscribe((result) => {
       expect(result).toEqual(response);
@@ -38,7 +38,7 @@ describe('RoomApiService', () => {
   });
 
   it('should join a room with an encoded room code and expected payload', () => {
-    const response = { roomCode: 'A/B1', playerId: '9' };
+    const response = {roomCode: 'A/B1', playerId: '9', playerToken: 'token-9'};
 
     service.joinRoom('A/B1', { playerName: 'Alex' }).subscribe((result) => {
       expect(result).toEqual(response);
@@ -99,12 +99,12 @@ describe('RoomApiService', () => {
     request.flush(response);
   });
 
-  it('should start a ranking game with an encoded room code and host player id', () => {
+  it('should start a ranking game with an encoded room code', () => {
     const response = {
       roomCode: 'A/B1',
     };
 
-    service.startRankingGame('A/B1', { hostPlayerId: 'host-1' }).subscribe((result) => {
+    service.startRankingGame('A/B1').subscribe((result) => {
       expect(result).toEqual(response);
     });
 
@@ -112,7 +112,7 @@ describe('RoomApiService', () => {
       `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/start`,
     );
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ hostPlayerId: 'host-1' });
+    expect(request.request.body).toEqual({});
 
     request.flush(response);
   });
@@ -131,12 +131,12 @@ describe('RoomApiService', () => {
       currentPlayerIsCaptain: false,
     };
 
-    service.getActiveRound('A/B1', 'player-1').subscribe((result) => {
+    service.getActiveRound('A/B1').subscribe((result) => {
       expect(result).toEqual(response);
     });
 
     const request = httpTesting.expectOne(
-      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/current-round?playerId=player-1`,
+      `${environment.apiBaseUrl}/rooms/A%2FB1/ranking-game/current-round`,
     );
     expect(request.request.method).toBe('GET');
 
@@ -153,7 +153,6 @@ describe('RoomApiService', () => {
 
     service
       .submitAnswer('A/B1', 'round/1', {
-        playerId: 'player-1',
         answerText: 'Mit WLAN-Problemen.',
       })
       .subscribe((result) => {
@@ -165,7 +164,6 @@ describe('RoomApiService', () => {
     );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
-      playerId: 'player-1',
       answerText: 'Mit WLAN-Problemen.',
     });
 

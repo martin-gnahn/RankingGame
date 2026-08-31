@@ -1,89 +1,162 @@
 {
-  "app.backToHome": "Zur Startseite",
-  "home.eyebrow": "Party Games",
-  "home.title": "Ranking Game",
-  "home.intro": "Erstellt einen Raum, sammelt Antworten und sortiert gemeinsam die besten Rankings.",
-  "home.roomActions": "Raumaktionen",
-  "home.errors.missingRoomCode": "Die Raumantwort enthielt keinen Raumcode.",
-  "home.errors.serverUnavailable": "Der Server ist gerade nicht erreichbar.",
-  "home.errors.roomActionFailed": "Die Raumaktion konnte nicht abgeschlossen werden.",
-  "createRoom.title": "Raum erstellen",
-  "createRoom.playerName": "Dein Name",
-  "createRoom.errors.nameRequired": "Name fehlt",
-  "createRoom.submit": "Raum erstellen",
-  "joinRoom.title": "Raum beitreten",
-  "joinRoom.roomCode": "Raumcode",
-  "joinRoom.playerName": "Dein Name",
-  "joinRoom.errors.roomCodeRequired": "Raumcode fehlt",
-  "joinRoom.errors.roomCodeFormat": "4-8 Zeichen, A-Z oder 0-9",
-  "joinRoom.errors.nameRequired": "Name fehlt",
-  "joinRoom.submit": "Raum beitreten",
-  "lobby.eyebrow": "Lobby",
-  "lobby.loading": "Lobby wird geladen",
-  "lobby.retry": "Erneut versuchen",
-  "lobby.statusAria": "Lobby Status",
-  "lobby.playerCount": "{{count}} Spieler",
-  "lobby.playersTitle": "Spieler",
-  "lobby.hostBadge": "Host",
-  "lobby.emptyPlayers": "Noch keine Spieler im Raum.",
-  "lobby.startGame": "Spiel starten",
-  "lobby.hostStarts": "Der Host startet das Spiel.",
-  "lobby.status.lobby": "Wartet auf Spieler",
-  "lobby.status.inGame": "Spiel läuft",
-  "lobby.status.finished": "Spiel beendet",
-  "lobby.status.closed": "Raum geschlossen",
-  "lobby.connection.online": "Online",
-  "lobby.connection.disconnected": "Getrennt",
-  "lobby.errors.missingRoomCode": "Der Raumcode fehlt.",
-  "lobby.errors.startFailed": "Das Spiel konnte nicht gestartet werden.",
-  "lobby.errors.liveUpdateReadFailed": "Live-Update konnte nicht gelesen werden.",
-  "lobby.errors.liveUpdateLoadFailed": "Live-Update konnte nicht geladen werden.",
-  "lobby.errors.chatLoadFailed": "Chat konnte nicht geladen werden.",
-  "lobby.errors.roomNotFound": "Dieser Raum wurde nicht gefunden.",
-  "lobby.errors.serverUnavailable": "Der Server ist gerade nicht erreichbar.",
-  "lobby.errors.loadFailed": "Die Lobby konnte nicht geladen werden.",
-  "game.loading": "Runde wird geladen",
-  "game.roundLabel": "Runde {{roundNumber}}",
-  "game.answer.label": "Antwort",
-  "game.answer.placeholder": "Deine Antwort",
-  "game.answer.required": "Bitte gib eine Reaktion ein.",
-  "game.assignedCardTitle": "Deine Karte:",
-  "game.assignedCardAria": "Deine zugewiesene Karte",
-  "game.assignedCardValue": "Deine Karte {{value}}",
-  "game.assignedCardLabel": "Deine Karte",
-  "game.submit.sent": "Antwort gesendet",
-  "game.submit.sending": "Wird gesendet",
-  "game.submit.default": "Antwort abgeben",
-  "game.ranking.eyebrow": "Ranking",
-  "game.ranking.hint.captain": "Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.",
-  "game.ranking.hint.player": "Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt...",
-  "game.ranking.counter": "{{ranked}} / {{total}} einsortiert",
-  "game.ranking.answerPoolTitle": "Antworten",
-  "game.ranking.submitting": "Wird einsortiert",
-  "game.ranking.rank": "Einordnen",
-  "game.ranking.emptyPool": "Alle Antworten liegen im Ranking.",
-  "game.ranking.dropTitle": "Hier ablegen",
-  "game.ranking.dropHint": "Ziehe eine Antwort hierher. Sie wird als nächste Position gespeichert.",
-  "game.ranking.complete": "Ranking komplett.",
-  "game.ranking.resultsTitle": "Aktuelles Ranking",
-  "game.ranking.loadingAria": "Ranking wird aktualisiert",
-  "game.ranking.emptyCaptain": "Lege die erste Antwort in das Ranking-Feld.",
-  "game.ranking.emptyPlayer": "Noch keine Antwort wurde einsortiert.",
-  "game.waitingForPlayers": "Antwort gespeichert. Warte auf die anderen Spieler.",
-  "game.unknownPlayer": "Unbekannter Spieler",
-  "game.errors.submitFailed": "Antwort konnte nicht gesendet werden.",
-  "game.errors.missingRoomCode": "Der Raumcode fehlt.",
-  "game.errors.missingPlayerId": "Die Spieler-ID fehlt.",
-  "game.errors.onlyHostCanRank": "Nur der Host kann Antworten sortieren.",
-  "game.errors.serverUnavailable": "Der Server ist gerade nicht erreichbar.",
-  "game.errors.roundLoadFailed": "Die Runde konnte nicht geladen werden.",
-  "chat.eyebrow": "Live",
-  "chat.title": "Chat",
-  "chat.expand": "Chat öffnen",
-  "chat.collapse": "Chat minimieren",
-  "chat.empty": "Noch keine Nachrichten.",
-  "chat.messageLabel": "Nachricht",
-  "chat.placeholder": "Schreib etwas",
-  "chat.errors.messageInvalid": "Bitte gib eine Nachricht mit maximal 500 Zeichen ein.",
-  "chat.send": "Senden"
+  "app": {
+    "backToHome": "Zur Startseite"
+  },
+  "home": {
+    "eyebrow": "Party Games",
+    "title": "Ranking Game",
+    "intro": "Erstellt einen Raum, sammelt Antworten und sortiert gemeinsam die besten Rankings.",
+    "roomActions": "Raumaktionen",
+    "errors": {
+      "missingRoomCode": "Die Raumantwort enthielt keinen Raumcode.",
+      "serverUnavailable": "Der Server ist gerade nicht erreichbar.",
+      "roomActionFailed": "Die Raumaktion konnte nicht abgeschlossen werden.",
+      "missingPlayerId": "Die Spieler-ID fehlt."
+    }
+  },
+  "createRoom": {
+    "title": "Raum erstellen",
+    "playerName": "Dein Name",
+    "errors": {
+      "nameRequired": "Name fehlt"
+    },
+    "submit": "Raum erstellen"
+  },
+  "joinRoom": {
+    "title": "Raum beitreten",
+    "roomCode": "Raumcode",
+    "playerName": "Dein Name",
+    "errors": {
+      "roomCodeRequired": "Raumcode fehlt",
+      "roomCodeFormat": "4-8 Zeichen, A-Z oder 0-9",
+      "nameRequired": "Name fehlt"
+    },
+    "submit": "Raum beitreten"
+  },
+  "lobby": {
+    "eyebrow": "Lobby",
+    "loading": "Lobby wird geladen",
+    "retry": "Erneut versuchen",
+    "statusAria": "Lobby Status",
+    "playerCount": "{{count}} Spieler",
+    "playersTitle": "Spieler",
+    "hostBadge": "Host",
+    "emptyPlayers": "Noch keine Spieler im Raum.",
+    "startGame": "Spiel starten",
+    "hostStarts": "Der Host startet das Spiel.",
+    "status": {
+      "lobby": "Wartet auf Spieler",
+      "inGame": "Spiel läuft",
+      "finished": "Spiel beendet",
+      "closed": "Raum geschlossen"
+    },
+    "connection": {
+      "online": "Online",
+      "disconnected": "Getrennt"
+    },
+    "errors": {
+      "missingRoomCode": "Der Raumcode fehlt.",
+      "startFailed": "Das Spiel konnte nicht gestartet werden.",
+      "liveUpdateReadFailed": "Live-Update konnte nicht gelesen werden.",
+      "liveUpdateLoadFailed": "Live-Update konnte nicht geladen werden.",
+      "chatLoadFailed": "Chat konnte nicht geladen werden.",
+      "roomNotFound": "Dieser Raum wurde nicht gefunden.",
+      "serverUnavailable": "Der Server ist gerade nicht erreichbar.",
+      "loadFailed": "Die Lobby konnte nicht geladen werden."
+    }
+  },
+  "game": {
+    "loading": "Runde wird geladen",
+    "roundLabel": "Runde {{roundNumber}}",
+    "answer": {
+      "label": "Antwort",
+      "placeholder": "Deine Antwort",
+      "required": "Bitte gib eine Reaktion ein."
+    },
+    "assignedCardTitle": "Deine Karte:",
+    "assignedCardAria": "Deine zugewiesene Karte",
+    "assignedCardValue": "Deine Karte {{value}}",
+    "assignedCardLabel": "Deine Karte",
+    "submit": {
+      "sent": "Antwort gesendet",
+      "sending": "Wird gesendet",
+      "default": "Antwort abgeben"
+    },
+    "ranking": {
+      "eyebrow": "Ranking",
+      "hint": {
+        "captain": "Alle Antworten wurden abgegeben. Du bist dran: Sortiere jetzt die Antworten.",
+        "player": "Alle Antworten wurden abgegeben. Der Kapitän sortiert jetzt..."
+      },
+      "counter": "{{ranked}} / {{total}} einsortiert",
+      "answerPoolTitle": "Antworten",
+      "submitting": "Wird einsortiert",
+      "rank": "Einordnen",
+      "emptyPool": "Alle Antworten liegen im Ranking.",
+      "dropTitle": "Hier ablegen",
+      "dropHint": "Ziehe eine Antwort hierher. Sie wird als nächste Position gespeichert.",
+      "complete": "Ranking komplett.",
+      "resultsTitle": "Aktuelles Ranking",
+      "loadingAria": "Ranking wird aktualisiert",
+      "emptyCaptain": "Lege die erste Antwort in das Ranking-Feld.",
+      "emptyPlayer": "Noch keine Antwort wurde einsortiert."
+    },
+    "waitingForPlayers": "Antwort gespeichert. Warte auf die anderen Spieler.",
+    "unknownPlayer": "Unbekannter Spieler",
+    "errors": {
+      "submitFailed": "Antwort konnte nicht gesendet werden.",
+      "missingActiveRound": "Keine aktuelle Runde.",
+      "missingRoomCode": "Der Raumcode fehlt.",
+      "missingPlayerId": "Die Spieler-ID fehlt.",
+      "onlyHostCanRank": "Nur der Host kann Antworten sortieren.",
+      "serverUnavailable": "Der Server ist gerade nicht erreichbar.",
+      "roundLoadFailed": "Die Runde konnte nicht geladen werden."
+    }
+  },
+  "error": {
+    "eyebrow": "Fehler",
+    "noToken": {
+      "title": "Kein Token gefunden.",
+      "message": "User-Token konnte nicht gefunden werden."
+    },
+    "tokenExpired": {
+      "title": "Sitzung abgelaufen",
+      "message": "Deine Spielsitzung ist abgelaufen. Bitte tritt dem Raum erneut bei."
+    },
+    "invalidToken": {
+      "title": "Ungültige Sitzung",
+      "message": "Dein Sitzungstoken ist ungültig oder gehört nicht zu diesem Raum. Bitte tritt dem Raum erneut bei."
+    },
+    "notFound": {
+      "title": "Nicht gefunden",
+      "message": "Die angeforderte Seite oder der Raum konnte nicht gefunden werden."
+    },
+    "serverUnavailable": {
+      "title": "Server nicht erreichbar",
+      "message": "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal."
+    },
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "message": "Die Aktion konnte nicht abgeschlossen werden."
+    },
+    "details": {
+      "title": "Technische Fehlerdetails",
+      "status": "HTTP-Status",
+      "message": "Meldung",
+      "noMessage": "Keine Servermeldung vorhanden."
+    }
+  },
+  "chat": {
+    "eyebrow": "Live",
+    "title": "Chat",
+    "expand": "Chat öffnen",
+    "collapse": "Chat minimieren",
+    "empty": "Noch keine Nachrichten.",
+    "messageLabel": "Nachricht",
+    "placeholder": "Schreib etwas",
+    "errors": {
+      "messageInvalid": "Bitte gib eine Nachricht mit maximal 500 Zeichen ein."
+    },
+    "send": "Senden"
+  }
 }

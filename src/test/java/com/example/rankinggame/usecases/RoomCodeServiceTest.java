@@ -40,3 +40,4 @@ class RoomCodeServiceTest {
                 .hasMessage("Room code is required");
     }
 }
+

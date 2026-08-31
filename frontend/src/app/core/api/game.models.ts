@@ -4,7 +4,6 @@ export interface GameSessionPlayerResponse {
 }
 
 export interface AddRankingPositionRequest {
-  hostId: string;
   answerId: string;
 }
 
@@ -23,8 +22,6 @@ export interface RankedAnswerDto {
   answerText: string;
   oneBasedPosition: number;
 }
-
-export type ValueObjectResponse = string | { value?: string } | null | undefined;
 
 export interface RankedAnswerListResponse {
   rankings: RankedAnswerDto[];
