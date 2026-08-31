@@ -49,7 +49,7 @@ class RankedAnswerGameControllerTest {
                         1,
                         questionId
                 ));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, hostPlayerId);
+        MockMvc mockMvc = mockMvc(fixture.startRankingGameService, fixture.getActiveRoundService, fixture.authenticatedPlayerId());
 
         mockMvc.perform(post("/api/rooms/abcd12/ranking-game/start")
                         .header("X-Player-Session-Token", "token")
@@ -96,7 +96,7 @@ class RankedAnswerGameControllerTest {
         ControllerFixture fixture = controllerFixture();
         when(fixture.startRankingGameService().startGame(any(StartRankingGameCommand.class)))
                 .thenThrow(new OnlyHostCanStartGame());
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
+        MockMvc mockMvc = mockMvc(fixture.startRankingGameService, fixture.getActiveRoundService, fixture.authenticatedPlayerId());
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
                         .header("X-Player-Session-Token", "token")
@@ -112,7 +112,7 @@ class RankedAnswerGameControllerTest {
         ControllerFixture fixture = controllerFixture();
         when(fixture.startRankingGameService().startGame(any(StartRankingGameCommand.class)))
                 .thenThrow(new RoomNotInLobbyException("ABCD12"));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
+        MockMvc mockMvc = mockMvc(fixture.startRankingGameService, fixture.getActiveRoundService, fixture.authenticatedPlayerId());
 
         mockMvc.perform(post("/api/rooms/ABCD12/ranking-game/start")
                         .header("X-Player-Session-Token", "token")
@@ -143,18 +143,19 @@ class RankedAnswerGameControllerTest {
                 "Welche Ausrede funktioniert immer?",
                 7,
                 false,
+                null,
                 currentPlayerIsCaptain));
         MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")
                         .header("X-Player-Session-Token", "token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.roomId").value(currentRound.roomId().toString()))
+                .andExpect(jsonPath("$.roomId").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomCode").value("ABCD12"))
-                .andExpect(jsonPath("$.gameSessionId").value(currentRound.gameSessionId().toString()))
-                .andExpect(jsonPath("$.roundId").value(currentRound.roundId().toString()))
+                .andExpect(jsonPath("$.gameSessionId").value(gameSessionId.toString()))
+                .andExpect(jsonPath("$.roundId").value(roundId.toString()))
                 .andExpect(jsonPath("$.roundNumber").value(1))
-                .andExpect(jsonPath("$.questionId").value(currentRound.questionId().toString()))
+                .andExpect(jsonPath("$.questionId").value(questionId.toString()))
                 .andExpect(jsonPath("$.questionText").value("Welche Ausrede funktioniert immer?"))
                 .andExpect(jsonPath("$.assignedCardValue").value(7));
     }
@@ -180,7 +181,7 @@ class RankedAnswerGameControllerTest {
         when(fixture.getActiveRoundService()
                 .loadActiveRoundForPlayer("ABCD12", fixture.authenticatedPlayerId()))
                 .thenThrow(new RoomHasNoActiveGameException("ABCD12"));
-        MockMvc mockMvc = mockMvc(startRankingGameService, getActiveRoundService, playerId);
+        MockMvc mockMvc = mockMvc(fixture.startRankingGameService, fixture.getActiveRoundService, fixture.authenticatedPlayerId());
 
         mockMvc.perform(get("/api/rooms/ABCD12/ranking-game/current-round")
                         .header("X-Player-Session-Token", "token"))
