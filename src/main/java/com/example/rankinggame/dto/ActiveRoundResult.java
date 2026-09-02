@@ -1,5 +1,7 @@
 package com.example.rankinggame.dto;
 
+import com.example.rankinggame.engine.AnswerText;
+
 import java.util.UUID;
 
 public record ActiveRoundResult(
@@ -12,5 +14,7 @@ public record ActiveRoundResult(
         String questionText,
         int assignedCardValue,
         boolean currentPlayerSubmitted,
-        boolean currentPlayerIsCaptain) {
+        AnswerText submittedAnswerByPlayer,
+        boolean currentPlayerIsCaptain
+) {
 }

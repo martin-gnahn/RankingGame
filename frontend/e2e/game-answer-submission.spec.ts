@@ -1,6 +1,12 @@
 import {test} from '@playwright/test';
 
-import {startGameWith2Players, submitAnswer, uniquePlayerName,} from './room-flow-helpers';
+import {
+  expectAnswerButtonToHaveSentState,
+  expectAnswerTextBoxToHaveValue,
+  startGameWith2Players,
+  submitAnswer,
+  uniquePlayerName,
+} from './room-flow-helpers';
 
 test('lets two players submit answers after the host starts the game', async ({
   browser,
@@ -16,6 +22,28 @@ test('lets two players submit answers after the host starts the game', async ({
 
     await submitAnswer(hostPage, 'Ich wuerde erst mal die Kaffeemaschine beschuldigen.');
     await submitAnswer(guestPage, 'Ich sage, das WLAN hatte Lampenfieber.');
+  } finally {
+    await guestContext.close();
+  }
+});
+
+test('after submitting answers, answer send button should stay disabled', async ({
+                                                                                   browser,
+                                                                                   page: hostPage,
+                                                                                 }) => {
+  const guestContext = await browser.newContext();
+  const guestPage = await guestContext.newPage();
+  const hostName = uniquePlayerName('Host');
+  const guestName = uniquePlayerName('Guest');
+
+  const answerText = 'Ich wuerde erst mal die Kaffeemaschine beschuldigen.';
+  try {
+    await startGameWith2Players(hostPage, hostName, guestPage, guestName);
+
+    await submitAnswer(hostPage, answerText);
+    await hostPage.reload();
+    await expectAnswerTextBoxToHaveValue(hostPage, answerText);
+    await expectAnswerButtonToHaveSentState(hostPage);
   } finally {
     await guestContext.close();
   }
